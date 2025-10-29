@@ -1,40 +1,84 @@
 /* Definimos colores y valores clave para que sean fáciles de cambiar */
 :root {
-    --color-fondo-pagina: #f0f0f0; /* Gris muy suave para el fondo general */
-    --color-principal-morado: #4b0082; /* Morado Oscuro, usado en el fondo principal */
-    --altura-pantalla-dinamica: 100dvh; /* Unidad clave para la altura completa en móviles */
+    --color-fondo-pagina: #f0f0f0; 
+    --color-principal-morado: #4b0082; 
+    --altura-pantalla-dinamica: 100dvh;
+    --color-morado-claro: #a020f0; 
+    --color-morado-medio: #8a2be2; 
+    --color-boton-base: #6a0dad; 
+    --color-hover: #af4dec; 
+    --color-letra: white; 
 }
-/*Aseguramos que no haya márgenes ni rellenos no deseados.*/
+/* Aseguramos que no haya márgenes ni rellenos no deseados. */
 body {
-    margin: 0; /* Quita el margen por defecto del cuerpo */
-    padding: 0; /* Quita el relleno por defecto del cuerpo */
-    font-family: Arial, sans-serif; /* Establece una fuente base */
-    background-color: var(--color-fondo-pagina); /* Usa la variable definida */
+    margin: 0; 
+    padding: 0; 
+    font-family: Arial, sans-serif; 
+    background-color: var(--color-fondo-pagina); 
 }
- /* Este contenedor envuelve toda la caja de login y tiene el color de fondo morado. */
-.contenedor-principal {
-    background-color: var(--color-principal-morado); /* Aplica el morado oscuro */
-    width: 100%; /* Ocupa todo el ancho disponible */
-    /* Configuración de Altura para Pantalla Completa: */
-    height: var(--altura-pantalla-dinamica); /* Usa la altura dinámica (dvh) para móviles */
-    min-height: 100vh; /* Respaldo para navegadores que no soportan dvh */
+/* Este contenedor envuelve toda la caja de login y tiene el color de fondo morado. */
+.login-pantalla {
+    background-color: var(--color-principal-morado); 
+    width: 100%; 
+    height: var(--altura-pantalla-dinamica); 
+    min-height: 100vh; 
     /* FLEXBOX: Utilizado para centrar la 'caja-inicio-sesion' */
     display: flex; 
     justify-content: center; /* Centra horizontalmente */
     align-items: center; /* Centra verticalmente */
 }
-
- /* Estilos base para la caja que contiene el logo y los botones. */
-.caja-inicio-sesion {
-    width: 90%; /* Ocupa la mayor parte del ancho en móviles */
-    max-width: 400px; /* Limita el ancho máximo para evitar que sea muy grande */
-    background-color: var(--color-principal-morado); /* Fondo de la caja */
-    color: white; /* Color de texto blanco por defecto */
+/* Estilos base para la caja que contiene el logo y los botones. */
+.login-caja {
+    width: 90%; 
+    max-width: 400px; 
+    background-color: var(--color-principal-morado); 
+    color: var(--color-letra); 
     padding: 40px 20px; 
     /* FLEXBOX: Organiza los elementos internos (logo, título, botones) */
     display: flex;
-    flex-direction: column; /* Apila los elementos uno debajo del otro */
-    align-items: center; /* Centra los elementos de la caja horizontalmente */
-    gap: 30px; /* Espacio uniforme entre cada elemento apilado */
+    flex-direction: column; 
+    align-items: center; 
+    gap: 30px; 
     text-align: center; 
+}
+/* Define la apariencia del texto "Inicio de Sesion" dentro de la caja morada. */
+.login-caja__titulo {
+    font-size: 1.5em; 
+    margin: 0; 
+}
+/* Define el tamaño base y el espaciado del logo 'LO GO'. */
+.login-caja__logo {
+    font-size: 3em; 
+    font-weight: bold; 
+    margin-bottom: 20px; 
+}
+/* Aplica color específico a la primera parte del logo. */
+.login-caja__logo-parte--uno {
+    color: var(--color-morado-claro); 
+}
+/* Aplica color específico a la segunda parte del logo y ajusta su posición. */
+.login-caja__logo-parte--dos {
+    color: var(--color-morado-medio); 
+    margin-top: -10px; 
+}
+/* Se aplican estilos a ambos botones para darles forma, fuente y transición. */
+.login-caja__boton {
+    width: 80%; 
+    padding: 15px; 
+    border: none; 
+    border-radius: 30px; 
+    font-size: 1.1em; 
+    font-weight: bold; 
+    cursor: pointer; 
+    transition: background-color 0.3s ease; 
+    color: var(--color-letra); 
+    text-transform: uppercase; 
+}
+/* Estilo específico para el botón. */
+.login-caja__boton {
+    background-color: var(--color-boton-base); /* Color único y oscuro */
+}
+/* Define el cambio de color al pasar el ratón. */
+.login-caja__boton--hover .login-caja__boton--hover:hover{
+    background-color: var(--color-hover); 
 }
