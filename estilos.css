@@ -1,20 +1,40 @@
-:root{
-    --Color_principal:#351E44;
-    --Color_secundario: #5B3177;
-    --color_letra: #ffffff;
+/* Definimos colores y valores clave para que sean fáciles de cambiar */
+:root {
+    --color-fondo-pagina: #f0f0f0; /* Gris muy suave para el fondo general */
+    --color-principal-morado: #4b0082; /* Morado Oscuro, usado en el fondo principal */
+    --altura-pantalla-dinamica: 100dvh; /* Unidad clave para la altura completa en móviles */
 }
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family: 'Poppins', sans-serif;
+/*Aseguramos que no haya márgenes ni rellenos no deseados.*/
+body {
+    margin: 0; /* Quita el margen por defecto del cuerpo */
+    padding: 0; /* Quita el relleno por defecto del cuerpo */
+    font-family: Arial, sans-serif; /* Establece una fuente base */
+    background-color: var(--color-fondo-pagina); /* Usa la variable definida */
+}
+ /* Este contenedor envuelve toda la caja de login y tiene el color de fondo morado. */
+.contenedor-principal {
+    background-color: var(--color-principal-morado); /* Aplica el morado oscuro */
+    width: 100%; /* Ocupa todo el ancho disponible */
+    /* Configuración de Altura para Pantalla Completa: */
+    height: var(--altura-pantalla-dinamica); /* Usa la altura dinámica (dvh) para móviles */
+    min-height: 100vh; /* Respaldo para navegadores que no soportan dvh */
+    /* FLEXBOX: Utilizado para centrar la 'caja-inicio-sesion' */
+    display: flex; 
+    justify-content: center; /* Centra horizontalmente */
+    align-items: center; /* Centra verticalmente */
 }
 
-body{
-    background:var(--Color_principal);
-}
-.header{
-    width:100%;
-    height:50px;
-    background:var(--Color_secundario);
+ /* Estilos base para la caja que contiene el logo y los botones. */
+.caja-inicio-sesion {
+    width: 90%; /* Ocupa la mayor parte del ancho en móviles */
+    max-width: 400px; /* Limita el ancho máximo para evitar que sea muy grande */
+    background-color: var(--color-principal-morado); /* Fondo de la caja */
+    color: white; /* Color de texto blanco por defecto */
+    padding: 40px 20px; 
+    /* FLEXBOX: Organiza los elementos internos (logo, título, botones) */
+    display: flex;
+    flex-direction: column; /* Apila los elementos uno debajo del otro */
+    align-items: center; /* Centra los elementos de la caja horizontalmente */
+    gap: 30px; /* Espacio uniforme entre cada elemento apilado */
+    text-align: center; 
 }
