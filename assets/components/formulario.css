@@ -1,0 +1,23 @@
+/* Se aplican estilos a ambos botones para darles forma, fuente y transición. */
+.caja__formulario {
+    font-size: 1.3em; 
+    font-weight: bold; 
+    color: var(--color-letra); 
+    text-transform: uppercase; 
+    
+}
+.formulario__label{
+    text-align: center;
+    display: block;
+    margin-bottom: 10px;
+    margin-top: 10px;
+}
+.formulario__input{
+    border: var(--color-principal-morado) solid 1px;
+    border-radius: 5px;
+    width: 300px;
+    height: 25px;
+    background-color: var(--color-fondo-pagina);
+    font-size: 15px;
+    text-align: center;
+}   

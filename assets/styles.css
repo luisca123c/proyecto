@@ -7,3 +7,8 @@
 
 /*Componentes*/
 @import url(components/boton.css);
+@import url(components/formulario.css);
+@import url(components/caja.css);
+
+/*pages*/
+@import url(pages/login.css);

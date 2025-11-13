@@ -1,0 +1,32 @@
+/* Este contenedor envuelve toda la caja de login y tiene el color de fondo morado. */
+.login-pantalla {
+    background-color: var(--color-principal-morado); 
+    width: 100%; 
+    height: var(--altura-pantalla-dinamica); 
+    min-height: 100vh; 
+    /* FLEXBOX: Utilizado para centrar la 'caja-inicio-sesion' */
+    display: flex; 
+    justify-content: center; /* Centra horizontalmente */
+    align-items: center; /* Centra verticalmente */
+}
+
+/* Media Query (Adaptación a pantallas grandes) */
+@media (min-width: 768px) {
+    /* Modificador para la caja en desktop (la hace blanca y flotante) */
+    .caja {
+        background-color: white; 
+        color: var(--color-principal-morado); 
+        border-radius: 10px; 
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); 
+        padding: 60px 40px; 
+    }
+    
+    /* Ajustes de color para elementos en la caja blanca */
+    .caja__titulo {
+        color: var(--color-principal-morado); 
+    }
+
+    .caja__logo {
+        color: var(--color-principal-morado);
+    }
+}

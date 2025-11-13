@@ -1,0 +1,34 @@
+/* Estilos base para la caja que contiene el logo y los botones. */
+.caja {
+    width: 90%; 
+    max-width: 400px; 
+    background-color: var(--color-principal-morado); 
+    color: var(--color-letra-claro); 
+    padding: 40px 20px; 
+    /* FLEXBOX: Organiza los elementos internos (logo, título, botones) */
+    display: flex;
+    flex-direction: column; 
+    align-items: center; 
+    gap: 30px; 
+    text-align: center; 
+}
+/* Define la apariencia del texto "Inicio de Sesion" dentro de la caja morada. */
+.caja__titulo {
+    font-size: 1.5em; 
+    margin: 0; 
+}
+/* Define el tamaño base y el espaciado del logo 'LO GO'. */
+.caja__logo {
+    font-size: 3em; 
+    font-weight: bold; 
+    margin-bottom: 20px; 
+}
+/* Aplica color específico a la primera parte del logo. */
+.caja__logo-parte--uno {
+    color: var(--color-morado-claro); 
+}
+/* Aplica color específico a la segunda parte del logo y ajusta su posición. */
+.caja__logo-parte--dos {
+    color: var(--color-morado-medio); 
+    margin-top: -10px; 
+}
