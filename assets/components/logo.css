@@ -1,0 +1,10 @@
+.logo{
+    display: block;
+    height: 50px;
+    width: 50px;
+}
+.logo--caja{
+    display: block;
+    height: 100px;
+    width: 100%;
+}
