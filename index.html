@@ -16,8 +16,18 @@
             
             <h2 class="login-caja__titulo">Inicio de Sesion</h2>
             
-            <button class="login-caja__boton login-caja__boton--hover">ADMINISTRADOR</button> 
-            <button class="login-caja__boton login-caja__boton--hover">EMPLEADO</button>
+            <form class="login-caja__formulario" action="" method="get" enctype="multipart/form-data">
+                <div>
+                    <label for="Usuario" class="formulario__label">Usuario: </label>
+                    <input class="formulario__input" type="text" name="Usuario" id="Usuario" required placeholder="Ingrese su Usuario o Correo">
+                </div>
+                <div>
+                    <label for="Usuario" class="formulario__label">contraseña: </label>
+                    <input class="formulario__input" type="text" name="contraseña" id="contraseña" required placeholder="Ingrese su contraseña">
+                </div>
+            </form>
+
+            <button class="login-caja__boton login-caja__boton--hover">INICIAR SESIÓN</button> 
         </main>
     </div>
 </body>
