@@ -6,6 +6,18 @@
     text-transform: uppercase; 
     
 }
+.formulario__container
+{
+    position: relative;
+    display: inline-block;
+}
+.formulario__container i{
+    position: absolute;
+    top: 50%;
+    left: 10px; 
+    transform: translateY(-50%);
+    color: var(--color-letra);
+}
 .formulario__label{
     text-align: center;
     display: block;
@@ -20,4 +32,9 @@
     background-color: var(--color-fondo-pagina);
     font-size: 15px;
     text-align: center;
+    padding-left: 35px; 
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
 }   

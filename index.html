@@ -12,21 +12,21 @@
             <div class="caja__logo">
                 <img src="assets\images\Logo.png" alt="logo" class="logo--caja">
             </div>
-            
             <h2 class="caja__titulo">Inicio de Sesion</h2>
-            
-            <form class="caja__formulario" action="" method="get" enctype="multipart/form-data">
+            <form class="caja__formulario" action="public/pagina_principal.html" method="get" enctype="multipart/form-data">
                 <div>
-                    <label for="Usuario" class="formulario__label">Usuario: </label>
-                    <input class="formulario__input" type="text" name="Usuario" id="Usuario" required placeholder="Ingrese su Usuario o Correo">
+                    <label for="Usuario" class="formulario__label">Usuario o correo: </label>
+                    <div class="formulario__container">
+                        <i class="fi fi-sr-user"></i>
+                        <input class="formulario__input" type="text" name="Usuario" id="Usuario" required placeholder="Ingrese su Usuario o Correo">
+                    </div>
                 </div>
                 <div>
                     <label for="Usuario" class="formulario__label">contraseña: </label>
-                    <input class="formulario__input" type="text" name="contraseña" id="contraseña" required placeholder="Ingrese su contraseña">
+                    <input class="formulario__input" type="password" name="contraseña" id="contraseña" required placeholder="Ingrese su contraseña">
                 </div>
+                <button class="boton" type="submit">INICIAR SESIÓN</button>             
             </form>
-
-            <button class="boton">INICIAR SESIÓN</button> 
         </main>
     </div>
 </body>
