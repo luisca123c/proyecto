@@ -12,6 +12,8 @@
 @import url(components/formulario.css);
 @import url(components/caja.css);
 @import url(components/logo.css);
+@import url(components/header.css); /* Asegúrate que header.css esté importado */
+@import url(components/footer.css); /* Importación del nuevo componente footer.css */
 
 /*pages*/
 @import url(pages/login.css);

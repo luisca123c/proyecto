@@ -1,3 +1,18 @@
-    .header{
-        
-    }
+/* Estilos específicos para el encabezado */
+.main-header {
+    background-color: var(--color-principal-morado); 
+    color: var(--color-letra-claro);
+    padding: 20px;
+    display: flex;
+    justify-content: space-between; /* Alinea elementos a los extremos */
+    align-items: center;
+}
+
+.header__titulo {
+    font-size: 1.8em;
+    margin: 0;
+}
+
+.header__info-usuario {
+    font-size: 1em;
+}

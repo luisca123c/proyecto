@@ -1,4 +1,9 @@
-/* (Grid de 3 filas y 2 columnas) */
+/* Definición del layout principal del cuerpo (body) */
+body {
+    min-height: var(--altura-pantalla-dinamica);
+}
+
+/* Nuevo layout basado en la imagen de referencia (Grid de 3 filas y 2 columnas) */
 .contenedor-principal {
     min-height: var(--altura-pantalla-dinamica);
     display: grid;
@@ -12,31 +17,23 @@
         "sidebar main"
         "footer footer";
 }
+
 /* Asignación de áreas a los elementos del grid */
 .main-header {
     grid-area: header;
-    background-color: var(--color-principal-morado); /* Color de fondo para visualización */
-    color: var(--color-letra-claro);
-    padding: 20px;
 }
+
 .main-sidebar {
     grid-area: sidebar;
-    background-color: var(--color-morado-medio); /* Color de fondo para visualización */
-    color: var(--color-letra-claro);
-    padding: 20px 0;
 }
+
 .pagina-main {
     grid-area: main;
-    background-color: var(--color-fondo-pagina); /* Color de fondo para visualización */
+    /* El color de fondo del contenido principal sí puede ir aquí */
+    background-color: var(--color-fondo-pagina); 
     padding: 30px;
 }
 
 .main-footer {
     grid-area: footer;
-    background-color: var(--color-principal-morado); /* Color de fondo para visualización */
-    color: var(--color-letra-claro);
-    padding: 15px;
-    text-align: center;
-    font-size: 0.8em;
 }
-
