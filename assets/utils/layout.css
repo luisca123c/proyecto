@@ -1,18 +1,42 @@
-body{
+/* (Grid de 3 filas y 2 columnas) */
+.contenedor-principal {
     min-height: var(--altura-pantalla-dinamica);
     display: grid;
+    /* Define 3 áreas: Header (auto), Contenido (1fr), Footer (auto) */
     grid-template-rows: auto 1fr auto;
-    grid-template-areas: 
-    "header"
-    "main"
-    "footer";
+    /* Define 2 columnas: Sidebar (ancho fijo, ej: 250px) y Main (resto del espacio: 1fr) */
+    grid-template-columns: 250px 1fr;
+    /* Define las áreas del grid */
+    grid-template-areas:
+        "header header"
+        "sidebar main"
+        "footer footer";
 }
-.main-header{
+/* Asignación de áreas a los elementos del grid */
+.main-header {
     grid-area: header;
+    background-color: var(--color-principal-morado); /* Color de fondo para visualización */
+    color: var(--color-letra-claro);
+    padding: 20px;
 }
-.pagina-main{
+.main-sidebar {
+    grid-area: sidebar;
+    background-color: var(--color-morado-medio); /* Color de fondo para visualización */
+    color: var(--color-letra-claro);
+    padding: 20px 0;
+}
+.pagina-main {
     grid-area: main;
+    background-color: var(--color-fondo-pagina); /* Color de fondo para visualización */
+    padding: 30px;
 }
-.main-footer{
+
+.main-footer {
     grid-area: footer;
+    background-color: var(--color-principal-morado); /* Color de fondo para visualización */
+    color: var(--color-letra-claro);
+    padding: 15px;
+    text-align: center;
+    font-size: 0.8em;
 }
+

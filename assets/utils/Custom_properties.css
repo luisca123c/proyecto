@@ -1,0 +1,18 @@
+/* Definimos colores y valores clave para que sean fáciles de cambiar */
+:root {
+    --color-fondo-pagina: #f0f0f0; 
+    --color-principal-morado: #4b0082; 
+    --altura-pantalla-dinamica: 100dvh;
+    --color-morado-claro: #a020f0; 
+    --color-morado-medio: #8a2be2; 
+    --color-boton-base: #6a0dad; 
+    --color-hover: #af4dec; 
+    --color-letra: white; 
+}
+/* Aseguramos que no haya márgenes ni rellenos no deseados. */
+body {
+    margin: 0; 
+    padding: 0; 
+    font-family: Arial, sans-serif; 
+    background-color: var(--color-fondo-pagina); 
+}
