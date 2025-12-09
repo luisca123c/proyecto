@@ -3,6 +3,7 @@
 
 /*Base*/
 @import url(utils/Base.css);
+@import url(utils/Custom_properties.css);
 
 /*Layout*/
 @import url(utils/layout.css);
@@ -12,8 +13,11 @@
 @import url(components/formulario.css);
 @import url(components/caja.css);
 @import url(components/logo.css);
-@import url(components/header.css); /* Asegúrate que header.css esté importado */
-@import url(components/footer.css); /* Importación del nuevo componente footer.css */
+@import url(components/header.css); 
+@import url(components/footer.css); /* Importación del Footer */
+@import url(components/sidebar.css); /* Importación del Sidebar responsivo */
+@import url(components/sidebar_nav.css); /* Importación de estilos de botones del Sidebar */
+@import url(components/main_botones.css);
 
 /*pages*/
 @import url(pages/login.css);

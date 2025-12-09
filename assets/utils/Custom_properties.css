@@ -8,6 +8,9 @@
     --color-boton-base: #6a0dad; 
     --color-hover: #af4dec; 
     --color-letra: white; 
+    --color-letra-claro: white; 
+    --color-icono-carrito: white; 
+    --sombra-header: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 /* Aseguramos que no haya márgenes ni rellenos no deseados. */
 body {

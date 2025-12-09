@@ -1,0 +1,87 @@
+/* =================================================================
+   BOTONES MAIN: COLUMNA ÚNICA (APLICADO UNIVERSALMENTE CON FLEXBOX)
+   ================================================================= */
+
+.pagina-main__titulo {
+    font-size: 1.8em; 
+    color: var(--color-principal-morado);
+    margin-bottom: 30px;
+    text-align: center;
+    width: 100%; /* Asegura que el título ocupe todo el ancho para centrarse */
+}
+
+.main-botones-contenedor {
+    display: flex; 
+    flex-direction: column; 
+    
+    gap: 20px; 
+    
+    /* Centrado Horizontal del bloque completo */
+    max-width: 280px; /* <--- REDUCIMOS EL ANCHO MÁXIMO (ajuste visual para móvil) */
+    margin: 0 auto; /* Centra el contenedor si el MAIN no lo hace */
+    
+    padding: 0 10px; 
+    box-sizing: border-box;
+    width: 100%; /* Ocupa el 100% del max-width de 280px */
+}
+
+.main-boton {
+    width: 100%; 
+    height: auto;
+    text-decoration: none;
+    
+    background-color: var(--color-morado-medio);
+    color: var(--color-letra-claro);
+    padding: 20px 10px; 
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border-radius: 8px; 
+    
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.main-boton:hover {
+    background-color: var(--color-hover);
+    transform: translateY(-3px); 
+}
+
+.main-boton .boton__icono {
+    font-size: 3em; 
+    margin-bottom: 10px;
+}
+
+/* =================================================================
+   BOTONES MAIN: DESKTOP (A partir de 768px)
+   ================================================================= */
+
+@media (min-width: 768px) {
+    .pagina-main__titulo {
+        font-size: 1.8em;
+        margin-bottom: 30px;
+    }
+    
+    .main-botones-contenedor {
+        gap: 25px; 
+        
+        /* DESKTOP: Múltiples columnas responsivas */
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+        
+        /* 💡 SOLUCIÓN CLAVE PARA CENTRAR FILAS INCOMPLETAS: */
+        justify-content: center; /* Centra el GRUPO COMPLETO de celdas */
+    }
+
+    .main-boton {
+        padding: 30px 10px;
+    }
+    .main-boton:hover {
+        transform: translateY(-3px); /* Activamos el efecto de elevación */
+    }
+    .main-boton .boton__icono {
+        font-size: 3em; 
+        margin-bottom: 10px;
+    }
+}

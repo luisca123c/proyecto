@@ -1,14 +1,3 @@
-/* Definimos colores y valores clave para que sean fáciles de cambiar */
-:root {
-    --color-fondo-pagina: #f0f0f0; 
-    --color-principal-morado: #4b0082; 
-    --altura-pantalla-dinamica: 100dvh;
-    --color-morado-claro: #a020f0; 
-    --color-morado-medio: #8a2be2; 
-    --color-boton-base: #6a0dad; 
-    --color-morado-muy-claro: #af4dec; 
-    --color-letra-claro: white; 
-}
 /* Aseguramos que no haya márgenes ni rellenos no deseados. */
 *{
     margin: 0; 

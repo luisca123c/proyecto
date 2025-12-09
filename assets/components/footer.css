@@ -5,4 +5,5 @@
     padding: 15px;
     text-align: center;
     font-size: 0.9em;
+    grid-column: 1 / -1; 
 }

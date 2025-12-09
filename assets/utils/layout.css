@@ -1,39 +1,58 @@
-/* Definición del layout principal del cuerpo (body) */
+/* =================================================================
+   LAYOUT: MOBILE FIRST (Estilos por defecto para móviles)
+   ================================================================= */
+
 body {
     min-height: var(--altura-pantalla-dinamica);
+    overflow-x: hidden; 
 }
 
-/* Nuevo layout basado en la imagen de referencia (Grid de 3 filas y 2 columnas) */
 .contenedor-principal {
-    min-height: var(--altura-pantalla-dinamica);
     display: grid;
-    /* Define 3 áreas: Header (auto), Contenido (1fr), Footer (auto) */
     grid-template-rows: auto 1fr auto;
-    /* Define 2 columnas: Sidebar (ancho fijo, ej: 250px) y Main (resto del espacio: 1fr) */
-    grid-template-columns: 250px 1fr;
-    /* Define las áreas del grid */
+    grid-template-columns: 1fr; 
     grid-template-areas:
-        "header header"
-        "sidebar main"
-        "footer footer";
+        "header"
+        "main"
+        "footer";
+    min-height: var(--altura-pantalla-dinamica);
+    width: 100vw; 
+    box-sizing: border-box;
 }
 
-/* Asignación de áreas a los elementos del grid */
 .main-header {
     grid-area: header;
 }
 
-.main-sidebar {
-    grid-area: sidebar;
-}
-
 .pagina-main {
     grid-area: main;
-    /* El color de fondo del contenido principal sí puede ir aquí */
     background-color: var(--color-fondo-pagina); 
-    padding: 30px;
+    /* Quitamos el padding lateral del main, se aplica al contenido interno */
+    padding: 15px 0; 
+    padding-top: 70px; 
+    overflow-x: hidden; 
+    
+    /* SOLUCIÓN: Usamos Flexbox en el MAIN para centrar su contenido interno
+       Esto asegura que el h2 y el contenedor de botones se centren si no lo hacen solos. */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centra los ítems (el título y el contenedor de botones) */
 }
 
 .main-footer {
     grid-area: footer;
+}
+
+
+/* =================================================================
+   LAYOUT: DESKTOP (A partir de 768px)
+   ================================================================= */
+
+@media (min-width: 768px) {
+    .pagina-main {
+        /* Revertimos a la configuración original en desktop */
+        padding: 30px; 
+        padding-top: 80px;
+        display: block; /* Volvemos al flujo normal si es necesario */
+    }
 }

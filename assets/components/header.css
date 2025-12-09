@@ -1,18 +1,77 @@
-/* Estilos específicos para el encabezado */
+/* =================================================================
+   HEADER: MOBILE FIRST (Estilos por defecto para móviles)
+   ================================================================= */
 .main-header {
     background-color: var(--color-principal-morado); 
     color: var(--color-letra-claro);
-    padding: 20px;
+    /* Padding para móvil */
+    padding: 10px 15px; 
     display: flex;
-    justify-content: space-between; /* Alinea elementos a los extremos */
+    justify-content: space-between; 
     align-items: center;
+    
+    position: sticky; 
+    top: 0;
+    width: 100%;
+    box-sizing: border-box; 
+    box-shadow: var(--sombra-header);
+    z-index: 20; 
 }
-
 .header__titulo {
-    font-size: 1.8em;
+    font-size: 1.5em; /* Tamaño móvil por defecto */
     margin: 0;
 }
-
+.header__acciones {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Espacio reducido para móvil */
+}
+.header__carrito-link {
+    color: var(--color-icono-carrito);
+    text-decoration: none;
+    font-size: 1.5em; 
+    transition: color 0.3s;
+}
+.header__carrito-link:hover {
+    color: var(--color-hover);
+}
+/* Ocultar información del usuario en pantallas muy pequeñas */
 .header__info-usuario {
-    font-size: 1em;
+    font-size: 0.9em; 
+    display: none; /* Oculto en móvil */
+}
+.header__link-salir {
+    color: var(--color-letra-claro);
+    text-decoration: none;
+    padding: 5px 8px; /* Padding más pequeño para móvil */
+    border: 1px solid var(--color-letra-claro);
+    border-radius: 5px;
+    font-size: 0.8em;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+.header__link-salir:hover {
+    background-color: #a93226; 
+    border-color: #a93226;
+}
+/* =================================================================
+   HEADER: DESKTOP (A partir de 768px)
+   ================================================================= */
+@media (min-width: 768px) {
+    .main-header {
+        padding: 15px 30px; /* Padding de escritorio */
+    }
+    .header__titulo {
+        font-size: 1.8em; /* Tamaño de escritorio */
+    }
+    .header__acciones {
+        gap: 20px; /* Espacio aumentado */
+    }
+    .header__info-usuario {
+        display: block; /* Mostrar info de usuario en escritorio */
+        font-size: 1em;
+    }
+    .header__link-salir {
+        padding: 5px 10px; /* Padding de escritorio */
+        font-size: 0.9em;
+    }
 }
