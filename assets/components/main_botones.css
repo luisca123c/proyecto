@@ -9,38 +9,32 @@
     text-align: center;
     width: 100%; /* Asegura que el título ocupe todo el ancho para centrarse */
 }
-
 .main-botones-contenedor {
-    display: flex; 
-    flex-direction: column; 
-    
     gap: 20px; 
-    
-    /* Centrado Horizontal del bloque completo */
     max-width: 280px; /* <--- REDUCIMOS EL ANCHO MÁXIMO (ajuste visual para móvil) */
     margin: 0 auto; /* Centra el contenedor si el MAIN no lo hace */
-    
     padding: 0 10px; 
     box-sizing: border-box;
     width: 100%; /* Ocupa el 100% del max-width de 280px */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
-
 .main-boton {
     width: 100%; 
     height: auto;
     text-decoration: none;
-    
     background-color: var(--color-morado-medio);
     color: var(--color-letra-claro);
     padding: 20px 10px; 
-    
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
     border-radius: 8px; 
-    
     transition: background-color 0.3s, transform 0.2s;
 }
 
