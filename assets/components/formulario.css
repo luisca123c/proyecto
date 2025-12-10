@@ -4,19 +4,12 @@
     font-weight: bold; 
     color: var(--color-letra); 
     text-transform: uppercase; 
-    
 }
 .formulario__container
 {
+    /*se posiciona en el flujo normal*/
     position: relative;
     display: inline-block;
-}
-.formulario__container i{
-    position: absolute;
-    top: 50%;
-    left: 10px; 
-    transform: translateY(-50%);
-    color: var(--color-letra);
 }
 .formulario__label{
     text-align: center;

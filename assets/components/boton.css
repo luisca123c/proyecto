@@ -8,12 +8,11 @@
     font-size: 1.1em; 
     font-weight: bold; 
     cursor: pointer; 
-    transition: background-color 0.3s ease; 
     color: var(--color-letra-claro);
     text-transform: uppercase; 
     background-color: var(--color-boton-base);
 }
 /* Define el cambio de color al pasar el ratón. */
 .boton:hover{
-    background-color: var(--color-morado-muy-claro); 
+    background-color: var(--color-hover);
 }

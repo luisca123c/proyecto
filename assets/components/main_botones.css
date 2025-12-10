@@ -70,6 +70,7 @@
 
     .main-boton {
         padding: 30px 10px;
+        width: 600px;
     }
     .main-boton:hover {
         transform: translateY(-3px); /* Activamos el efecto de elevación */
