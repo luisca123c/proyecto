@@ -6,8 +6,14 @@ body {
 }
 .contenedor-principal {
     display: grid;
+    /*Tendra 3 filas:
+    la primera tendra la altura de su contenido, 
+    la segunda llenara el espacio que sobre,
+    la tercera tendra la altura de su contenido*/
     grid-template-rows: auto 1fr auto;
+    /*Solo tendra una columna el grid (en mobiles)*/
     grid-template-columns: 1fr; 
+    /*Definimos las areas de grid (para mobiles)*/
     grid-template-areas:
         "header"
         "main"
@@ -20,6 +26,9 @@ body {
 .main-header {
     grid-area: header;
 }
+.main-sidebar{
+    grid-area: sidebar;
+}
 /*Definimos el area del main*/
 .pagina-main {
     grid-area: main;
@@ -28,8 +37,39 @@ body {
     padding-top: 70px; 
     overflow-x: hidden;  
 }
+.pagina-main--principal{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
 /*Definimos el area del footer*/
 .main-footer {
     grid-area: footer;
 }
 
+@media (min-width: 768px) {
+    .contenedor-principal--con-sidebar {
+        display: grid;
+        grid-template-columns: 250px 1fr; /* 2 Columnas */
+        grid-template-areas:
+            "header header"
+            "sidebar main"
+            "footer footer";
+    }
+    .contenedor-principal:not(.contenedor-principal--con-sidebar)
+    {
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-template-areas: 
+        "header"
+        "main"
+        "footer";
+    }
+    .pagina-main {
+        padding: 30px; 
+        padding-top: 80px; 
+    } 
+    .contenedor-principal:not(.contenedor-principal--con-sidebar) .header__titulo {
+        margin-left: 0; 
+    }
+}

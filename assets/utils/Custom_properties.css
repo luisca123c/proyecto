@@ -9,6 +9,6 @@
     --color-boton-base: #6a0dad; 
     --color-hover: #af4dec; 
     --color-letra-claro: white; 
-    --color-icono-carrito: white; 
+    --color-icono-carrito: rgb(255, 255, 255); 
     --sombra-header: 0 4px 6px rgba(0, 0, 0, 0.1);
 }

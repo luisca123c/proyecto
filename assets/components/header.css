@@ -29,7 +29,7 @@
     align-items: center;
     gap: 15px; 
 }
-.header__carrito-link {
+.header__icono-link {
     color: var(--color-icono-carrito);
     /*Quitamos la decoracion del texto*/
     text-decoration: none;
@@ -37,8 +37,18 @@
     /*Transicion para cuando se ejecute el hover*/
     transition: color 0.3s;
 }
-.header__carrito-link:hover {
+.header__icono-link:hover {
     color: var(--color-hover);
+}
+/*Diseño del icono del menu visible solo en celular*/
+.header__menu-toggle {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 5px; 
+    display: block; 
 }
 /* Ocultar información del usuario (usuario:Administrador) en pantallas muy pequeñas */
 .header__info-usuario {
@@ -66,6 +76,7 @@
     }
     .header__titulo {
         font-size: 1.8em; 
+        margin-left: 250px;
     }
     .header__acciones {
         gap: 20px; 
@@ -78,5 +89,9 @@
     .header__link-salir {
         padding: 5px 10px; 
         font-size: 0.9em;
+    }
+    /*Ocultamos el icono del menu en escritorio*/
+    .header__menu-toggle {
+        display: none;
     }
 }

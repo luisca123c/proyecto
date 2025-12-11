@@ -1,0 +1,106 @@
+/*Ocultamos el sidebar*/
+.menu-toggle {
+    display: none;
+}
+/* El Sidebar inicialmente está oculto fuera de la pantalla */
+.main-sidebar {
+    position: fixed; 
+    top: 0;
+    left: 0;
+    width: 250px;
+    height: 100%;
+    background-color: var(--color-principal-morado); 
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+    transform: translateX(-100%); /* Oculto por defecto */
+    transition: transform 0.3s ease-in-out;
+    /*Nos aseguramos que siempre este por encima de todos los elementos*/
+    z-index: 100; 
+    /*Solo mostrara la barra lateral si el contenido excede el tamaño del sidebar*/
+    overflow-y: auto;
+}
+
+
+/*usando la pseudoclase checked Cuando el checkbox está marcado, selecciona el elemento adyacente (el sidebar) y lo muestra */
+.menu-toggle:checked + .main-header + .main-sidebar {
+    transform: translateX(0);
+}
+.sidebar__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.sidebar__logo {
+    width: 75px; 
+    height: auto;
+}
+/*Boton para cerrar el sidebar*/
+.sidebar__cerrar-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5em;
+    cursor: pointer;
+    /* Aseguramos que el botón de cerrar se muestre */
+    display: block; 
+}
+
+.sidebar__nav-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar__nav-link {
+    display: block;
+    color: var(--color-letra-claro);
+    padding: 15px 20px;
+    text-decoration: none;
+    font-size: 1em;
+    transition: background-color 0.3s;
+}
+
+.sidebar__nav-link i {
+    margin-right: 10px;
+    font-size: 1.2em;
+}
+
+.sidebar__nav-link:hover {
+    background-color: var(--color-morado-medio);
+}
+.sidebar__nav-link--activo {
+    background-color: var(--color-morado-claro);
+    font-weight: bold;
+}
+
+.sidebar__separator {
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    margin: 10px 0;
+}
+
+/* Ocultar el botón de hamburguesa en el header por defecto en desktop (se mueve a header.css) */
+
+
+@media (min-width: 768px) {
+    /* El Sidebar Fijo */
+    .main-sidebar {
+        position: sticky; 
+        top: 0;
+        transform: translateX(0); /* Siempre visible */
+        height: 100vh; 
+        box-shadow: none;
+    }
+    
+    /* Ocultamos el botón de cerrar en el sidebar fijo de desktop */
+    .sidebar__close-btn {
+        display: none;
+    }
+
+    /* Reseteamos el comportamiento del checkbox, ya que el sidebar es fijo */
+    .menu-toggle:checked + .main-header + .main-sidebar {
+        transform: translateX(0);
+    }
+}
+
