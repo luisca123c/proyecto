@@ -1,12 +1,9 @@
-/* =================================================================
-   LAYOUT: MOBILE FIRST (Estilos por defecto para móviles)
-   ================================================================= */
-
 body {
     min-height: var(--altura-pantalla-dinamica);
+    /*En caso de que el contenido del body sea mayor que lo permitido en el eje x, no se mostrara la barra para moverse en este
+    si no que esta sera ocultada y el contenido no podra ser accesible*/
     overflow-x: hidden; 
 }
-
 .contenedor-principal {
     display: grid;
     grid-template-rows: auto 1fr auto;
@@ -19,40 +16,20 @@ body {
     width: 100vw; 
     box-sizing: border-box;
 }
-
+/*Definimos el area del header*/
 .main-header {
     grid-area: header;
 }
-
+/*Definimos el area del main*/
 .pagina-main {
     grid-area: main;
     background-color: var(--color-fondo-pagina); 
-    /* Quitamos el padding lateral del main, se aplica al contenido interno */
     padding: 15px 0; 
     padding-top: 70px; 
-    overflow-x: hidden; 
-    
-    /* SOLUCIÓN: Usamos Flexbox en el MAIN para centrar su contenido interno
-       Esto asegura que el h2 y el contenedor de botones se centren si no lo hacen solos. */
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Centra los ítems (el título y el contenedor de botones) */
+    overflow-x: hidden;  
 }
-
+/*Definimos el area del footer*/
 .main-footer {
     grid-area: footer;
 }
 
-
-/* =================================================================
-   LAYOUT: DESKTOP (A partir de 768px)
-   ================================================================= */
-
-@media (min-width: 768px) {
-    .pagina-main {
-        /* Revertimos a la configuración original en desktop */
-        padding: 30px; 
-        padding-top: 80px;
-        display: block; /* Volvemos al flujo normal si es necesario */
-    }
-}

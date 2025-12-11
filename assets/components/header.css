@@ -1,49 +1,55 @@
-/* =================================================================
-   HEADER: MOBILE FIRST (Estilos por defecto para móviles)
-   ================================================================= */
 .main-header {
     background-color: var(--color-principal-morado); 
     color: var(--color-letra-claro);
-    /* Padding para móvil */
     padding: 10px 15px; 
     display: flex;
+    /*El primer articulo se encontrara al inicio, y el ultimo al final distrubuyendose uniformemente*/
     justify-content: space-between; 
     align-items: center;
-    
-    position: sticky; 
-    top: 0;
+    /*El header se quedara fijo en su lugar*/
+    position: fixed; 
     width: 100%;
+    /*El calculo de la altura y el ancho del elemento incluria el borde*/
     box-sizing: border-box; 
+    /*Definimos la box-shadow con una custom property*/
     box-shadow: var(--sombra-header);
-    z-index: 20; 
+    overflow-x: hidden; 
+}
+.header__empresa{
+    display: flex;
+    gap: 15px;
+    align-items: center;
 }
 .header__titulo {
-    font-size: 1.5em; /* Tamaño móvil por defecto */
+    font-size: 1.5em;
     margin: 0;
 }
 .header__acciones {
     display: flex;
     align-items: center;
-    gap: 15px; /* Espacio reducido para móvil */
+    gap: 15px; 
 }
 .header__carrito-link {
     color: var(--color-icono-carrito);
+    /*Quitamos la decoracion del texto*/
     text-decoration: none;
     font-size: 1.5em; 
+    /*Transicion para cuando se ejecute el hover*/
     transition: color 0.3s;
 }
 .header__carrito-link:hover {
     color: var(--color-hover);
 }
-/* Ocultar información del usuario en pantallas muy pequeñas */
+/* Ocultar información del usuario (usuario:Administrador) en pantallas muy pequeñas */
 .header__info-usuario {
     font-size: 0.9em; 
-    display: none; /* Oculto en móvil */
+    /*Display none para ocultarlo*/
+    display: none;
 }
 .header__link-salir {
     color: var(--color-letra-claro);
     text-decoration: none;
-    padding: 5px 8px; /* Padding más pequeño para móvil */
+    padding: 5px 8px; 
     border: 1px solid var(--color-letra-claro);
     border-radius: 5px;
     font-size: 0.8em;
@@ -53,25 +59,24 @@
     background-color: #a93226; 
     border-color: #a93226;
 }
-/* =================================================================
-   HEADER: DESKTOP (A partir de 768px)
-   ================================================================= */
+/*Media queris para cuando el width sea de 768px o superior*/
 @media (min-width: 768px) {
     .main-header {
-        padding: 15px 30px; /* Padding de escritorio */
+        padding: 15px 30px;
     }
     .header__titulo {
-        font-size: 1.8em; /* Tamaño de escritorio */
+        font-size: 1.8em; 
     }
     .header__acciones {
-        gap: 20px; /* Espacio aumentado */
+        gap: 20px; 
     }
     .header__info-usuario {
-        display: block; /* Mostrar info de usuario en escritorio */
+        /*Para pantallas no tan pequeñas mostramos la informacion del usuario (usuario: administrador)*/
+        display: block; 
         font-size: 1em;
     }
     .header__link-salir {
-        padding: 5px 10px; /* Padding de escritorio */
+        padding: 5px 10px; 
         font-size: 0.9em;
     }
 }
