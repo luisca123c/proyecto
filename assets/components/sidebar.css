@@ -80,21 +80,18 @@
     margin: 10px 0;
 }
 
-/* Ocultar el botón de hamburguesa en el header por defecto en desktop (se mueve a header.css) */
-
-
 @media (min-width: 768px) {
     /* El Sidebar Fijo */
     .main-sidebar {
-        position: sticky; 
+        position: fixed; 
         top: 0;
         transform: translateX(0); /* Siempre visible */
         height: 100vh; 
         box-shadow: none;
     }
     
-    /* Ocultamos el botón de cerrar en el sidebar fijo de desktop */
-    .sidebar__close-btn {
+    /* Ocultamos el botón de cerrar en el sidebar*/
+    .sidebar__cerrar-btn {
         display: none;
     }
 

@@ -17,6 +17,7 @@
 @import url(components/footer.css); 
 @import url(components/main_botones.css);
 @import url(components/sidebar.css);
+@import url(components/caja_listado.css);
 
 /*pages*/
 @import url(pages/login.css);

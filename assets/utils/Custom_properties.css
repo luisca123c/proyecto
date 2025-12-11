@@ -11,4 +11,9 @@
     --color-letra-claro: white; 
     --color-icono-carrito: rgb(255, 255, 255); 
     --sombra-header: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --color-exito:#00c000;
+    --color-exito-hover:#61c261;
+    --color-peligro:#c50000;
+    --color-peligro-hover:#bd6464;
+    --color-fondo-caja: #cccccc;
 }

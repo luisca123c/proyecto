@@ -18,3 +18,20 @@
 .boton:hover{
     background-color: var(--color-hover);
 }
+.boton--exito {
+    background-color: var(--color-exito);
+    color: var(--color-letra-claro);
+}
+
+.boton--exito:hover {
+    background-color: var(--color-exito-hover); 
+}
+
+.boton--peligro {
+    background-color: var(--color-peligro); 
+    color: var(--color-letra-claro);
+}
+
+.boton--peligro:hover {
+    background-color: var(--color-peligro-hover); 
+}
