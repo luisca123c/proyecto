@@ -1,32 +1,106 @@
-/* Este contenedor envuelve toda la caja de login y tiene el color de fondo morado. */
-.login-pantalla {
-    background-color: var(--color-principal-morado); 
-    width: 100%; 
-    height: var(--altura-pantalla-dinamica); 
-    min-height: 100vh; 
-    /* FLEXBOX: Utilizado para centrar la 'caja-inicio-sesion' */
-    display: flex; 
-    justify-content: center; /* Centra horizontalmente */
-    align-items: center; /* Centra verticalmente */
+/* =========================
+   LOGIN PAGE
+========================= */
+
+/* Centrado del login */
+.pagina-main {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-/* Media Query (Adaptación a pantallas grandes) */
-@media (min-width: 768px) {
-    /* Modificador para la caja en desktop (la hace blanca y flotante) */
-    .caja {
-        background-color: white; 
-        color: var(--color-principal-morado); 
-        border-radius: 10px; 
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); 
-        padding: 60px 40px; 
-    }
-    
-    /* Ajustes de color para elementos en la caja blanca */
-    .caja__titulo {
-        color: var(--color-principal-morado); 
-    }
+/* Contenedor tarjeta */
+.form-login-container {
+  width: min(400px, 95%);
+  background-color: var(--color-card);
+  padding: 35px 25px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--sombra-card);
+  display: flex;
+  flex-direction: column;
+}
 
-    .caja__logo {
-        color: var(--color-principal-morado);
-    }
+/* Título */
+.form-login-container h1 {
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--color-principal-morado);
+}
+
+/* Grupo de campo */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 18px;
+}
+
+/* Labels */
+.form-group label {
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* Wrapper icono + input */
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: var(--color-input-bg);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-borde);
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Focus visual */
+.input-wrapper:focus-within {
+  border-color: var(--color-principal-morado);
+  box-shadow: 0 0 0 2px rgba(75, 0, 130, 0.15);
+}
+
+/* Iconos */
+.input-wrapper i {
+  font-size: 14px;
+  color: var(--color-principal-morado);
+}
+
+/* Inputs */
+.input-wrapper input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  font-size: 0.9rem;
+}
+
+/* Botón */
+.form-login-container .boton {
+  margin-top: 10px;
+}
+
+/* Texto inferior */
+.login-footer-text {
+  margin-top: 15px;
+  font-size: 0.8rem;
+  text-align: center;
+  opacity: 0.7;
+}
+
+/* =========================
+   Responsive
+========================= */
+
+@media (min-width: 768px) {
+
+  .form-login-container {
+    padding: 45px 35px;
+  }
+
+  .form-login-container h1 {
+    font-size: 1.6rem;
+  }
 }

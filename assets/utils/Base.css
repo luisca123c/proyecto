@@ -1,10 +1,11 @@
 /* Aseguramos que no haya márgenes ni rellenos no deseados. */
-*{
-    margin: 0; 
-    padding: 0; 
-    font-family: Arial, sans-serif; 
+* {
+  margin: 0;
+  padding: 0;
+  font-family: var(--fuente-base);
+  box-sizing: border-box;
 }
-/* Definimos el color de fondo de la pagina*/
+
 body {
-    background-color: var(--color-fondo-pagina); 
+  background-color: var(--color-fondo-pagina);
 }

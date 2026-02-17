@@ -1,21 +1,44 @@
 /* Definimos colores y valores clave para que sean fáciles de cambiar */
 :root {
-    --color-fondo-pagina: #f0f0f0; 
-    --color-principal-morado: #4b0082; 
-    --altura-pantalla-dinamica: 100dvh;
-    --color-morado-claro: #a020f0; 
-    --color-morado-medio: #8a2be2; 
-    --color-boton-base: #6a0dad; 
-    --color-hover: #af4dec; 
-    --color-letra: white; 
-    --color-letra-claro: white; 
-    --color-icono-carrito: white; 
-    --sombra-header: 0 4px 6px rgba(0, 0, 0, 0.1);
+  /* Colores base */
+  --color-fondo-pagina: #f0f0f0;
+  --color-texto: #ffffff;
+
+  /* Marca morado */
+  --color-principal-morado: #4b0082;
+  --color-morado-medio: #8a2be2;
+  --color-morado-claro: #a020f0;
+
+  /* Interacción */
+  --color-boton-base: #6a0dad;
+  --color-hover: #af4dec;
+
+  /* Estados */
+  --color-success: #2e7d32;
+  --color-success-hover: #256428;
+
+  --color-danger: #a93226;
+  --color-danger-hover: #8f2a20;
+
+  /* UI neutrales */
+  --color-card: #ffffff;
+  --color-input-bg: #f0f0f0;
+  --color-borde: #cccccc;
+
+  /* Tipografía */
+  --fuente-base: Arial, sans-serif;
+
+  /* Tamaños */
+  --altura-pantalla-dinamica: 100dvh;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  /* Sombras */
+  --sombra-header: 0 4px 6px rgba(0, 0, 0, 0.10);
+  --sombra-card: 0 10px 25px rgba(0, 0, 0, 0.08);
+  --sombra-menu: 0 5px 10px rgba(0, 0, 0, 0.50);
 }
-/* Aseguramos que no haya márgenes ni rellenos no deseados. */
-body {
-    margin: 0; 
-    padding: 0; 
-    font-family: Arial, sans-serif; 
-    background-color: var(--color-fondo-pagina); 
-}
+    

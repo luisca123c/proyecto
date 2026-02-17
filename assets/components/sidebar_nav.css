@@ -11,12 +11,17 @@
 
 /* Modificador para el botón de SALIR */
 .sidebar__nav-link--salir {
-    background-color: #A93226; /* Rojo oscuro para acción de salir */
+  background-color: var(--color-danger);
+}
+
+
+.sidebar__nav-link--salir:hover {
+  background-color: var(--color-danger-hover);
 }
 
 /* Reafirmamos estilos del componente boton.css para evitar conflictos */
 .sidebar__nav-link:hover {
-    background-color: var(--color-morado-muy-claro); 
+  background-color: var(--color-hover);
 }
 
 /* Adaptación responsiva (para móvil, se ve mejor el botón sin márgenes) */

@@ -90,7 +90,7 @@
         left: 0;
         width: 100%;
         background-color: var(--color-principal-morado);
-        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.5);
+        box-shadow: var(--sombra-menu);
         display: none !important; /* <--- CAMBIO CRUCIAL: Oculto por defecto, forzado */
         flex-direction: column;
         z-index: 9;

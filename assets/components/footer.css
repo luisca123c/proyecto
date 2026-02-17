@@ -1,7 +1,7 @@
 /* Estilos específicos para el pie de página */
 .main-footer {
     background-color: var(--color-principal-morado); 
-    color: var(--color-letra-claro);
+    color: var(--color-texto);
     padding: 15px;
     text-align: center;
     font-size: 0.9em;

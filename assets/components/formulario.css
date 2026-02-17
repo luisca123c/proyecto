@@ -19,15 +19,14 @@
 }
 .formulario__input{
     color: var(--color-principal-morado);
-    border-radius: 5px;
     width: 300px;
     height: 25px;
-    background-color: var(--color-fondo-pagina);
+    background-color: var(--color-input-bg);
     font-size: 15px;
     text-align: center;
     padding-left: 35px; 
     padding-top: 10px;
     padding-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-sm);
 }   

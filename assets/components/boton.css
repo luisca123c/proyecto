@@ -1,18 +1,21 @@
-/* Se aplican estilos a ambos botones para darles forma, fuente y transición. */
 .boton {
-    margin: 30px;
-    width: 80%; 
-    padding: 15px; 
-    border: none; 
-    border-radius: 30px; 
-    font-size: 1.1em; 
-    font-weight: bold; 
-    cursor: pointer; 
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
     color: var(--color-letra-claro);
-    text-transform: uppercase; 
+    text-transform: uppercase;
     background-color: var(--color-boton-base);
+    transition: background-color 0.2s ease, transform 0.1s ease;
 }
-/* Define el cambio de color al pasar el ratón. */
-.boton:hover{
+
+.boton:hover {
     background-color: var(--color-hover);
+}
+
+.boton:active {
+    transform: scale(0.98);
 }

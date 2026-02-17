@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard | Admin | Dulce Gestión</title>
+
+  <!-- Desde /public/admin/ -->
+  <link rel="stylesheet" href="../../assets/styles.css" />
+
+  <!-- Iconos Flaticon -->
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.2.0/uicons-solid-rounded/css/uicons-solid-rounded.css">
+</head>
+<body>
+
+  <div class="layout-app">
+
+    <!-- Toggle CSS-only (abre/cierra sidebar en móvil) -->
+    <input type="checkbox" id="toggle-menu" class="toggle-menu" hidden>
+
+    <!-- Header -->
+    <header class="main-header header-app">
+      <label for="toggle-menu" class="btn-menu" aria-label="Abrir o cerrar menú">☰</label>
+
+      <div class="header-brand">
+        <img src="../../assets/images/Logo.png" alt="Logo Dulce Gestión" class="header-logo">
+        <span class="header-title">Dulce Gestión</span>
+      </div>
+
+      <div class="header-actions">
+        <button class="icon-btn" type="button" aria-label="Notificaciones">
+          <i class="fi fi-sr-bell"></i>
+        </button>
+        <button class="icon-btn" type="button" aria-label="Perfil">
+          <i class="fi fi-sr-user"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <nav class="sidebar-nav" aria-label="Menú principal">
+        <a class="sidebar-link is-active" href="dashboard.html"><i class="fi fi-sr-home"></i><span>Inicio</span></a>
+        <a class="sidebar-link" href="productos.html"><i class="fi fi-sr-box-open"></i><span>Productos</span></a>
+        <a class="sidebar-link" href="ventas.html"><i class="fi fi-sr-shopping-cart"></i><span>Ventas</span></a>
+        <a class="sidebar-link" href="empleados.html"><i class="fi fi-sr-users"></i><span>Empleados</span></a>
+        <a class="sidebar-link" href="gastos.html"><i class="fi fi-sr-receipt"></i><span>Gastos</span></a>
+        <a class="sidebar-link" href="../login.html"><i class="fi fi-sr-sign-out-alt"></i><span>Cerrar sesión</span></a>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main class="pagina-main">
+      <h1 style="margin:0 0 14px;">Panel de administración</h1>
+      <p style="margin:0 0 18px; opacity:.85;">Accede rápido a los módulos principales.</p>
+
+      <!-- Botones / tarjetas tipo dashboard -->
+      <section class="main-botones-contenedor" style="width:100%;">
+        <a class="main-boton" href="productos.html">
+          <i class="fi fi-sr-box-open" aria-hidden="true"></i>
+          <span>Productos</span>
+        </a>
+
+        <a class="main-boton" href="ventas.html">
+          <i class="fi fi-sr-shopping-cart" aria-hidden="true"></i>
+          <span>Ventas</span>
+        </a>
+
+        <a class="main-boton" href="empleados.html">
+          <i class="fi fi-sr-users" aria-hidden="true"></i>
+          <span>Empleados</span>
+        </a>
+
+        <a class="main-boton" href="gastos.html">
+          <i class="fi fi-sr-receipt" aria-hidden="true"></i>
+          <span>Gastos</span>
+        </a>
+      </section>
+    </main>
+
+  </div>
+
+</body>
+</html>

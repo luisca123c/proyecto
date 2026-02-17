@@ -2,8 +2,8 @@
 
 
 /*Base*/
-@import url(utils/Base.css);
 @import url(utils/Custom_properties.css);
+@import url(utils/Base.css);
 
 /*Layout*/
 @import url(utils/layout.css);

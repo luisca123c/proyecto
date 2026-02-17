@@ -59,18 +59,17 @@
     }
     
     .main-botones-contenedor {
-        gap: 25px; 
-        
-        /* DESKTOP: Múltiples columnas responsivas */
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
-        
-        /* 💡 SOLUCIÓN CLAVE PARA CENTRAR FILAS INCOMPLETAS: */
-        justify-content: center; /* Centra el GRUPO COMPLETO de celdas */
-    }
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 25px;
+        max-width: 900px;
+        margin: 0 auto;
+        justify-content: center;
+    } 
 
     .main-boton {
         padding: 30px 10px;
-        width: 600px;
+        width: 100%;
     }
     .main-boton:hover {
         transform: translateY(-3px); /* Activamos el efecto de elevación */

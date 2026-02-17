@@ -3,7 +3,7 @@
    ================================================================= */
 .main-header {
     background-color: var(--color-principal-morado); 
-    color: var(--color-letra-claro);
+    color: var(--color-texto);
     /* Padding para móvil */
     padding: 10px 15px; 
     display: flex;
@@ -50,9 +50,10 @@
     transition: background-color 0.3s, border-color 0.3s;
 }
 .header__link-salir:hover {
-    background-color: #a93226; 
-    border-color: #a93226;
+  background-color: var(--color-danger);
+  border-color: var(--color-danger);
 }
+
 /* =================================================================
    HEADER: DESKTOP (A partir de 768px)
    ================================================================= */
