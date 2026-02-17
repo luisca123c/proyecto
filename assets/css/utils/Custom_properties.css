@@ -1,0 +1,76 @@
+/* Definimos colores y valores clave para que sean fáciles de cambiar */
+:root {
+
+  /* =========================
+     COLORES BASE
+  ========================== */
+
+  --color-fondo-pagina: #f0f0f0;
+  --color-texto: #ffffff;
+  --color-texto-oscuro: #333333;
+  --color-card: #ffffff;
+  --color-input-bg: #f0f0f0;
+  --color-borde: #cccccc;
+  --borde-blanco-suave: rgba(255, 255, 255, 0.20);
+
+  /* =========================
+     MARCA
+  ========================== */
+
+  --color-principal-morado: #4b0082;
+  --color-morado-medio: #8a2be2;
+  --color-morado-claro: #a020f0;
+
+  /* =========================
+     INTERACCIÓN
+  ========================== */
+
+  --color-boton-base: #6a0dad;
+  --color-hover: #af4dec;
+
+  /* =========================
+     ESTADOS
+  ========================== */
+
+  --color-success: #2e7d32;
+  --color-success-hover: #256428;
+
+  --color-danger: #a93226;
+  --color-danger-hover: #8f2a20;
+
+  /* =========================
+     TIPOGRAFÍA
+  ========================== */
+
+  --fuente-base: Arial, sans-serif;
+
+  /* =========================
+     TAMAÑOS
+  ========================== */
+
+  --altura-pantalla-dinamica: 100dvh;
+
+  /* =========================
+     RADIOS
+  ========================== */
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  /* =========================
+     SOMBRAS
+  ========================== */
+
+  --sombra-header: 0 4px 6px rgba(0, 0, 0, 0.10);
+  --sombra-card: 0 10px 25px rgba(0, 0, 0, 0.08);
+  --sombra-menu: 0 5px 10px rgba(0, 0, 0, 0.50);
+  --sombra-sidebar: 2px 0 5px rgba(0, 0, 0, 0.50);
+  --sombra-suave: 0 1px 3px rgba(0, 0, 0, 0.15);
+
+  /* =========================
+     FOCUS
+  ========================== */
+  
+  --focus-ring: 0 0 0 2px rgba(75, 0, 130, 0.15);
+}

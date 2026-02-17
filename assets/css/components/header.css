@@ -1,0 +1,114 @@
+.main-header {
+  background-color: var(--color-principal-morado);
+  color: var(--color-texto);
+
+  /* Padding para móvil */
+  padding: 10px 15px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  /* Header fijo */
+  position: fixed;
+  width: 100%;
+
+  box-sizing: border-box;
+  box-shadow: var(--sombra-header);
+
+  overflow-x: hidden;
+}
+
+.header__empresa {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.header__titulo {
+  font-size: 1.5em;
+  margin: 0;
+}
+
+.header__acciones {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.header__icono-link {
+  color: var(--color-texto);
+  text-decoration: none;
+  font-size: 1.5em;
+  transition: color 0.3s;
+}
+
+.header__icono-link:hover {
+  color: var(--color-hover);
+}
+
+/* Icono del menú (solo móvil) */
+.header__menu-toggle {
+  background: none;
+  border: none;
+  color: var(--color-texto); /* antes: white */
+  font-size: 1.5em;
+  cursor: pointer;
+  padding: 5px;
+  display: block;
+}
+
+/* Ocultar info usuario en pantallas muy pequeñas */
+.header__info-usuario {
+  font-size: 0.9em;
+  display: none;
+}
+
+/* Link salir */
+.header__link-salir {
+  color: var(--color-texto);            /* antes: --color-letra-claro */
+  text-decoration: none;
+  padding: 5px 8px;
+  border: 1px solid var(--color-texto); /* antes: --color-letra-claro */
+  border-radius: var(--radius-sm);      /* antes: 5px */
+  font-size: 0.8em;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+.header__link-salir:hover {
+  background-color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+/* =================================================================
+   HEADER: DESKTOP (A partir de 768px)
+   ================================================================= */
+@media (min-width: 768px) {
+  .main-header {
+    padding: 15px 30px;
+  }
+
+  .header__titulo {
+    font-size: 1.8em;
+    margin-left: 250px;
+  }
+
+  .header__acciones {
+    gap: 20px;
+  }
+
+  .header__info-usuario {
+    display: block;
+    font-size: 1em;
+  }
+
+  .header__link-salir {
+    padding: 5px 10px;
+    font-size: 0.9em;
+  }
+
+  /* Ocultar icono menú en escritorio */
+  .header__menu-toggle {
+    display: none;
+  }
+}

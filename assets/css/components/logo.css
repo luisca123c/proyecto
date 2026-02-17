@@ -1,0 +1,25 @@
+.logo {
+  display: inline-block;
+  height: 25px;
+  width: 25px;
+  object-fit: contain;
+}
+
+/* Logo grande (por ejemplo en login o tarjetas) */
+.logo--caja {
+  display: block;
+  height: 200px;
+  width: 100%;
+  object-fit: contain;
+}
+
+/* =========================
+   DESKTOP
+========================= */
+
+@media (min-width: 768px) {
+  .logo {
+    height: 50px;
+    width: 50px;
+  }
+}

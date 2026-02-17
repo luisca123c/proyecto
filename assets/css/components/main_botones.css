@@ -1,0 +1,89 @@
+.pagina-main__titulo {
+  margin-top: 40px;
+  margin-bottom: 30px;
+  font-size: 1.8em;
+  color: var(--color-principal-morado);
+  text-align: center;
+  width: 100%;
+}
+
+/* =========================
+   CONTENEDOR BOTONES
+========================= */
+
+.main-botones-contenedor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+
+  max-width: 280px;
+  width: 100%;
+
+  margin: 0 auto;
+  padding: 0 10px;
+
+  box-sizing: border-box;
+  text-align: center;
+}
+
+/* =========================
+   BOTÓN PRINCIPAL
+========================= */
+
+.main-boton {
+  width: 100%;
+  height: auto;
+
+  text-decoration: none;
+
+  background-color: var(--color-morado-medio);
+  color: var(--color-texto); /* antes: --color-letra-claro */
+
+  padding: 20px 10px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  border-radius: var(--radius-sm); /* antes: 8px */
+
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.main-boton:hover {
+  background-color: var(--color-hover);
+  transform: translateY(-2px);
+}
+
+.main-boton .boton__icono {
+  font-size: 3em;
+  margin-bottom: 10px;
+}
+
+/* =========================
+   DESKTOP
+========================= */
+
+@media (min-width: 768px) {
+
+  .main-botones-contenedor {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 25px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .main-boton {
+    padding: 30px 10px;
+  }
+
+  .main-boton:hover {
+    transform: translateY(-10px);
+  }
+}

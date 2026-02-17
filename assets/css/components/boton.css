@@ -1,0 +1,112 @@
+.boton {
+  /* Layout */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  width: 100%;
+  padding: 12px 16px;
+
+  /* Tipografía */
+  font-family: var(--fuente-base);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+
+  /* Estilo */
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+
+  /* Colores (por defecto: primario) */
+  background-color: var(--color-boton-base);
+  color: var(--color-texto);
+
+  /* Efectos */
+  transition: background-color 0.2s ease, transform 0.08s ease, opacity 0.2s ease;  user-select: none;
+}
+
+.boton:hover {
+  background-color: var(--color-hover);
+}
+
+.boton:active {
+  transform: scale(0.98);
+}
+
+/* Para usuarios de teclado*/
+.boton:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Estado deshabilitado */
+.boton:disabled,
+.boton--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+
+
+/* Botón primario */
+.boton--primario {
+  background-color: var(--color-boton-base);
+  color: var(--color-texto);
+}
+.boton--primario:hover {
+  background-color: var(--color-hover);
+}
+
+/* Botón éxito */
+.boton--success {
+  background-color: var(--color-success);
+  color: var(--color-texto);
+}
+.boton--success:hover {
+  background-color: var(--color-success-hover);
+}
+
+/* Botón peligro */
+.boton--danger {
+  background-color: var(--color-danger);
+  color: var(--color-texto);
+}
+.boton--danger:hover {
+  background-color: var(--color-danger-hover);
+}
+
+/* Botón secundario */
+.boton--secundario {
+  background-color: var(--color-morado-medio);
+  color: var(--color-texto);
+}
+.boton--secundario:hover {
+  background-color: var(--color-morado-claro);
+}
+
+/* Botón fantasma (fondo transparente) */
+.boton--ghost {
+  background-color: transparent;
+  color: var(--color-principal-morado);
+  border: 1px solid var(--color-borde);
+}
+.boton--ghost:hover {
+  background-color: var(--color-input-bg);
+}
+
+/* Tamaños */
+.boton--sm {
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  border-radius: var(--radius-sm);
+}
+
+.boton--lg {
+  padding: 14px 18px;
+  font-size: 1rem;
+  border-radius: var(--radius-lg);
+}
