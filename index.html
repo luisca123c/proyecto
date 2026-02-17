@@ -23,37 +23,31 @@
 
     <!-- MAIN -->
     <main class="pagina-main">
+      <section class="login">
+        <div class="login__panel">
 
-      <section class="form-login-container">
+          <img class="login__logo" src="assets/images/Logo.png" alt="Logo Dulce Gestión">
 
-        <h1>Iniciar Sesión</h1>
+          <h1 class="login__titulo">Inicio de sesión</h1>
 
-        <form>
+          <form class="login__form">
+            <label class="login__label" for="correo">usuario o correo:</label>
 
-            <div class="form-group">
-            <label for="correo">Correo</label>
-            <div class="input-wrapper">
-                <i class="fi fi-sr-user"></i>
-                <input type="email" id="correo" placeholder="correo@ejemplo.com">
-            </div>
-            </div>
-
-            <div class="form-group">
-            <label for="contrasena">Contraseña</label>
-            <div class="input-wrapper">
-                <i class="fi fi-sr-lock"></i>
-                <input type="password" id="contrasena" placeholder="********">
-            </div>
+            <div class="input-wrapper login__input-wrapper">
+              <input class="login__input" type="email" id="correo" placeholder="Ingresa el usuario o correo">
             </div>
 
-            <button type="submit" class="boton">Ingresar</button>
+            <label class="login__label" for="contrasena">Contraseña:</label>
 
+            <div class="input-wrapper login__input-wrapper">
+              <input class="login__input" type="password" id="contrasena" placeholder="Ingresa la contraseña">
+            </div>
 
-        </form>
+            <button type="submit" class="boton login__boton">Iniciar sesión</button>
+          </form>
 
-    </section>
-
-
+        </div>
+      </section>
     </main>
 
     <!-- FOOTER -->
