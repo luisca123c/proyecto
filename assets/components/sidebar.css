@@ -1,86 +1,98 @@
-/* -----------------------------------------------------------------
-   ESTILOS DE ESCRITORIO (Mayor o igual a 768px)
-   ----------------------------------------------------------------- */
-
-.main-sidebar {
-    background-color: var(--color-principal-morado); 
-    color: var(--color-letra-claro);
-    padding: 20px 10px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px; 
-    min-height: 100%; 
-    z-index: 10; 
-}
-
-/* Ocultar elementos de control móvil en escritorio */
-.sidebar__activador, 
-.sidebar__label-toggle {
+/*Ocultamos el sidebar*/
+.menu-toggle {
     display: none;
 }
+/* El Sidebar inicialmente está oculto fuera de la pantalla */
+.main-sidebar {
+    position: fixed; 
+    top: 0;
+    left: 0;
+    width: 250px;
+    height: 100%;
+    background-color: var(--color-principal-morado); 
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+    transform: translateX(-100%); /* Oculto por defecto */
+    transition: transform 0.3s ease-in-out;
+    /*Nos aseguramos que siempre este por encima de todos los elementos*/
+    z-index: 100; 
+    /*Solo mostrara la barra lateral si el contenido excede el tamaño del sidebar*/
+    overflow-y: auto;
+}
 
-/* Botones y Header del Sidebar (Escritorio) */
+
+/*usando la pseudoclase checked Cuando el checkbox está marcado, selecciona el elemento adyacente (el sidebar) y lo muestra */
+.menu-toggle:checked + .main-header + .main-sidebar {
+    transform: translateX(0);
+}
 .sidebar__header {
-    width: 100%;
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     align-items: center;
-    margin-bottom: 30px;
-    padding: 0 5px;
+    padding: 15px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
-.sidebar__icon, .sidebar__home-icon {
-    font-size: 1.8em; 
-    color: var(--color-letra-claro);
+
+.sidebar__logo {
+    width: 75px; 
+    height: auto;
+}
+/*Boton para cerrar el sidebar*/
+.sidebar__cerrar-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5em;
     cursor: pointer;
-}
-.sidebar__logo-small {
-    height: 40px;
-    width: auto;
-}
-.sidebar__nav {
-    width: 100%;
-    /* Muestra el menú completo por defecto en Desktop */
-    display: flex;
-    flex-direction: column;
-}
-.boton__icono {
-    font-size: 1.5em; 
-    margin-bottom: 5px;
+    /* Aseguramos que el botón de cerrar se muestre */
+    display: block; 
 }
 
+.sidebar__nav-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
 
-/* -----------------------------------------------------------------
-   ESTILOS RESPONSIVOS (Menor de 768px)
-   ----------------------------------------------------------------- */
+.sidebar__nav-link {
+    display: block;
+    color: var(--color-letra-claro);
+    padding: 15px 20px;
+    text-decoration: none;
+    font-size: 1em;
+    transition: background-color 0.3s;
+}
 
-@media (max-width: 767px) {
-    
+.sidebar__nav-link i {
+    margin-right: 10px;
+    font-size: 1.2em;
+}
+
+.sidebar__nav-link:hover {
+    background-color: var(--color-morado-medio);
+}
+.sidebar__nav-link--activo {
+    background-color: var(--color-morado-claro);
+    font-weight: bold;
+}
+
+.sidebar__separator {
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    margin: 10px 0;
+}
+
+@media (min-width: 768px) {
+    /* El Sidebar Fijo */
     .main-sidebar {
-        /* Se asegura la alineación horizontal de la barra superior */
-        grid-area: header; 
-        width: 100%;
-        padding: 10px;
-        flex-direction: row; 
-        justify-content: flex-start; 
-        align-items: center;
-        height: auto;
+        position: fixed; 
+        top: 0;
+        transform: translateX(0); /* Siempre visible */
+        height: 100vh; 
+        box-shadow: none;
     }
     
-    .sidebar__header {
+    /* Ocultamos el botón de cerrar en el sidebar*/
+    .sidebar__cerrar-btn {
         display: none;
-    }
-    
-    /* Mostrar el label/ícono hamburguesa en móvil */
-    .sidebar__label-toggle {
-        display: block; 
-        cursor: pointer;
-        margin-left: 10px;
-        margin-right: 20px;
-    }
-    .sidebar__menu-toggle {
-        font-size: 1.8em;
-        color: var(--color-letra-claro);
     }
 
     /* EL MENÚ ESTÁ OCULTO POR DEFECTO EN MÓVIL */
@@ -101,17 +113,5 @@
         /* CAMBIO CRUCIAL: Forzar a mostrar cuando el checkbox está activo */
         display: flex !important; 
     }
-
-    .contenedor-principal {
-        grid-template-columns: 1fr; 
-        grid-template-areas:
-            "header"
-            "main"
-            "footer";
-    }
-    
-    .pagina-main {
-        padding: 15px;
-    }
-    
 }
+

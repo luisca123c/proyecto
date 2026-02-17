@@ -14,10 +14,10 @@
 @import url(components/caja.css);
 @import url(components/logo.css);
 @import url(components/header.css); 
-@import url(components/footer.css); /* Importación del Footer */
-@import url(components/sidebar.css); /* Importación del Sidebar responsivo */
-@import url(components/sidebar_nav.css); /* Importación de estilos de botones del Sidebar */
+@import url(components/footer.css); 
 @import url(components/main_botones.css);
+@import url(components/sidebar.css);
+@import url(components/caja_listado.css);
 
 /*pages*/
 @import url(pages/login.css);

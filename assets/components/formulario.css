@@ -1,5 +1,6 @@
 /* Se aplican estilos a ambos botones para darles forma, fuente y transición. */
 .caja__formulario {
+    /*unidad de medida relativa*/
     font-size: 1.3em; 
     font-weight: bold; 
     color: var(--color-letra); 
@@ -24,7 +25,6 @@
     background-color: var(--color-input-bg);
     font-size: 15px;
     text-align: center;
-    padding-left: 35px; 
     padding-top: 10px;
     padding-bottom: 10px;
     border: 1px solid var(--color-borde);

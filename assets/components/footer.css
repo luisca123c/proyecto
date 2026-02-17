@@ -4,7 +4,10 @@
     color: var(--color-texto);
     padding: 15px;
     text-align: center;
+    /*unidad de medida relativa*/
     font-size: 0.9em;
     /*El elemento se va a extender a travez de todas las columnas disponibles*/
     grid-column: 1 / -1; 
+    overflow-x: hidden; 
+    box-sizing: border-box; 
 }

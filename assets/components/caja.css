@@ -1,6 +1,8 @@
 /* Estilos base para la caja que contiene el logo y los botones. */
 .caja {
+    /*Ancho*/    
     width: 90%; 
+    /*Ancho Maximo*/
     max-width: 400px; 
     background-color: var(--color-principal-morado); 
     color: var(--color-letra-claro); 
@@ -12,9 +14,27 @@
     gap: 30px; 
     text-align: center; 
 }
-/* Define la apariencia del texto "Inicio de Sesion" dentro de la caja morada. */
+/* Define la apariencia del texto dentro de la caja. */
 .caja__titulo {
+    /*unidad de medida relativa*/
     font-size: 1.5em; 
     margin: 0; 
 }
 
+@media (min-width: 768px) {
+    .caja {
+        background-color: white; 
+        color: var(--color-principal-morado); 
+        border-radius: 10px; 
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); 
+        padding: 60px 40px; 
+    }
+    
+    .caja__titulo {
+        color: var(--color-principal-morado); 
+    }
+
+    .caja__logo {
+        color: var(--color-principal-morado);
+    }
+}
