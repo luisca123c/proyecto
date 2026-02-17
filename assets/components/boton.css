@@ -6,7 +6,7 @@
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
-    color: var(--color-letra-claro);
+    color: var(--color-texto);
     text-transform: uppercase;
     background-color: var(--color-boton-base);
     transition: background-color 0.2s ease, transform 0.1s ease;
