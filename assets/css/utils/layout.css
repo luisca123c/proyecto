@@ -5,30 +5,6 @@ body {
 }
 
 /* =========================
-   Layout SIN sidebar (Login, páginas simples)
-========================= */
-.contenedor-principal {
-  display: grid;
-  grid-template-areas:
-    "header"
-    "main"
-    "footer";
-  grid-template-rows: auto 1fr auto;
-  min-height: 100vh;
-  width: 100%;
-}
-
-.main-header { grid-area: header; }
-.pagina-main {
-  grid-area: main;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-}
-.main-footer { grid-area: footer; }
-
-/* =========================
    Layout CON sidebar (App)
 ========================= */
 .layout-app {
@@ -40,102 +16,14 @@ body {
   min-height: 100vh;
 }
 
-/* Sidebar móvil: oculto fuera de pantalla */
-.sidebar {
-  position: fixed;
-  top: 0;
-  left: -260px;
-  width: 250px;
-  height: 100vh;
-  background: #2d1b69;
-  transition: left 0.3s ease;
-  z-index: 1000;
-  padding-top: 70px; /* para que no quede detrás del header */
-}
+.main-header { grid-area: header; }
+.pagina-main { grid-area: main; }
 
-/* Toggle: si está checked, abre sidebar */
-.toggle-menu:checked ~ .sidebar {
-  left: 0;
-}
-
-/* Main dentro de layout-app */
+/* Main base */
 .layout-app .pagina-main {
-  padding: 20px 15px;
-  padding-top: 70px;
-}
-
-/* =========================
-   Header app (puedes moverlo a header.css luego)
-========================= */
-.header-app {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 15px;
-}
-
-/* Botón hamburguesa */
-.btn-menu {
-  cursor: pointer;
-  font-size: 22px;
-  user-select: none;
-}
-
-.header-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.header-logo {
-  width: 36px;
-  height: 36px;
-  object-fit: contain;
-}
-
-.header-title {
-  font-weight: 700;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.icon-btn {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: 18px;
-}
-
-/* Sidebar links (puedes moverlo a sidebar.css luego) */
-.sidebar-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 14px;
-}
-
-.sidebar-link {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  text-decoration: none;
-  color: #fff;
-  opacity: .95;
-}
-
-.sidebar-link.is-active {
-  background: rgba(255,255,255,.12);
-}
-
-.sidebar-link:hover {
-  background: rgba(255,255,255,.10);
+  padding: 20px 16px;
+  padding-top: 90px; /* header fijo */
+  width: 100%;
 }
 
 /* =========================
@@ -144,22 +32,16 @@ body {
 @media (min-width: 768px) {
   .layout-app {
     grid-template-areas:
-      "header header"
+      "sidebar header"
       "sidebar main";
-    grid-template-columns: 250px 1fr;
+    grid-template-columns: 260px 1fr;
     grid-template-rows: auto 1fr;
   }
 
-  .sidebar {
-    grid-area: sidebar;
-    position: relative;
-    left: 0;
-    height: auto;
-    padding-top: 0;
-  }
+  .main-sidebar { grid-area: sidebar; }
 
   .layout-app .pagina-main {
-    padding: 30px;
-    padding-top: 80px;
+    padding: 28px;
+    padding-top: 100px;
   }
 }

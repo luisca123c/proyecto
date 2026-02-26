@@ -1,110 +1,93 @@
-/* Ocultamos el checkbox */
-.menu-toggle {
-  display: none;
-}
-
-/* Sidebar oculto fuera de pantalla (móvil) */
-.main-sidebar {
+.main-header {
+  background-color: var(--color-principal-morado);
+  color: var(--color-texto);
   position: fixed;
   top: 0;
   left: 0;
-
-  width: 250px;
-  height: 100%;
-
-  background-color: var(--color-principal-morado);
-  box-shadow: var(--sombra-sidebar);
-
-  transform: translateX(-100%);
-  transition: transform 0.3s ease-in-out;
-
-  z-index: 100;
-  overflow-y: auto;
+  right: 0;
+  width: 100%;
+  box-sizing: border-box;
+  box-shadow: var(--sombra-header);
+  z-index: 900;
 }
 
-/* Cuando el checkbox está marcado, se muestra el sidebar */
-.menu-toggle:checked + .main-header + .main-sidebar {
-  transform: translateX(0);
-}
-
-/* Header del sidebar */
-.sidebar__header {
+/* Header “app” */
+.header-app {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-
-  padding: 15px 10px;
-  border-bottom: 1px solid var(--borde-blanco-suave);
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 15px;
 }
 
-/* Logo */
-.sidebar__logo {
-  width: 75px;
-  height: auto;
+.header-app__izquierda{
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-/* Botón cerrar */
-.sidebar__cerrar-btn {
-  background: none;
-  border: none;
-  color: var(--color-texto);
-  font-size: 1.5em;
+.header-app__btn-menu{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  display: block;
+  color: var(--color-texto);
 }
 
-/* Lista */
-.sidebar__nav-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.header-app__btn-menu:hover{
+  background: rgba(255,255,255,.10);
 }
 
-/* Links */
-.sidebar__nav-link {
-  display: block;
-  color: var(--color-texto); /* antes: --color-letra-claro */
-  padding: 15px 20px;
+.header-app__marca{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-app__logo{
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.header-app__titulo{
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.header-app__acciones{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-app__icono{
+  color: var(--color-texto);
   text-decoration: none;
-  font-size: 1em;
-
-  transition: background-color 0.3s;
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
 }
 
-.sidebar__nav-link i {
-  margin-right: 10px;
-  font-size: 1.2em;
+.header-app__icono:hover{
+  background: rgba(255,255,255,.10);
 }
 
-/* Hover / activo */
-.sidebar__nav-link:hover {
-  background-color: var(--color-morado-medio);
-}
-
-.sidebar__nav-link--activo {
-  background-color: var(--color-morado-claro);
-  font-weight: bold;
-}
-
-/* Separador */
-.sidebar__separator {
-  border-top: 1px solid var(--borde-blanco-suave);
-  margin: 10px 0;
-}
-
-/* =========================
-   DESKTOP
-========================= */
-@media (min-width: 768px) {
-  /* Sidebar siempre visible */
-  .main-sidebar {
-    transform: translateX(0);
-    height: 100vh;
-    box-shadow: none;
+/* En desktop el botón hamburguesa no es necesario */
+@media (min-width: 768px){
+  .header-app__btn-menu{
+    display: none;
   }
 
-  /* En desktop no necesitas botón cerrar */
-  .sidebar__cerrar-btn {
-    display: none;
+  /* OJO: dejamos espacio visual porque hay sidebar fijo */
+  .main-header{
+    left: 260px;
+    width: calc(100% - 260px);
   }
 }

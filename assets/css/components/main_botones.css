@@ -1,89 +1,93 @@
-.pagina-main__titulo {
-  margin-top: 40px;
-  margin-bottom: 30px;
-  font-size: 1.8em;
-  color: var(--color-principal-morado);
-  text-align: center;
+.main-header {
+  background-color: var(--color-principal-morado);
+  color: var(--color-texto);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   width: 100%;
-}
-
-/* =========================
-   CONTENEDOR BOTONES
-========================= */
-
-.main-botones-contenedor {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-
-  max-width: 280px;
-  width: 100%;
-
-  margin: 0 auto;
-  padding: 0 10px;
-
   box-sizing: border-box;
-  text-align: center;
+  box-shadow: var(--sombra-header);
+  z-index: 900;
 }
 
-/* =========================
-   BOTÓN PRINCIPAL
-========================= */
-
-.main-boton {
-  width: 100%;
-  height: auto;
-
-  text-decoration: none;
-
-  background-color: var(--color-morado-medio);
-  color: var(--color-texto); /* antes: --color-letra-claro */
-
-  padding: 20px 10px;
-
+/* Header “app” */
+.header-app {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 15px;
+}
+
+.header-app__izquierda{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-app__btn-menu{
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-
-  text-align: center;
-
-  border-radius: var(--radius-sm); /* antes: 8px */
-
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  color: var(--color-texto);
 }
 
-.main-boton:hover {
-  background-color: var(--color-hover);
-  transform: translateY(-2px);
+.header-app__btn-menu:hover{
+  background: rgba(255,255,255,.10);
 }
 
-.main-boton .boton__icono {
-  font-size: 3em;
-  margin-bottom: 10px;
+.header-app__marca{
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-/* =========================
-   DESKTOP
-========================= */
+.header-app__logo{
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
 
-@media (min-width: 768px) {
+.header-app__titulo{
+  font-weight: 700;
+  font-size: 1.05rem;
+}
 
-  .main-botones-contenedor {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 25px;
-    max-width: 900px;
-    margin: 0 auto;
+.header-app__acciones{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-app__icono{
+  color: var(--color-texto);
+  text-decoration: none;
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+}
+
+.header-app__icono:hover{
+  background: rgba(255,255,255,.10);
+}
+
+/* En desktop el botón hamburguesa no es necesario */
+@media (min-width: 768px){
+  .header-app__btn-menu{
+    display: none;
   }
 
-  .main-boton {
-    padding: 30px 10px;
-  }
-
-  .main-boton:hover {
-    transform: translateY(-10px);
+  /* OJO: dejamos espacio visual porque hay sidebar fijo */
+  .main-header{
+    left: 260px;
+    width: calc(100% - 260px);
   }
 }

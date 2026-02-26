@@ -96,6 +96,22 @@
   letter-spacing: 0;
 }
 
+.input-wrapper input {
+  width: 100%;
+  padding: 12px 12px 12px 38px;
+  border-radius: var(--radius-md);
+
+  /* 🔥 BORDE NUEVO */
+  border: 1px solid var(--color-borde);
+
+  background-color: var(--color-card);
+  color: var(--color-texto-oscuro);
+  font-size: 0.95rem;
+  outline: none;
+
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
 /* =========================
    DESKTOP
 ========================= */

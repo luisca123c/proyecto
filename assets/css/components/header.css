@@ -1,114 +1,93 @@
 .main-header {
   background-color: var(--color-principal-morado);
   color: var(--color-texto);
-
-  /* Padding para móvil */
-  padding: 10px 15px;
-
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  /* Header fijo */
   position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   width: 100%;
-
   box-sizing: border-box;
   box-shadow: var(--sombra-header);
-
-  overflow-x: hidden;
+  z-index: 900;
 }
 
-.header__empresa {
-  display: flex;
-  gap: 15px;
-  align-items: center;
-}
-
-.header__titulo {
-  font-size: 1.5em;
-  margin: 0;
-}
-
-.header__acciones {
+/* Header “app” */
+.header-app {
   display: flex;
   align-items: center;
-  gap: 15px;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 15px;
 }
 
-.header__icono-link {
+.header-app__izquierda{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-app__btn-menu{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  color: var(--color-texto);
+}
+
+.header-app__btn-menu:hover{
+  background: rgba(255,255,255,.10);
+}
+
+.header-app__marca{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-app__logo{
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.header-app__titulo{
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.header-app__acciones{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-app__icono{
   color: var(--color-texto);
   text-decoration: none;
-  font-size: 1.5em;
-  transition: color 0.3s;
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
 }
 
-.header__icono-link:hover {
-  color: var(--color-hover);
+.header-app__icono:hover{
+  background: rgba(255,255,255,.10);
 }
 
-/* Icono del menú (solo móvil) */
-.header__menu-toggle {
-  background: none;
-  border: none;
-  color: var(--color-texto); /* antes: white */
-  font-size: 1.5em;
-  cursor: pointer;
-  padding: 5px;
-  display: block;
-}
-
-/* Ocultar info usuario en pantallas muy pequeñas */
-.header__info-usuario {
-  font-size: 0.9em;
-  display: none;
-}
-
-/* Link salir */
-.header__link-salir {
-  color: var(--color-texto);            /* antes: --color-letra-claro */
-  text-decoration: none;
-  padding: 5px 8px;
-  border: 1px solid var(--color-texto); /* antes: --color-letra-claro */
-  border-radius: var(--radius-sm);      /* antes: 5px */
-  font-size: 0.8em;
-  transition: background-color 0.3s, border-color 0.3s;
-}
-
-.header__link-salir:hover {
-  background-color: var(--color-danger);
-  border-color: var(--color-danger);
-}
-
-/* =================================================================
-   HEADER: DESKTOP (A partir de 768px)
-   ================================================================= */
-@media (min-width: 768px) {
-  .main-header {
-    padding: 15px 30px;
-  }
-
-  .header__titulo {
-    font-size: 1.8em;
-    margin-left: 250px;
-  }
-
-  .header__acciones {
-    gap: 20px;
-  }
-
-  .header__info-usuario {
-    display: block;
-    font-size: 1em;
-  }
-
-  .header__link-salir {
-    padding: 5px 10px;
-    font-size: 0.9em;
-  }
-
-  /* Ocultar icono menú en escritorio */
-  .header__menu-toggle {
+/* En desktop el botón hamburguesa no es necesario */
+@media (min-width: 768px){
+  .header-app__btn-menu{
     display: none;
+  }
+
+  /* OJO: dejamos espacio visual porque hay sidebar fijo */
+  .main-header{
+    left: 260px;
+    width: calc(100% - 260px);
   }
 }
