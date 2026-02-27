@@ -1,0 +1,98 @@
+.main-header {
+  background-color: var(--color-principal-morado);
+  color: var(--color-texto);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  box-sizing: border-box;
+  box-shadow: var(--sombra-header);
+  z-index: 900;
+}
+
+/* Header "app" */
+.header-app {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 15px;
+}
+
+.header-app__izquierda {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-app__btn-menu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  color: var(--color-texto);
+}
+
+.header-app__btn-menu:hover {
+  background: rgba(255, 255, 255, 0.10);
+}
+
+.header-app__marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-app__logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.header-app__titulo {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.header-app__acciones {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-app__icono {
+  color: var(--color-texto);
+  text-decoration: none;
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+}
+
+.header-app__icono:hover {
+  background: rgba(255, 255, 255, 0.10);
+}
+
+@media (min-width: 768px) {
+  .header-app__btn-menu {
+    display: none;
+  }
+
+  /* Solo se desplaza cuando hay sidebar */
+  .layout-app .main-header {
+    left: 260px;
+    width: calc(100% - 260px);
+  }
+
+  /* El header del login siempre ocupa todo el ancho */
+  .main-header--login {
+    left: 0 !important;
+    width: 100% !important;
+  }
+}
