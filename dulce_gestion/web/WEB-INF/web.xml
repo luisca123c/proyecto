@@ -83,6 +83,46 @@
         <url-pattern>/empleados/eliminar</url-pattern>
     </servlet-mapping>
 
+    <!-- ProductosServlet -->
+    <servlet>
+        <servlet-name>ProductosServlet</servlet-name>
+        <servlet-class>com.dulce_gestion.controllers.ProductosServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ProductosServlet</servlet-name>
+        <url-pattern>/productos</url-pattern>
+    </servlet-mapping>
+
+    <!-- NuevoProductoServlet -->
+    <servlet>
+        <servlet-name>NuevoProductoServlet</servlet-name>
+        <servlet-class>com.dulce_gestion.controllers.NuevoProductoServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>NuevoProductoServlet</servlet-name>
+        <url-pattern>/productos/nuevo</url-pattern>
+    </servlet-mapping>
+
+    <!-- EditarProductoServlet -->
+    <servlet>
+        <servlet-name>EditarProductoServlet</servlet-name>
+        <servlet-class>com.dulce_gestion.controllers.EditarProductoServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>EditarProductoServlet</servlet-name>
+        <url-pattern>/productos/editar</url-pattern>
+    </servlet-mapping>
+
+    <!-- EliminarProductoServlet -->
+    <servlet>
+        <servlet-name>EliminarProductoServlet</servlet-name>
+        <servlet-class>com.dulce_gestion.controllers.EliminarProductoServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>EliminarProductoServlet</servlet-name>
+        <url-pattern>/productos/eliminar</url-pattern>
+    </servlet-mapping>
+
     <!-- ========== SESIÓN ========== -->
     <session-config>
         <session-timeout>30</session-timeout>
