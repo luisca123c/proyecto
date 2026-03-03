@@ -8,8 +8,10 @@
     String errorEmpleados = (String) request.getAttribute("errorEmpleados");
     boolean esSuperAdmin = "SuperAdministrador".equals(rolSolicitante);
     boolean esAdmin      = "Administrador".equals(rolSolicitante);
-    boolean exitoCreado  = "creado".equals(request.getParameter("exito"));
-    boolean exitoEditado = "editado".equals(request.getParameter("exito"));
+    boolean exitoCreado   = "creado".equals(request.getParameter("exito"));
+    boolean exitoEditado  = "editado".equals(request.getParameter("exito"));
+    boolean exitoEliminado = "eliminado".equals(request.getParameter("exito"));
+    String errorParam     = request.getParameter("error");
 %>
 <!doctype html>
 <html lang="es">
@@ -114,6 +116,21 @@
         <i class="fi fi-sr-check"></i> Usuario actualizado correctamente.
       </div>
       <% } %>
+      <% if (exitoEliminado) { %>
+      <div class="modulo-exito">
+        <i class="fi fi-sr-check"></i> Usuario eliminado correctamente.
+      </div>
+      <% } %>
+      <% if ("eliminacion".equals(errorParam)) { %>
+      <div class="modulo-error">
+        <i class="fi fi-sr-triangle-warning"></i> No se pudo eliminar. El usuario tiene registros asociados.
+      </div>
+      <% } %>
+      <% if ("sinpermiso".equals(errorParam)) { %>
+      <div class="modulo-error">
+        <i class="fi fi-sr-triangle-warning"></i> No tienes permiso para eliminar este usuario.
+      </div>
+      <% } %>
       <% if (errorEmpleados != null) { %>
       <div class="modulo-error">
         <i class="fi fi-sr-triangle-warning"></i> <%= errorEmpleados %>
@@ -149,6 +166,13 @@
              title="Editar">
             <i class="fi fi-sr-edit"></i>
           </a>
+          <form method="POST" action="<%= ctx %>/empleados/eliminar" style="display:contents"
+                onsubmit="return confirm('¿Seguro que deseas eliminar a <%= emp.getNombreCompleto() %>? Esta acción no se puede deshacer.')">
+            <input type="hidden" name="id" value="<%= emp.getId() %>">
+            <button type="submit" class="empleado-card__btn-eliminar" title="Eliminar">
+              <i class="fi fi-sr-trash"></i>
+            </button>
+          </form>
           <% } %>
         </div>
         <% } %>

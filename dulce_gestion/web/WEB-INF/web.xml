@@ -73,6 +73,16 @@
         <url-pattern>/empleados/editar</url-pattern>
     </servlet-mapping>
 
+    <!-- EliminarEmpleadoServlet -->
+    <servlet>
+        <servlet-name>EliminarEmpleadoServlet</servlet-name>
+        <servlet-class>com.dulce_gestion.controllers.EliminarEmpleadoServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>EliminarEmpleadoServlet</servlet-name>
+        <url-pattern>/empleados/eliminar</url-pattern>
+    </servlet-mapping>
+
     <!-- ========== SESIÓN ========== -->
     <session-config>
         <session-timeout>30</session-timeout>
