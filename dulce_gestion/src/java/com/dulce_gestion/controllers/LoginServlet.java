@@ -2,97 +2,82 @@ package com.dulce_gestion.controllers;
 
 import com.dulce_gestion.dao.UsuarioDAO;
 import com.dulce_gestion.models.Usuario;
-
+import java.sql.SQLException;
+import java.io.IOException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.*;
 
-import java.io.IOException;
-import java.sql.SQLException;
-
-/**
- * Servlet que maneja la autenticación.
- * GET  /login → muestra el formulario
- * POST /login → procesa las credenciales
- */
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
-
-    private static final String VISTA_LOGIN    = "/WEB-INF/jsp/auth/login.jsp";
-    private static final String RUTA_DASHBOARD = "/dashboard";
-
-    // ── GET: mostrar formulario ───────────────────────────────
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Si ya hay sesión activa, ir directo al dashboard
-        HttpSession session = request.getSession(false);
-        if (session != null && session.getAttribute("usuario") != null) {
-            response.sendRedirect(request.getContextPath() + RUTA_DASHBOARD);
+        // Si ya hay sesión activa, redirigir al dashboard (que resuelve el rol)
+        HttpSession sesion = request.getSession(false);
+
+        if (sesion != null && sesion.getAttribute("usuario") != null) {
+            // FIX 3: redirigir a /dashboard en lugar de hardcodear /admin/dashboard
+            response.sendRedirect(request.getContextPath() + "/dashboard");
             return;
         }
 
-        request.getRequestDispatcher(VISTA_LOGIN).forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/jsp/auth/login.jsp")
+               .forward(request, response);
     }
-
-    // ── POST: procesar credenciales ───────────────────────────
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        request.setCharacterEncoding("UTF-8");
+        String correoOUsuario = request.getParameter("correo");
+        String contrasena     = request.getParameter("contrasena");
 
-        String correo     = request.getParameter("correo");
-        String contrasena = request.getParameter("contrasena");
+        if (correoOUsuario == null || contrasena == null ||
+            correoOUsuario.isBlank() || contrasena.isBlank()) {
 
-        // Validación básica server-side
-        if (correo == null || correo.isBlank() ||
-            contrasena == null || contrasena.isBlank()) {
-            reenviarConError(request, response, "Completa todos los campos.");
+            request.setAttribute("errorLogin", "Debe completar todos los campos.");
+            request.getRequestDispatcher("/WEB-INF/jsp/auth/login.jsp")
+                   .forward(request, response);
             return;
         }
 
+        UsuarioDAO usuarioDAO = new UsuarioDAO();
+        Usuario usuario = null;
         try {
-            UsuarioDAO dao = new UsuarioDAO();
-            Usuario usuario = dao.autenticar(correo, contrasena);
-
-            if (usuario == null) {
-                reenviarConError(request, response, "Correo o contraseña incorrectos.");
-                return;
-            }
-
-            if (!"Activo".equalsIgnoreCase(usuario.getEstado())) {
-                reenviarConError(request, response, "Tu cuenta está desactivada. Contacta al administrador.");
-                return;
-            }
-
-            // Login exitoso: crear sesión
-            HttpSession session = request.getSession(true);
-            session.setAttribute("usuario", usuario);
-            session.setMaxInactiveInterval(30 * 60); // 30 minutos
-
-            response.sendRedirect(request.getContextPath() + RUTA_DASHBOARD);
-
+            usuario = usuarioDAO.autenticar(correoOUsuario.trim(), contrasena);
         } catch (SQLException e) {
-            getServletContext().log("Error de BD en LoginServlet", e);
-            reenviarConError(request, response, "Error interno del servidor. Intenta más tarde.");
+            e.printStackTrace();
+
+            request.setAttribute("errorLogin", "Error al conectar con la base de datos.");
+            request.getRequestDispatcher("/WEB-INF/jsp/auth/login.jsp")
+                   .forward(request, response);
+            return;
         }
-    }
 
-    // ── Utilidad ─────────────────────────────────────────────
+        if (usuario == null) {
+            request.setAttribute("errorLogin", "Credenciales inválidas.");
+            request.getRequestDispatcher("/WEB-INF/jsp/auth/login.jsp")
+                   .forward(request, response);
+            return;
+        }
 
-    private void reenviarConError(HttpServletRequest request,
-                                   HttpServletResponse response,
-                                   String mensaje)
-            throws ServletException, IOException {
+        // Verificar que el usuario esté activo
+        if (!"Activo".equals(usuario.getEstado())) {
+            request.setAttribute("errorLogin", "Tu cuenta está inactiva. Contacta al administrador.");
+            request.getRequestDispatcher("/WEB-INF/jsp/auth/login.jsp")
+                   .forward(request, response);
+            return;
+        }
 
-        request.setAttribute("errorLogin", mensaje);
-        request.getRequestDispatcher(VISTA_LOGIN).forward(request, response);
+        // Crear sesión
+        HttpSession sesion = request.getSession(true);
+        sesion.setAttribute("usuario", usuario);
+        sesion.setMaxInactiveInterval(30 * 60); // 30 minutos
+
+        // FIX 4: redirigir a /dashboard que resuelve el rol correctamente
+        response.sendRedirect(request.getContextPath() + "/dashboard");
     }
 }

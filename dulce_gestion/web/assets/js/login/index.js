@@ -1,51 +1,87 @@
+// ==============================
+// IMPORTACIONES
+// ==============================
+
 import { mostrarError, limpiarError, establecerEstadoBoton } from "./dom.js";
 import { validarFormularioLogin } from "./validaciones.js";
 
-// ── Referencias al DOM ────────────────────────────────────────
+
+// ==============================
+// CONSTANTES Y VARIABLES
+// ==============================
+
 const formularioLogin = document.getElementById("formularioLogin");
-const campoCorreo     = document.getElementById("correo");
+const campoCorreo = document.getElementById("correo");
 const campoContrasena = document.getElementById("contrasena");
 const contenedorError = document.getElementById("contenedorErrorLogin");
-const botonLogin      = document.getElementById("btnLogin");
+const botonLogin = document.getElementById("btnLogin");
+const datosLogin = document.getElementById("datosLogin");
 
-// ── Funciones ─────────────────────────────────────────────────
+
+// ==============================
+// FUNCIONES Y MÉTODOS
+// ==============================
 
 /**
- * Valida en cliente antes de enviar al servidor.
- * Si hay error lo muestra y cancela el submit.
+ * Muestra error enviado desde el servidor si existe.
+ */
+function mostrarErrorServidor() {
+
+  const mensajeErrorServidor =
+    datosLogin?.dataset?.mensajeError?.trim();
+
+  if (mensajeErrorServidor) {
+    mostrarError(contenedorError, mensajeErrorServidor);
+  }
+}
+
+
+/**
+ * Maneja la validación del formulario antes de enviarlo.
  */
 function manejarEnvioFormulario(evento) {
-    limpiarError(contenedorError);
 
-    const mensajeError = validarFormularioLogin(
-        campoCorreo.value,
-        campoContrasena.value
-    );
+  limpiarError(contenedorError);
 
-    if (mensajeError) {
-        evento.preventDefault();
-        mostrarError(contenedorError, mensajeError);
-        return;
-    }
+  const mensajeError = validarFormularioLogin(
+    campoCorreo.value,
+    campoContrasena.value
+  );
 
-    // Pasa validación → mostrar estado cargando
-    establecerEstadoBoton(botonLogin, true);
+  if (mensajeError) {
+    evento.preventDefault();
+    mostrarError(contenedorError, mensajeError);
+    return;
+  }
+
+  establecerEstadoBoton(botonLogin, true);
 }
+
 
 /**
- * Limpia el error cuando el usuario empieza a corregir los campos.
+ * Limpia errores cuando el usuario escribe.
  */
-function configurarLimpiezaErrores() {
-    [campoCorreo, campoContrasena].forEach((campo) => {
-        campo.addEventListener("input", () => limpiarError(contenedorError));
+function configurarEventosInput() {
+
+  [campoCorreo, campoContrasena].forEach((campo) => {
+    campo.addEventListener("input", () => {
+      limpiarError(contenedorError);
     });
+  });
 }
 
-// ── Eventos ───────────────────────────────────────────────────
+
+// ==============================
+// EVENTOS
+// ==============================
 
 document.addEventListener("DOMContentLoaded", () => {
-    if (!formularioLogin) return;
 
-    formularioLogin.addEventListener("submit", manejarEnvioFormulario);
-    configurarLimpiezaErrores();
+  if (!formularioLogin) return;
+
+  mostrarErrorServidor();
+
+  formularioLogin.addEventListener("submit", manejarEnvioFormulario);
+
+  configurarEventosInput();
 });

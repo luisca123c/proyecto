@@ -2,7 +2,7 @@
 <%@ page import="com.dulce_gestion.models.Usuario" %>
 <%
     Usuario usuario = (Usuario) session.getAttribute("usuario");
-    String nombre = (usuario != null) ? usuario.getNombreCompleto() : "Administrador";
+    String nombre = (usuario != null) ? usuario.getNombreCompleto() : "Empleado";
     String ctx = request.getContextPath();
 %>
 <!doctype html>
@@ -36,13 +36,7 @@
   <main class="dashboard-contenido">
     <nav class="dashboard-grid" aria-label="Módulos del sistema">
 
-      <%-- Administrador: sin Usuarios ni Gestión de Roles --%>
-      <%-- Permisos: VER_EMPLEADOS, VER_PRODUCTOS, VER_VENTAS, VER_GASTOS, VER_GANANCIAS --%>
-
-      <a class="dashboard-card" href="<%= ctx %>/empleados">
-        <i class="dashboard-card__icono fi fi-sr-users"></i>
-        <span class="dashboard-card__texto">Empleados</span>
-      </a>
+      <%-- Empleado: solo VER_PRODUCTOS, CREAR_VENTA, VER_VENTAS --%>
 
       <a class="dashboard-card" href="<%= ctx %>/productos">
         <i class="dashboard-card__icono fi fi-sr-box-open"></i>
@@ -52,16 +46,6 @@
       <a class="dashboard-card" href="<%= ctx %>/ventas">
         <i class="dashboard-card__icono fi fi-sr-shopping-cart"></i>
         <span class="dashboard-card__texto">Ventas</span>
-      </a>
-
-      <a class="dashboard-card" href="<%= ctx %>/gastos">
-        <i class="dashboard-card__icono fi fi-sr-receipt"></i>
-        <span class="dashboard-card__texto">Gastos</span>
-      </a>
-
-      <a class="dashboard-card" href="<%= ctx %>/ganancias">
-        <i class="dashboard-card__icono fi fi-sr-chart-line-up"></i>
-        <span class="dashboard-card__texto">Ganancias</span>
       </a>
 
       <a class="dashboard-card dashboard-card--salir" href="<%= ctx %>/logout">

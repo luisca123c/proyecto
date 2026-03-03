@@ -1,22 +1,25 @@
 package com.dulce_gestion.models;
 
-/**
- * Representa los datos del usuario que se guardan en sesión
- * después de autenticarse correctamente.
+/*
+ * Representa al usuario autenticado en el sistema.
+ * El LoginServlet guarda un objeto de esta clase en la sesión HTTP,
+ * así cualquier página puede saber quién está conectado y qué rol tiene.
+ *
+ * Los datos vienen de un JOIN entre las tablas:
+ * usuarios, correos, roles y perfil_usuario.
  */
 public class Usuario {
 
-    private int    id;
-    private String correo;
-    private String estado;
-    private int    idRol;
-    private String nombreRol;
-    private String nombreCompleto;
+    private int    id;             // PK de la tabla usuarios
+    private String correo;         // Correo (tabla correos)
+    private String estado;         // "Activo" o "Inactivo"
+    private int    idRol;          // ID del rol
+    private String nombreRol;      // Nombre del rol (tabla roles)
+    private String nombreCompleto; // Nombre para mostrar (tabla perfil_usuario)
 
     public Usuario() {}
 
-    // ── Getters ──────────────────────────────────────────────
-
+    // Getters
     public int    getId()             { return id; }
     public String getCorreo()         { return correo; }
     public String getEstado()         { return estado; }
@@ -24,8 +27,7 @@ public class Usuario {
     public String getNombreRol()      { return nombreRol; }
     public String getNombreCompleto() { return nombreCompleto; }
 
-    // ── Setters ──────────────────────────────────────────────
-
+    // Setters
     public void setId(int id)                    { this.id = id; }
     public void setCorreo(String correo)         { this.correo = correo; }
     public void setEstado(String estado)         { this.estado = estado; }

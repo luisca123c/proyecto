@@ -2,7 +2,7 @@
 <%@ page import="com.dulce_gestion.models.Usuario" %>
 <%
     Usuario usuario = (Usuario) session.getAttribute("usuario");
-    String nombre = (usuario != null) ? usuario.getNombreCompleto() : "Administrador";
+    String nombre = (usuario != null) ? usuario.getNombreCompleto() : "SuperAdministrador";
     String ctx = request.getContextPath();
 %>
 <!doctype html>
@@ -36,8 +36,8 @@
   <main class="dashboard-contenido">
     <nav class="dashboard-grid" aria-label="Módulos del sistema">
 
-      <%-- Administrador: sin Usuarios ni Gestión de Roles --%>
-      <%-- Permisos: VER_EMPLEADOS, VER_PRODUCTOS, VER_VENTAS, VER_GASTOS, VER_GANANCIAS --%>
+      <%-- SuperAdministrador: todos los módulos --%>
+      <%-- Permisos: VER_EMPLEADOS, VER_PRODUCTOS, VER_VENTAS, VER_GASTOS, VER_GANANCIAS, GESTIONAR_ROLES --%>
 
       <a class="dashboard-card" href="<%= ctx %>/empleados">
         <i class="dashboard-card__icono fi fi-sr-users"></i>
@@ -62,6 +62,11 @@
       <a class="dashboard-card" href="<%= ctx %>/ganancias">
         <i class="dashboard-card__icono fi fi-sr-chart-line-up"></i>
         <span class="dashboard-card__texto">Ganancias</span>
+      </a>
+
+      <a class="dashboard-card" href="<%= ctx %>/usuarios">
+        <i class="dashboard-card__icono fi fi-sr-user-gear"></i>
+        <span class="dashboard-card__texto">Usuarios</span>
       </a>
 
       <a class="dashboard-card dashboard-card--salir" href="<%= ctx %>/logout">
