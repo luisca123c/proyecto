@@ -3,23 +3,24 @@
 <%
     Usuario sesionUsuario = (Usuario) session.getAttribute("usuario");
     String ctx = request.getContextPath();
+    Usuario obj = (Usuario) request.getAttribute("objetivo");
     boolean esSuperAdmin = Boolean.TRUE.equals(request.getAttribute("esSuperAdmin"));
     String error = (String) request.getAttribute("error");
 
-    // Conservar datos si hubo error (para no perder lo escrito)
-    String vNombre    = request.getParameter("nombreCompleto") != null ? request.getParameter("nombreCompleto") : "";
-    String vTelefono  = request.getParameter("telefono")       != null ? request.getParameter("telefono")       : "";
-    String vGenero    = request.getParameter("genero")         != null ? request.getParameter("genero")         : "";
-    String vCorreo    = request.getParameter("correo")         != null ? request.getParameter("correo")         : "";
-    String vEstado    = request.getParameter("estado")         != null ? request.getParameter("estado")         : "Activo";
-    String vRol       = request.getParameter("rol")            != null ? request.getParameter("rol")            : "Empleado";
+    // Si hubo error POST, tomar los valores del POST; si no, del objeto BD
+    String vNombre   = request.getParameter("nombreCompleto") != null ? request.getParameter("nombreCompleto") : obj.getNombreCompleto();
+    String vTelefono = request.getParameter("telefono")       != null ? request.getParameter("telefono")       : obj.getTelefono();
+    String vGenero   = request.getParameter("genero")         != null ? request.getParameter("genero")         : obj.getGenero();
+    String vCorreo   = request.getParameter("correo")         != null ? request.getParameter("correo")         : obj.getCorreo();
+    String vEstado   = request.getParameter("estado")         != null ? request.getParameter("estado")         : obj.getEstado();
+    String vRol      = request.getParameter("rol")            != null ? request.getParameter("rol")            : obj.getNombreRol();
 %>
 <!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Nuevo Empleado | Dulce Gestión</title>
+  <title>Editar Empleado | Dulce Gestión</title>
   <link rel="stylesheet" href="<%= ctx %>/assets/css/styles.css">
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.2.0/uicons-solid-rounded/css/uicons-solid-rounded.css">
 </head>
@@ -35,12 +36,12 @@
         <i class="fi fi-sr-menu-burger"></i>
       </label>
       <div class="header-app__marca">
-        <img class="header-app__logo" src="<%= ctx %>/assets/images/Logo.png" alt="Logo Dulce Gestión">
+        <img class="header-app__logo" src="<%= ctx %>/assets/images/Logo.png" alt="Logo">
         <span class="header-app__titulo">Dulce Gestión</span>
       </div>
     </div>
     <div class="header-app__acciones">
-      <a class="header-app__icono" href="<%= ctx %>/logout" aria-label="Cerrar sesión" title="Cerrar sesión">
+      <a class="header-app__icono" href="<%= ctx %>/logout" title="Cerrar sesión">
         <i class="fi fi-sr-sign-out-alt"></i>
       </a>
     </div>
@@ -52,10 +53,10 @@
   <aside class="main-sidebar sidebar">
     <div class="sidebar__top">
       <div class="sidebar__brand">
-        <img class="sidebar__logo" src="<%= ctx %>/assets/images/Logo.png" alt="Logo Dulce Gestión">
+        <img class="sidebar__logo" src="<%= ctx %>/assets/images/Logo.png" alt="Logo">
         <span class="sidebar__brand-text">Menú</span>
       </div>
-      <label for="sidebar-toggle" class="sidebar__cerrar" aria-label="Cerrar menú">
+      <label for="sidebar-toggle" class="sidebar__cerrar">
         <i class="fi fi-sr-cross"></i>
       </label>
     </div>
@@ -78,9 +79,11 @@
       <a class="sidebar__link" href="<%= ctx %>/ganancias">
         <i class="fi fi-sr-chart-line-up"></i><span>Ganancias</span>
       </a>
+      <% if (esSuperAdmin) { %>
       <a class="sidebar__link" href="<%= ctx %>/perfil">
         <i class="fi fi-sr-user"></i><span>Perfil</span>
       </a>
+      <% } %>
       <div class="sidebar__separador"></div>
       <a class="sidebar__link sidebar__link--salir" href="<%= ctx %>/logout">
         <i class="fi fi-sr-sign-out-alt"></i><span>Cerrar sesión</span>
@@ -92,13 +95,13 @@
   <main class="pagina-main">
     <div class="modulo-contenido nuevo-empleado-contenido">
 
-      <!-- Avatar + nombre preview -->
+      <!-- Avatar + nombre -->
       <div class="nuevo-empleado__avatar-bloque">
         <div class="nuevo-empleado__avatar">
           <i class="fi fi-sr-user"></i>
         </div>
         <span class="nuevo-empleado__nombre-preview" id="previewNombre">
-          <%= vNombre.isBlank() ? "Nombre" : vNombre %>
+          <%= vNombre %>
         </span>
       </div>
 
@@ -111,31 +114,25 @@
       <% } %>
 
       <!-- FORMULARIO -->
-      <form method="POST" action="<%= ctx %>/empleados/nuevo" novalidate>
+      <form method="POST" action="<%= ctx %>/empleados/editar" novalidate>
+        <input type="hidden" name="id" value="<%= obj.getId() %>">
 
-        <!-- Nombre completo -->
+        <!-- Nombre -->
         <div class="nv-campo">
-          <label class="nv-campo__label">Nombre Completo Empleado</label>
+          <label class="nv-campo__label">Nombre Completo</label>
           <div class="nv-campo__input-wrapper">
-            <input class="nv-campo__input"
-                   type="text" name="nombreCompleto"
-                   placeholder="Nombre completo"
-                   value="<%= vNombre %>"
-                   id="inputNombre"
-                   required>
+            <input class="nv-campo__input" type="text" name="nombreCompleto"
+                   id="inputNombre" value="<%= vNombre %>" required>
             <i class="fi fi-sr-edit nv-campo__icono-edit"></i>
           </div>
         </div>
 
         <!-- Teléfono -->
         <div class="nv-campo">
-          <label class="nv-campo__label">Teléfono Empleado</label>
+          <label class="nv-campo__label">Teléfono</label>
           <div class="nv-campo__input-wrapper">
-            <input class="nv-campo__input"
-                   type="tel" name="telefono"
-                   placeholder="Número de teléfono"
-                   value="<%= vTelefono %>"
-                   required>
+            <input class="nv-campo__input" type="tel" name="telefono"
+                   value="<%= vTelefono %>" required>
             <i class="fi fi-sr-edit nv-campo__icono-edit"></i>
           </div>
         </div>
@@ -145,24 +142,11 @@
           <label class="nv-campo__label">Género</label>
           <div class="nv-campo__input-wrapper nv-campo__input-wrapper--select">
             <select class="nv-campo__input" name="genero" required>
-              <option value="" disabled <%= vGenero.isBlank() ? "selected" : "" %>>Selecciona</option>
-              <option value="Masculino"  <%= "Masculino" .equals(vGenero) ? "selected" : "" %>>Masculino</option>
-              <option value="Femenino"   <%= "Femenino"  .equals(vGenero) ? "selected" : "" %>>Femenino</option>
-              <option value="Otro"       <%= "Otro"      .equals(vGenero) ? "selected" : "" %>>Otro</option>
+              <option value="Masculino" <%= "Masculino".equals(vGenero) ? "selected" : "" %>>Masculino</option>
+              <option value="Femenino"  <%= "Femenino" .equals(vGenero) ? "selected" : "" %>>Femenino</option>
+              <option value="Otro"      <%= "Otro"     .equals(vGenero) ? "selected" : "" %>>Otro</option>
             </select>
             <i class="fi fi-sr-angle-down nv-campo__icono-edit"></i>
-          </div>
-        </div>
-
-        <!-- Fecha ingreso (solo visual, se guarda automáticamente) -->
-        <div class="nv-campo">
-          <label class="nv-campo__label">Fecha Ingreso</label>
-          <div class="nv-campo__input-wrapper">
-            <input class="nv-campo__input nv-campo__input--readonly"
-                   type="text"
-                   value="<%= new java.text.SimpleDateFormat("dd/MM/yyyy").format(new java.util.Date()) %>"
-                   readonly>
-            <i class="fi fi-sr-calendar nv-campo__icono-edit"></i>
           </div>
         </div>
 
@@ -170,23 +154,18 @@
         <div class="nv-campo">
           <label class="nv-campo__label">Correo</label>
           <div class="nv-campo__input-wrapper">
-            <input class="nv-campo__input"
-                   type="email" name="correo"
-                   placeholder="correo@ejemplo.com"
-                   value="<%= vCorreo %>"
-                   required>
+            <input class="nv-campo__input" type="email" name="correo"
+                   value="<%= vCorreo %>" required>
             <i class="fi fi-sr-edit nv-campo__icono-edit"></i>
           </div>
         </div>
 
-        <!-- Contraseña -->
+        <!-- Nueva contraseña (opcional) -->
         <div class="nv-campo">
-          <label class="nv-campo__label">Contraseña</label>
+          <label class="nv-campo__label">Nueva Contraseña <span style="opacity:.6;font-weight:400">(dejar vacío para no cambiar)</span></label>
           <div class="nv-campo__input-wrapper">
-            <input class="nv-campo__input"
-                   type="password" name="contrasena"
-                   placeholder="Mínimo 6 caracteres"
-                   required>
+            <input class="nv-campo__input" type="password" name="contrasena"
+                   placeholder="Mínimo 6 caracteres">
             <i class="fi fi-sr-edit nv-campo__icono-edit"></i>
           </div>
         </div>
@@ -203,24 +182,28 @@
           </div>
         </div>
 
-        <!-- Rol -->
+        <!-- Rol — solo SuperAdmin puede cambiarlo -->
         <div class="nv-campo">
           <label class="nv-campo__label">Rol</label>
           <div class="nv-campo__input-wrapper nv-campo__input-wrapper--select">
+            <% if (esSuperAdmin) { %>
             <select class="nv-campo__input" name="rol" required>
-              <option value="Empleado"       <%= "Empleado"      .equals(vRol) ? "selected" : "" %>>Empleado</option>
-              <% if (esSuperAdmin) { %>
-              <option value="Administrador"  <%= "Administrador" .equals(vRol) ? "selected" : "" %>>Administrador</option>
-              <% } %>
+              <option value="Empleado"      <%= "Empleado"     .equals(vRol) ? "selected" : "" %>>Empleado</option>
+              <option value="Administrador" <%= "Administrador".equals(vRol) ? "selected" : "" %>>Administrador</option>
             </select>
             <i class="fi fi-sr-angle-down nv-campo__icono-edit"></i>
+            <% } else { %>
+            <input class="nv-campo__input nv-campo__input--readonly"
+                   type="text" value="<%= vRol %>" readonly>
+            <input type="hidden" name="rol" value="<%= vRol %>">
+            <% } %>
           </div>
         </div>
 
         <!-- Botones -->
         <div class="nv-botones">
           <button type="submit" class="nv-btn nv-btn--agregar">
-            Agregar
+            Guardar cambios
           </button>
           <a href="<%= ctx %>/empleados" class="nv-btn nv-btn--volver">
             Volver
@@ -228,13 +211,11 @@
         </div>
 
       </form>
-
     </div>
   </main>
 
 </body>
 <script>
-  // Preview del nombre mientras se escribe
   const inputNombre   = document.getElementById('inputNombre');
   const previewNombre = document.getElementById('previewNombre');
   inputNombre.addEventListener('input', () => {

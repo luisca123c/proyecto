@@ -6,8 +6,10 @@
     String rolSolicitante = (String) request.getAttribute("rolSolicitante");
     List<Usuario> empleados = (List<Usuario>) request.getAttribute("empleados");
     String errorEmpleados = (String) request.getAttribute("errorEmpleados");
-    boolean exitoCreado = "creado".equals(request.getParameter("exito"));
     boolean esSuperAdmin = "SuperAdministrador".equals(rolSolicitante);
+    boolean esAdmin      = "Administrador".equals(rolSolicitante);
+    boolean exitoCreado  = "creado".equals(request.getParameter("exito"));
+    boolean exitoEditado = "editado".equals(request.getParameter("exito"));
 %>
 <!doctype html>
 <html lang="es">
@@ -18,7 +20,6 @@
   <link rel="stylesheet" href="<%= ctx %>/assets/css/styles.css">
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.2.0/uicons-solid-rounded/css/uicons-solid-rounded.css">
 </head>
-
 <body class="layout-app">
 
   <input type="checkbox" id="sidebar-toggle" class="sidebar__toggle" aria-label="Abrir menú">
@@ -35,7 +36,7 @@
       </div>
     </div>
     <div class="header-app__acciones">
-      <a class="header-app__icono" href="<%= ctx %>/logout" aria-label="Cerrar sesión" title="Cerrar sesión">
+      <a class="header-app__icono" href="<%= ctx %>/logout" title="Cerrar sesión">
         <i class="fi fi-sr-sign-out-alt"></i>
       </a>
     </div>
@@ -47,10 +48,10 @@
   <aside class="main-sidebar sidebar">
     <div class="sidebar__top">
       <div class="sidebar__brand">
-        <img class="sidebar__logo" src="<%= ctx %>/assets/images/Logo.png" alt="Logo Dulce Gestión">
+        <img class="sidebar__logo" src="<%= ctx %>/assets/images/Logo.png" alt="Logo">
         <span class="sidebar__brand-text">Menú</span>
       </div>
-      <label for="sidebar-toggle" class="sidebar__cerrar" aria-label="Cerrar menú">
+      <label for="sidebar-toggle" class="sidebar__cerrar">
         <i class="fi fi-sr-cross"></i>
       </label>
     </div>
@@ -89,37 +90,37 @@
   <main class="pagina-main">
     <div class="modulo-contenido">
 
-      <!-- Encabezado del módulo -->
+      <!-- Encabezado -->
       <div class="modulo-encabezado">
         <h1 class="modulo-titulo">
           <i class="fi fi-sr-users"></i>
           <%= esSuperAdmin ? "Administradores y Empleados" : "Empleados" %>
         </h1>
-        <% if (esSuperAdmin) { %>
+        <%-- Ambos roles pueden agregar; el formulario limita quién crea Admins --%>
         <a class="boton boton--primario boton--sm" href="<%= ctx %>/empleados/nuevo">
           <i class="fi fi-sr-user-add"></i>
           Agregar empleado
         </a>
-        <% } %>
       </div>
 
-      <!-- Éxito -->
+      <!-- Mensajes -->
       <% if (exitoCreado) { %>
       <div class="modulo-exito">
-        <i class="fi fi-sr-check"></i>
-        Usuario creado correctamente.
+        <i class="fi fi-sr-check"></i> Usuario creado correctamente.
       </div>
       <% } %>
-
-      <!-- Error si hay -->
+      <% if (exitoEditado) { %>
+      <div class="modulo-exito">
+        <i class="fi fi-sr-check"></i> Usuario actualizado correctamente.
+      </div>
+      <% } %>
       <% if (errorEmpleados != null) { %>
       <div class="modulo-error">
-        <i class="fi fi-sr-triangle-warning"></i>
-        <%= errorEmpleados %>
+        <i class="fi fi-sr-triangle-warning"></i> <%= errorEmpleados %>
       </div>
       <% } %>
 
-      <!-- Lista de empleados -->
+      <!-- Lista -->
       <% if (empleados == null || empleados.isEmpty()) { %>
       <div class="modulo-vacio">
         <i class="fi fi-sr-users modulo-vacio__icono"></i>
@@ -141,19 +142,26 @@
               <%= emp.getEstado() %>
             </span>
           </div>
+          <%-- Botón editar: superAdmin edita todos, admin solo edita empleados --%>
+          <% if (esSuperAdmin || (esAdmin && "Empleado".equals(emp.getNombreRol()))) { %>
+          <a class="empleado-card__btn-editar"
+             href="<%= ctx %>/empleados/editar?id=<%= emp.getId() %>"
+             title="Editar">
+            <i class="fi fi-sr-edit"></i>
+          </a>
+          <% } %>
         </div>
         <% } %>
       </div>
       <% } %>
 
-      <% if (esSuperAdmin) { %>
+      <!-- Botón agregar al fondo en móvil -->
       <div class="modulo-accion-footer">
         <a class="boton boton--primario" href="<%= ctx %>/empleados/nuevo">
           <i class="fi fi-sr-user-add"></i>
           Agregar empleado
         </a>
       </div>
-      <% } %>
 
     </div>
   </main>

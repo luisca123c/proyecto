@@ -31,6 +31,9 @@ public class NuevoEmpleadoServlet extends HttpServlet {
             throws ServletException, IOException {
 
         if (!verificarSuperAdmin(request, response)) return;
+        HttpSession sesion = request.getSession(false);
+        Usuario sol = (Usuario) sesion.getAttribute("usuario");
+        request.setAttribute("esSuperAdmin", "SuperAdministrador".equals(sol.getNombreRol()));
         request.getRequestDispatcher(VISTA).forward(request, response);
     }
 
@@ -54,12 +57,14 @@ public class NuevoEmpleadoServlet extends HttpServlet {
                 || estaVacio(correo) || estaVacio(contrasena)
                 || estaVacio(estado) || estaVacio(rol)) {
 
+            setEsSuperAdmin(request);
             request.setAttribute("error", "Todos los campos son obligatorios.");
             request.getRequestDispatcher(VISTA).forward(request, response);
             return;
         }
 
         if (contrasena.trim().length() < 6) {
+            setEsSuperAdmin(request);
             request.setAttribute("error", "La contraseña debe tener al menos 6 caracteres.");
             request.getRequestDispatcher(VISTA).forward(request, response);
             return;
@@ -70,6 +75,7 @@ public class NuevoEmpleadoServlet extends HttpServlet {
         Usuario solicitante  = (Usuario) session.getAttribute("usuario");
         if ("Administrador".equals(rol)
                 && !"SuperAdministrador".equals(solicitante.getNombreRol())) {
+            setEsSuperAdmin(request);
             request.setAttribute("error", "No tienes permiso para crear Administradores.");
             request.getRequestDispatcher(VISTA).forward(request, response);
             return;
@@ -78,12 +84,14 @@ public class NuevoEmpleadoServlet extends HttpServlet {
         CrearEmpleadoDAO dao = new CrearEmpleadoDAO();
         try {
             if (dao.correoExiste(correo)) {
-                request.setAttribute("error", "El correo ya está registrado.");
+                setEsSuperAdmin(request);
+            request.setAttribute("error", "El correo ya está registrado.");
                 request.getRequestDispatcher(VISTA).forward(request, response);
                 return;
             }
             if (dao.telefonoExiste(telefono)) {
-                request.setAttribute("error", "El teléfono ya está registrado.");
+                setEsSuperAdmin(request);
+            request.setAttribute("error", "El teléfono ya está registrado.");
                 request.getRequestDispatcher(VISTA).forward(request, response);
                 return;
             }
@@ -96,6 +104,7 @@ public class NuevoEmpleadoServlet extends HttpServlet {
 
         } catch (SQLException e) {
             e.printStackTrace();
+            setEsSuperAdmin(request);
             request.setAttribute("error", "Error al guardar. Intenta de nuevo.");
             request.getRequestDispatcher(VISTA).forward(request, response);
             return;
@@ -107,11 +116,20 @@ public class NuevoEmpleadoServlet extends HttpServlet {
 
     /* ── Helpers ─────────────────────────────────────────────── */
 
+    /*
+     * Permite acceso a SuperAdministrador y Administrador.
+     * Solo SuperAdmin puede crear Admins — eso se valida más adelante en el POST.
+     */
     private boolean verificarSuperAdmin(HttpServletRequest req, HttpServletResponse res)
             throws IOException {
         HttpSession session = req.getSession(false);
         Usuario u = (session != null) ? (Usuario) session.getAttribute("usuario") : null;
-        if (u == null || !"SuperAdministrador".equals(u.getNombreRol())) {
+        if (u == null) {
+            res.sendRedirect(req.getContextPath() + "/login");
+            return false;
+        }
+        String rol = u.getNombreRol();
+        if (!"SuperAdministrador".equals(rol) && !"Administrador".equals(rol)) {
             res.sendRedirect(req.getContextPath() + "/dashboard");
             return false;
         }
@@ -120,5 +138,13 @@ public class NuevoEmpleadoServlet extends HttpServlet {
 
     private boolean estaVacio(String valor) {
         return valor == null || valor.isBlank();
+    }
+
+    private void setEsSuperAdmin(HttpServletRequest req) {
+        HttpSession s = req.getSession(false);
+        if (s != null) {
+            Usuario u = (Usuario) s.getAttribute("usuario");
+            req.setAttribute("esSuperAdmin", u != null && "SuperAdministrador".equals(u.getNombreRol()));
+        }
     }
 }

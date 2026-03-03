@@ -383,3 +383,23 @@
   font-weight: 600;
   font-size: 0.9rem;
 }
+
+/* Botón editar dentro de la card */
+.empleado-card__btn-editar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  background-color: rgba(255, 255, 255, 0.15);
+  color: var(--color-texto);
+  text-decoration: none;
+  font-size: 1rem;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease;
+}
+
+.empleado-card__btn-editar:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}

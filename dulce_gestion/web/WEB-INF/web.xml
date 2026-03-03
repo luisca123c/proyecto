@@ -63,6 +63,16 @@
         <url-pattern>/empleados/nuevo</url-pattern>
     </servlet-mapping>
 
+    <!-- EditarEmpleadoServlet -->
+    <servlet>
+        <servlet-name>EditarEmpleadoServlet</servlet-name>
+        <servlet-class>com.dulce_gestion.controllers.EditarEmpleadoServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>EditarEmpleadoServlet</servlet-name>
+        <url-pattern>/empleados/editar</url-pattern>
+    </servlet-mapping>
+
     <!-- ========== SESIÓN ========== -->
     <session-config>
         <session-timeout>30</session-timeout>
