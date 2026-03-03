@@ -1,108 +1,197 @@
 /* ==========================================================
    DASHBOARD — dashboard.css
-   Fondo morado completo, cards ícono+texto centradas.
-   Mobile-first, columna única. Desktop: 2 columnas.
+   Usa el layout-app (grid con sidebar) ya definido en layout.css
+   Las cards se centran dentro del pagina-main.
 ========================================================== */
 
-/* Fondo morado en toda la página */
-.pagina-dashboard {
+/* -----------------------------------------------------------
+   SIDEBAR — estilos visuales
+   (posición y grid area ya están en layout.css)
+----------------------------------------------------------- */
+.sidebar {
   background-color: var(--color-principal-morado);
-  min-height: 100dvh;
+  box-shadow: var(--sombra-sidebar);
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  /* Móvil: panel deslizable desde la izquierda */
+  position: fixed;
+  top: 0;
+  left: -260px;
+  width: 260px;
+  height: 100vh;
+  z-index: 1000;
+  transition: left 0.28s ease;
 }
 
-/* -----------------------------------------------------------
-   HEADER DASHBOARD
------------------------------------------------------------ */
-.dashboard-header {
-  background-color: var(--color-principal-morado);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  padding: 12px 20px;
+/* Overlay semitransparente en móvil */
+.sidebar__overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 999;
+  cursor: pointer;
+}
 
+/* Checkbox oculto que controla el sidebar */
+.sidebar__toggle {
+  display: none;
+}
+
+/* Cuando el toggle está activo: mostrar sidebar y overlay */
+.sidebar__toggle:checked ~ .sidebar {
+  left: 0;
+}
+
+.sidebar__toggle:checked ~ .sidebar__overlay {
+  display: block;
+}
+
+/* Cabecera del sidebar */
+.sidebar__top {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.dashboard-header__marca {
+.sidebar__brand {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.dashboard-header__logo {
-  width: 36px;
-  height: 36px;
+.sidebar__logo {
+  width: 32px;
+  height: 32px;
   object-fit: contain;
 }
 
-.dashboard-header__titulo {
-  font-size: 1rem;
-  font-weight: 700;
+.sidebar__brand-text {
   color: var(--color-texto);
-  letter-spacing: 0.3px;
+  font-weight: 700;
+  font-size: 1rem;
 }
 
-/* Botón salir en header */
-.dashboard-header__salir {
+/* Botón cerrar (X) solo en móvil */
+.sidebar__cerrar {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-
-  padding: 8px 16px;
-  border-radius: var(--radius-md);
-
-  background-color: rgba(255, 255, 255, 0.15);
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
   color: var(--color-texto);
-  text-decoration: none;
-  font-size: 0.9rem;
-  font-weight: 600;
-  font-family: var(--fuente-base);
-
-  transition: background-color 0.2s ease;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: background 0.2s;
 }
 
-.dashboard-header__salir i {
-  font-size: 1rem;
-  display: flex;
+.sidebar__cerrar:hover {
+  background: rgba(255, 255, 255, 0.12);
 }
 
-.dashboard-header__salir:hover {
-  background-color: rgba(255, 255, 255, 0.25);
-}
-
-/* -----------------------------------------------------------
-   MAIN — contenedor de las cards
------------------------------------------------------------ */
-.dashboard-contenido {
-  flex: 1;
+/* Nav del sidebar */
+.sidebar__nav {
   display: flex;
   flex-direction: column;
+  padding: 12px 0;
+  gap: 2px;
+  flex: 1;
+}
+
+.sidebar__link {
+  display: flex;
   align-items: center;
-  padding: 28px 20px;
-  gap: 0;
+  gap: 12px;
+  padding: 12px 20px;
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: 0;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.sidebar__link i {
+  font-size: 1.1rem;
+  width: 20px;
+  display: flex;
+  flex-shrink: 0;
+}
+
+.sidebar__link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-texto);
+}
+
+.sidebar__link--activo {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--color-texto);
+  font-weight: 700;
+}
+
+.sidebar__separador {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  margin: 8px 16px;
+}
+
+.sidebar__link--salir {
+  color: #ff8a80;
+}
+
+.sidebar__link--salir:hover {
+  background: rgba(169, 50, 38, 0.25);
+  color: #ffcdd2;
 }
 
 /* -----------------------------------------------------------
-   GRID DE CARDS
+   DESKTOP (≥768px) — sidebar fijo en grid area
 ----------------------------------------------------------- */
+@media (min-width: 768px) {
+  .sidebar {
+    position: static;        /* el grid lo ubica en su área */
+    left: auto;
+    height: 100%;
+    min-height: 100vh;
+    transition: none;
+  }
+
+  .sidebar__cerrar {
+    display: none;           /* no se necesita botón cerrar */
+  }
+
+  .sidebar__overlay {
+    display: none !important;
+  }
+}
+
+/* -----------------------------------------------------------
+   CARDS DEL DASHBOARD
+   Centradas dentro del pagina-main
+----------------------------------------------------------- */
+.dashboard-contenido {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px 16px;
+  min-height: calc(100vh - 64px);
+}
+
+/* Grid móvil: columna única centrada */
 .dashboard-grid {
   width: 100%;
-  max-width: 360px;
+  max-width: 340px;
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
-/* -----------------------------------------------------------
-   CARD individual
------------------------------------------------------------ */
+/* Card individual */
 .dashboard-card {
   display: flex;
   flex-direction: column;
@@ -110,8 +199,8 @@
   justify-content: center;
   gap: 10px;
 
-  padding: 20px 16px;
-  min-height: 90px;
+  padding: 22px 16px;
+  min-height: 95px;
 
   background-color: var(--color-morado-medio);
   color: var(--color-texto);
@@ -121,19 +210,17 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
 
   font-family: var(--fuente-base);
-  font-size: 1rem;
   font-weight: 700;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.3px;
   text-align: center;
 
-  transition: background-color 0.2s ease, transform 0.08s ease, box-shadow 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.08s ease;
   user-select: none;
   cursor: pointer;
 }
 
 .dashboard-card:hover {
   background-color: var(--color-morado-claro);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
 .dashboard-card:active {
@@ -145,9 +232,8 @@
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4);
 }
 
-/* Ícono grande dentro de la card */
 .dashboard-card__icono {
-  font-size: 1.8rem;
+  font-size: 1.9rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -159,57 +245,53 @@
   font-weight: 700;
 }
 
-/* Variante SALIR — rojo */
+/* Variante SALIR */
 .dashboard-card--salir {
   background-color: var(--color-danger);
-  border-color: rgba(255, 255, 255, 0.08);
 }
-
 .dashboard-card--salir:hover {
   background-color: var(--color-danger-hover);
 }
 
 /* -----------------------------------------------------------
-   FOOTER
+   DESKTOP (≥768px) — grid 3 columnas centrado
 ----------------------------------------------------------- */
-.dashboard-footer {
-  background-color: var(--color-principal-morado);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 14px 20px;
-  text-align: center;
-}
-
-.dashboard-footer__texto {
-  margin: 0;
-  font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-/* ==========================================================
-   DESKTOP (≥ 768px) — grid 2 columnas
-========================================================== */
 @media (min-width: 768px) {
-  .dashboard-grid {
-    max-width: 520px;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+
+  .dashboard-contenido {
+    padding: 40px;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 64px);
   }
 
-  /* La última card (Salir) centrada si queda sola */
-  .dashboard-card--salir:last-child:nth-child(odd) {
-    grid-column: 1 / -1;
-    max-width: 240px;
+  .dashboard-grid {
+    width: 100%;
+    max-width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  /* Salir sola → columna central */
+  .dashboard-card--salir:last-child:nth-child(3n + 1) {
+    grid-column: 2 / 3;
+  }
+
+  /* Salir sola fila de 2 → ocupa las 2 últimas columnas centrado */
+  .dashboard-card--salir:last-child:nth-child(3n + 2) {
+    grid-column: 2 / 4;
+    max-width: 220px;
     margin: 0 auto;
     width: 100%;
   }
 
   .dashboard-card {
-    min-height: 110px;
-    padding: 24px 20px;
+    min-height: 150px;
+    padding: 30px 20px;
   }
 
   .dashboard-card__icono {
-    font-size: 2rem;
+    font-size: 2.4rem;
   }
 }
