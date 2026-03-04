@@ -16,6 +16,16 @@
     </filter-mapping>
 
     <!-- ========== SERVLETS ========== -->
+
+    <!-- ImagenServlet: sirve imágenes desde carpeta externa -->
+    <servlet>
+        <servlet-name>ImagenServlet</servlet-name>
+        <servlet-class>com.dulce_gestion.controllers.ImagenServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ImagenServlet</servlet-name>
+        <url-pattern>/uploads/*</url-pattern>
+    </servlet-mapping>
     <servlet>
         <servlet-name>LoginServlet</servlet-name>
         <servlet-class>com.dulce_gestion.controllers.LoginServlet</servlet-class>

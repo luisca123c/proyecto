@@ -1,7 +1,10 @@
 package com.dulce_gestion.controllers;
 
 import com.dulce_gestion.dao.EliminarProductoDAO;
+import com.dulce_gestion.dao.ImagenProductoDAO;
 import com.dulce_gestion.models.Usuario;
+import com.dulce_gestion.utils.Uploads;
+import java.io.File;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -44,6 +47,20 @@ public class EliminarProductoServlet extends HttpServlet {
 
         try {
             int id = Integer.parseInt(idParam.trim());
+
+            // Borrar imagen física antes de eliminar el producto
+            try {
+                String urlRelativa = new ImagenProductoDAO().obtenerPath(id);
+                if (urlRelativa != null && !urlRelativa.isBlank()) {
+                    String nombreArchivo = new File(urlRelativa).getName();
+                    File img = new File(
+                        Uploads.carpetaProductos(request.getServletContext()),
+                        nombreArchivo
+                    );
+                    if (img.exists()) img.delete();
+                }
+            } catch (Exception ignored) {}
+
             new EliminarProductoDAO().eliminar(id);
             response.sendRedirect(ctx + "/productos?exito=eliminado");
         } catch (NumberFormatException e) {

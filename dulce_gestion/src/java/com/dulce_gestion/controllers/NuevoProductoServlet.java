@@ -3,6 +3,7 @@ package com.dulce_gestion.controllers;
 import com.dulce_gestion.dao.CrearProductoDAO;
 import com.dulce_gestion.dao.ImagenProductoDAO;
 import com.dulce_gestion.dao.ProductoDAO;
+import com.dulce_gestion.utils.Uploads;
 import com.dulce_gestion.models.Usuario;
 
 import jakarta.servlet.ServletException;
@@ -109,26 +110,23 @@ public class NuevoProductoServlet extends HttpServlet {
     }
 
     /*
-     * Guarda el archivo en disco y registra el path en la BD.
-     * Los archivos van a: [webroot]/assets/images/productos/
+     * Guarda el archivo en la carpeta externa definida en Uploads.java
+     * y registra la URL relativa en la BD.
      */
     private void guardarImagen(HttpServletRequest request, Part part,
                                 int idProducto, String nombreProducto)
             throws IOException, SQLException {
 
-        String webRoot   = request.getServletContext().getRealPath("/");
-        File   carpeta   = new File(webRoot, "assets/images/productos");
-        if (!carpeta.exists()) carpeta.mkdirs();
+        File carpeta = Uploads.carpetaProductos(request.getServletContext());
 
-        // Generar nombre de archivo unico basado en el ID del producto
-        String ext       = obtenerExtension(part.getSubmittedFileName());
+        String ext           = obtenerExtension(part.getSubmittedFileName());
         String nombreArchivo = "producto_" + idProducto + ext;
-        File   destino   = new File(carpeta, nombreArchivo);
+        File   destino       = new File(carpeta, nombreArchivo);
 
         part.write(destino.getAbsolutePath());
 
-        String pathRelativo = "assets/images/productos/" + nombreArchivo;
-        new ImagenProductoDAO().guardarOActualizar(idProducto, pathRelativo, nombreProducto);
+        String urlRelativa = Uploads.urlRelativa(nombreArchivo);
+        new ImagenProductoDAO().guardarOActualizar(idProducto, urlRelativa, nombreProducto);
     }
 
     private String obtenerExtension(String filename) {

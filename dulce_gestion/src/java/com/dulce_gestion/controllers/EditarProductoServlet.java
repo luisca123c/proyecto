@@ -3,6 +3,7 @@ package com.dulce_gestion.controllers;
 import com.dulce_gestion.dao.EditarProductoDAO;
 import com.dulce_gestion.dao.ImagenProductoDAO;
 import com.dulce_gestion.dao.ProductoDAO;
+import com.dulce_gestion.utils.Uploads;
 import com.dulce_gestion.models.Producto;
 import com.dulce_gestion.models.Usuario;
 
@@ -125,29 +126,25 @@ public class EditarProductoServlet extends HttpServlet {
         // Borrar imagen anterior si existe
         eliminarImagenFisica(request, idProducto);
 
-        String webRoot = request.getServletContext().getRealPath("/");
-        File carpeta   = new File(webRoot, "assets/images/productos");
-        if (!carpeta.exists()) carpeta.mkdirs();
-
-        String ext           = obtenerExtension(part.getSubmittedFileName());
+        File carpeta     = Uploads.carpetaProductos(request.getServletContext());
+        String ext       = obtenerExtension(part.getSubmittedFileName());
         String nombreArchivo = "producto_" + idProducto + ext;
-        File   destino       = new File(carpeta, nombreArchivo);
+        File   destino   = new File(carpeta, nombreArchivo);
         part.write(destino.getAbsolutePath());
 
-        String pathRelativo = "assets/images/productos/" + nombreArchivo;
-        new ImagenProductoDAO().guardarOActualizar(idProducto, pathRelativo, nombreProducto);
+        String urlRelativa = Uploads.urlRelativa(nombreArchivo);
+        new ImagenProductoDAO().guardarOActualizar(idProducto, urlRelativa, nombreProducto);
     }
 
     /*
-     * Borra el archivo fisico de la imagen anterior en disco.
+     * Borra el archivo físico de la imagen anterior del directorio externo.
      */
     private void eliminarImagenFisica(HttpServletRequest request, int idProducto) {
         try {
-            ImagenProductoDAO dao = new ImagenProductoDAO();
-            String path = dao.obtenerPath(idProducto);
-            if (path != null && !path.isBlank()) {
-                String webRoot = request.getServletContext().getRealPath("/");
-                File f = new File(webRoot, path);
+            String urlRelativa = new ImagenProductoDAO().obtenerPath(idProducto);
+            if (urlRelativa != null && !urlRelativa.isBlank()) {
+                String nombreArchivo = new File(urlRelativa).getName();
+                File f = new File(Uploads.carpetaProductos(request.getServletContext()), nombreArchivo);
                 if (f.exists()) f.delete();
             }
         } catch (Exception ignored) {}

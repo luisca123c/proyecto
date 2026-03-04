@@ -38,7 +38,8 @@ public class FiltroAutenticacion implements Filter {
 
         // Rutas públicas: login y assets estáticos
         boolean esPublica = uri.equals(contextPath + "/login")
-                         || uri.startsWith(contextPath + "/assets/");
+                         || uri.startsWith(contextPath + "/assets/")
+                         || uri.startsWith(contextPath + "/uploads/");
 
         if (esPublica) {
             chain.doFilter(request, response);
