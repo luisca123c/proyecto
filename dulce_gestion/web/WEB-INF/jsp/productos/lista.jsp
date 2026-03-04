@@ -22,6 +22,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Productos | Dulce Gestion</title>
+  <link rel="stylesheet" href="<%= ctx %>/assets/css/pages/mensajes.css">
   <link rel="stylesheet" href="<%= ctx %>/assets/css/styles.css">
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.2.0/uicons-solid-rounded/css/uicons-solid-rounded.css">
 </head>
@@ -101,13 +102,13 @@
 
       <!-- Mensajes -->
       <% if (exitoCreado) { %>
-      <div class="modulo-exito"><i class="fi fi-sr-check"></i> Producto creado correctamente.</div>
+      <div class="alerta alerta-exito"><i class="fi fi-sr-check-circle"></i> <span>Producto creado correctamente</span></div>
       <% } %>
       <% if (exitoEditado) { %>
       <div class="modulo-exito"><i class="fi fi-sr-check"></i> Producto actualizado correctamente.</div>
       <% } %>
       <% if (exitoEliminado) { %>
-      <div class="modulo-exito"><i class="fi fi-sr-check"></i> Producto eliminado correctamente.</div>
+      <div class="alerta alerta-exito"><i class="fi fi-sr-check-circle"></i> <span>Producto eliminado correctamente</span></div>
       <% } %>
       <% if ("eliminacion".equals(errorParam)) { %>
       <div class="modulo-error"><i class="fi fi-sr-triangle-warning"></i> No se pudo eliminar. El producto tiene ventas asociadas.</div>
@@ -170,7 +171,7 @@
           <div class="pcard__info">
             <span class="pcard__nombre"><%= prod.getNombre() %></span>
             <span class="pcard__detalle">
-              Stock: $<%= prod.getPrecioUnitario() %> = <%= prod.getStockActual() %>
+              stock = <%= prod.getStockActual() %> precio = $<%= prod.getPrecioUnitario() %>
             </span>
           </div>
 

@@ -71,6 +71,10 @@
         <i class="fi fi-sr-chart-line-up"></i><span>Ganancias</span>
       </a>
       <div class="sidebar__separador"></div>
+      <div class="sidebar__separador"></div>
+      <a class="sidebar__link" href="<%= ctx %>/perfil">
+        <i class="fi fi-sr-user"></i><span>Perfil</span>
+      </a>
       <a class="sidebar__link sidebar__link--salir" href="<%= ctx %>/logout">
         <i class="fi fi-sr-sign-out-alt"></i><span>Cerrar sesión</span>
       </a>
@@ -105,6 +109,11 @@
         <a class="dashboard-card" href="<%= ctx %>/ganancias">
           <i class="dashboard-card__icono fi fi-sr-chart-line-up"></i>
           <span class="dashboard-card__texto">Ganancias</span>
+        </a>
+
+        <a class="dashboard-card" href="<%= ctx %>/perfil">
+          <i class="dashboard-card__icono fi fi-sr-user"></i>
+          <span class="dashboard-card__texto">Perfil</span>
         </a>
 
       </nav>

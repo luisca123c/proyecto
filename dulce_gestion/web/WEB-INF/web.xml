@@ -122,6 +122,46 @@
         <servlet-name>EliminarProductoServlet</servlet-name>
         <url-pattern>/productos/eliminar</url-pattern>
     </servlet-mapping>
+    <!-- ========== PERFIL ========== -->
+    <servlet>
+        <servlet-name>PerfilServlet</servlet-name>
+        <servlet-class>com.dulce_gestion.controllers.PerfilServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>PerfilServlet</servlet-name>
+        <url-pattern>/perfil</url-pattern>
+
+    <!-- VerPerfilServlet -->
+    <servlet>
+        <servlet-name>VerPerfilServlet</servlet-name>
+        <servlet-class>com.dulce_gestion.controllers.VerPerfilServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>VerPerfilServlet</servlet-name>
+        <url-pattern>/perfil/ver</url-pattern>
+    </servlet-mapping>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>EditarPerfilServlet</servlet-name>
+        <servlet-class>com.dulce_gestion.controllers.EditarPerfilServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>EditarPerfilServlet</servlet-name>
+        <url-pattern>/perfil/editar</url-pattern>
+
+    <!-- VerPerfilServlet -->
+    <servlet>
+        <servlet-name>VerPerfilServlet</servlet-name>
+        <servlet-class>com.dulce_gestion.controllers.VerPerfilServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>VerPerfilServlet</servlet-name>
+        <url-pattern>/perfil/ver</url-pattern>
+    </servlet-mapping>
+    </servlet-mapping>
+
+    
 
     <!-- ========== SESIÓN ========== -->
     <session-config>

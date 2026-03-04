@@ -1,0 +1,520 @@
+/* ============================================
+   ARCHIVO: /assets/css/pages/perfil.css
+   DESCRIPCIÓN: Estilos específicos para módulo de Perfil
+   ============================================ */
+
+/* ========== CONTENEDOR PRINCIPAL ========== */
+.perfil-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* ========== CARD DE PERFIL ========== */
+.perfil-card {
+    background: white;
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+/* ========== HEADER DEL PERFIL ========== */
+.perfil-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.perfil-avatar {
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 40px;
+    margin-right: 20px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.perfil-info h1 {
+    margin: 0 0 10px 0;
+    color: #333;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.perfil-info p {
+    margin: 5px 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.perfil-info p strong {
+    color: #333;
+    font-weight: 600;
+}
+
+.perfil-badge {
+    display: inline-block;
+    background: #667eea;
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 10px;
+}
+
+.perfil-badge--admin {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.perfil-badge--empleado {
+    background: #4caf50;
+}
+
+/* ========== ALERTAS ========== */
+.alerta {
+    padding: 15px 20px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.alerta i {
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.alerta-error {
+    background: #ffebee;
+    border-left: 4px solid #f44336;
+    color: #c62828;
+}
+
+.alerta-exito {
+    background: #e8f5e9;
+    border-left: 4px solid #4caf50;
+    color: #2e7d32;
+}
+
+.alerta-info {
+    background: #e3f2fd;
+    border-left: 4px solid #2196f3;
+    color: #1565c0;
+}
+
+/* ========== ADVERTENCIA EMPLEADO ========== */
+.restriccion-empleado {
+    background: #fff3cd;
+    padding: 15px 20px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    color: #856404;
+    border-left: 4px solid #ffc107;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+}
+
+.restriccion-empleado i {
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.restriccion-empleado strong {
+    font-weight: 600;
+}
+
+/* ========== TABS ========== */
+.tab-botones {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #f0f0f0;
+    overflow-x: auto;
+}
+
+.tab-btn {
+    padding: 12px 20px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-weight: 600;
+    color: #666;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.tab-btn:hover {
+    color: #333;
+}
+
+.tab-btn.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+}
+
+.tab-btn i {
+    font-size: 16px;
+}
+
+.tab-contenido {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.tab-contenido.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* ========== FORMULARIOS ========== */
+.formulario-perfil {
+    margin-top: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: #999;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-group input:disabled,
+.form-group select:disabled {
+    background: #f5f5f5;
+    color: #999;
+    cursor: not-allowed;
+}
+
+.form-group input[type="email"] {
+    /* Estilos específicos para email si es necesario */
+}
+
+.form-group input[type="password"] {
+    letter-spacing: 2px;
+}
+
+.form-group input[type="tel"] {
+    /* Estilos específicos para tel si es necesario */
+}
+
+/* ========== LAYOUT DE FILAS EN FORMULARIO ========== */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ========== BOTONES ========== */
+.botones-accion {
+    display: flex;
+    gap: 10px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* BOTÓN PRIMARY */
+.btn-primary {
+    background: #667eea;
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #5568d3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+/* BOTÓN SECONDARY */
+.btn-secondary {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: #d0d0d0;
+}
+
+/* BOTÓN DANGER */
+.btn-danger {
+    background: #f44336;
+    color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: #d32f2f;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+}
+
+/* ========== ESTADO DEL USUARIO ========== */
+.estado-usuario {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.estado-usuario--activo {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.estado-usuario--inactivo {
+    background: #ffebee;
+    color: #c62828;
+}
+
+/* ========== INFORMACIÓN ADICIONAL ========== */
+.info-adicional {
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 4px;
+    margin-top: 20px;
+    border-left: 4px solid #667eea;
+}
+
+.info-adicional dt {
+    font-weight: 600;
+    color: #333;
+    margin-top: 10px;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #999;
+}
+
+.info-adicional dd {
+    margin: 5px 0 0 0;
+    color: #666;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+    .perfil-container {
+        padding: 10px;
+    }
+
+    .perfil-card {
+        padding: 20px;
+    }
+
+    .perfil-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .perfil-avatar {
+        margin-right: 0;
+        margin-bottom: 20px;
+        width: 80px;
+        height: 80px;
+        font-size: 32px;
+    }
+
+    .perfil-info h1 {
+        font-size: 24px;
+    }
+
+    .tab-botones {
+        gap: 0;
+        margin-bottom: 0;
+    }
+
+    .tab-btn {
+        flex: 1;
+        border-bottom: 3px solid #f0f0f0;
+        padding: 12px 10px;
+        font-size: 12px;
+    }
+
+    .tab-btn i {
+        display: none;
+    }
+
+    .botones-accion {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ========== ANIMACIONES ========== */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.perfil-card {
+    animation: slideInUp 0.3s ease;
+}
+
+/* ========== MODO OSCURO (FUTURO) ========== */
+@media (prefers-color-scheme: dark) {
+    .perfil-card {
+        background: #1e1e1e;
+        color: #e0e0e0;
+    }
+
+    .perfil-header {
+        border-bottom-color: #333;
+    }
+
+    .perfil-info h1 {
+        color: #fff;
+    }
+
+    .perfil-info p {
+        color: #b0b0b0;
+    }
+
+    .form-group label {
+        color: #e0e0e0;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        background: #2a2a2a;
+        color: #e0e0e0;
+        border-color: #404040;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        border-color: #667eea;
+    }
+
+    .info-adicional {
+        background: #2a2a2a;
+    }
+
+    .info-adicional dt {
+        color: #999;
+    }
+
+    .info-adicional dd {
+        color: #b0b0b0;
+    }
+}
+
+/* ========== UTILIDADES ========== */
+.text-center {
+    text-align: center;
+}
+
+.mt-20 {
+    margin-top: 20px;
+}
+
+.mb-20 {
+    margin-bottom: 20px;
+}
+
+.hidden {
+    display: none;
+}
+
+.visible {
+    display: block;
+}

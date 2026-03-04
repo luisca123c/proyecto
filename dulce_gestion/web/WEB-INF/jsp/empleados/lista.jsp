@@ -159,6 +159,13 @@
               <%= emp.getEstado() %>
             </span>
           </div>
+          <!-- Botón Perfil -->
+          <a class="empleado-card__btn-perfil"
+             href="<%= ctx %>/perfil/ver?id=<%= emp.getId() %>"
+             title="Ver Perfil"
+             style="display: inline-flex; align-items: center; justify-content: center; background: #667eea; color: white; width: 32px; height: 32px; border-radius: 4px; text-decoration: none; margin-right: 6px;">
+            <i class="fi fi-sr-user"></i>
+          </a>
           <%-- Botón editar: superAdmin edita todos, admin solo edita empleados --%>
           <% if (esSuperAdmin || (esAdmin && "Empleado".equals(emp.getNombreRol()))) { %>
           <a class="empleado-card__btn-editar"
