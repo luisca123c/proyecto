@@ -21,11 +21,6 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.List;
 
-/*
- * Servlet para /productos/editar?id=X
- * Solo accesible para SuperAdministrador y Administrador.
- * Soporta subida de imagen via multipart.
- */
 @MultipartConfig(maxFileSize = 5 * 1024 * 1024)
 public class EditarProductoServlet extends HttpServlet {
 
@@ -97,17 +92,19 @@ public class EditarProductoServlet extends HttpServlet {
             new EditarProductoDAO().actualizar(id, nombre, descripcion, stock,
                                                precio, estado, fechaVenc, idCategoria, idUnidad);
 
-            // Procesar imagen si fue enviada
-            Part imagenPart = request.getPart("imagen");
-            if (imagenPart != null && imagenPart.getSize() > 0) {
-                guardarImagen(request, imagenPart, id, nombre);
-            }
-
-            // Eliminar imagen si se marco el checkbox
+            // ── Eliminar imagen si se marcó el checkbox ──
             String eliminarImg = request.getParameter("eliminarImagen");
             if ("1".equals(eliminarImg)) {
                 eliminarImagenFisica(request, id);
                 new ImagenProductoDAO().eliminar(id);
+            } else {
+                // ── Guardar nueva imagen si se subió ──
+                Part imagenPart = request.getPart("imagen");
+                if (imagenPart != null && imagenPart.getSize() > 0
+                        && imagenPart.getSubmittedFileName() != null
+                        && !imagenPart.getSubmittedFileName().isBlank()) {
+                    guardarImagen(request, imagenPart, id, nombre);
+                }
             }
 
         } catch (SQLException e) {
@@ -119,33 +116,52 @@ public class EditarProductoServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/productos?exito=editado");
     }
 
+    /* ── Guardar imagen en build/web/ Y en fuente del proyecto ── */
     private void guardarImagen(HttpServletRequest request, Part part,
                                 int idProducto, String nombreProducto)
             throws IOException, SQLException {
 
-        // Borrar imagen anterior si existe
+        // Borrar archivo anterior si existe
         eliminarImagenFisica(request, idProducto);
 
-        File carpeta     = Uploads.carpetaProductos(request.getServletContext());
-        String ext       = obtenerExtension(part.getSubmittedFileName());
+        String ext           = obtenerExtension(part.getSubmittedFileName());
         String nombreArchivo = "producto_" + idProducto + ext;
-        File   destino   = new File(carpeta, nombreArchivo);
-        part.write(destino.getAbsolutePath());
 
-        String urlRelativa = Uploads.urlRelativa(nombreArchivo);
-        new ImagenProductoDAO().guardarOActualizar(idProducto, urlRelativa, nombreProducto);
+        // 1. Guardar en build/web/ (activo en Tomcat ahora mismo)
+        File carpetaDeploy = Uploads.carpetaProductos(request.getServletContext());
+        File archivoDeploy = new File(carpetaDeploy, nombreArchivo);
+        part.write(archivoDeploy.getAbsolutePath());
+
+        // 2. Copiar al fuente web/ para que persista tras Clean & Build
+        File carpetaFuente = Uploads.carpetaProductosFuente(request.getServletContext());
+        if (carpetaFuente != null) {
+            try {
+                java.nio.file.Files.copy(
+                    archivoDeploy.toPath(),
+                    new File(carpetaFuente, nombreArchivo).toPath(),
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING
+                );
+            } catch (Exception ignored) {}
+        }
+
+        new ImagenProductoDAO().guardarOActualizar(idProducto,
+                Uploads.urlRelativa(nombreArchivo), nombreProducto);
     }
 
-    /*
-     * Borra el archivo físico de la imagen anterior del directorio externo.
-     */
+    /* ── Borra el archivo físico en ambas carpetas ── */
     private void eliminarImagenFisica(HttpServletRequest request, int idProducto) {
         try {
             String urlRelativa = new ImagenProductoDAO().obtenerPath(idProducto);
-            if (urlRelativa != null && !urlRelativa.isBlank()) {
-                String nombreArchivo = new File(urlRelativa).getName();
-                File f = new File(Uploads.carpetaProductos(request.getServletContext()), nombreArchivo);
-                if (f.exists()) f.delete();
+            if (urlRelativa == null || urlRelativa.isBlank()) return;
+            String nombreArchivo = new File(urlRelativa).getName();
+
+            File f1 = new File(Uploads.carpetaProductos(request.getServletContext()), nombreArchivo);
+            if (f1.exists()) f1.delete();
+
+            File carpetaFuente = Uploads.carpetaProductosFuente(request.getServletContext());
+            if (carpetaFuente != null) {
+                File f2 = new File(carpetaFuente, nombreArchivo);
+                if (f2.exists()) f2.delete();
             }
         } catch (Exception ignored) {}
     }
@@ -173,7 +189,6 @@ public class EditarProductoServlet extends HttpServlet {
             request.setAttribute("categorias", dao.listarCategorias());
             request.setAttribute("unidades",   dao.listarUnidades());
         } catch (SQLException e) {
-            e.printStackTrace();
             request.setAttribute("categorias", List.of());
             request.setAttribute("unidades",   List.of());
         }

@@ -16,16 +16,6 @@
     </filter-mapping>
 
     <!-- ========== SERVLETS ========== -->
-
-    <!-- ImagenServlet: sirve imágenes desde carpeta externa -->
-    <servlet>
-        <servlet-name>ImagenServlet</servlet-name>
-        <servlet-class>com.dulce_gestion.controllers.ImagenServlet</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>ImagenServlet</servlet-name>
-        <url-pattern>/uploads/*</url-pattern>
-    </servlet-mapping>
     <servlet>
         <servlet-name>LoginServlet</servlet-name>
         <servlet-class>com.dulce_gestion.controllers.LoginServlet</servlet-class>
@@ -107,6 +97,11 @@
     <servlet>
         <servlet-name>NuevoProductoServlet</servlet-name>
         <servlet-class>com.dulce_gestion.controllers.NuevoProductoServlet</servlet-class>
+        <multipart-config>
+            <max-file-size>5242880</max-file-size>
+            <max-request-size>10485760</max-request-size>
+            <file-size-threshold>1048576</file-size-threshold>
+        </multipart-config>
     </servlet>
     <servlet-mapping>
         <servlet-name>NuevoProductoServlet</servlet-name>
@@ -117,6 +112,11 @@
     <servlet>
         <servlet-name>EditarProductoServlet</servlet-name>
         <servlet-class>com.dulce_gestion.controllers.EditarProductoServlet</servlet-class>
+        <multipart-config>
+            <max-file-size>5242880</max-file-size>
+            <max-request-size>10485760</max-request-size>
+            <file-size-threshold>1048576</file-size-threshold>
+        </multipart-config>
     </servlet>
     <servlet-mapping>
         <servlet-name>EditarProductoServlet</servlet-name>
@@ -172,6 +172,36 @@
     </servlet-mapping>
 
     
+
+    <!-- GastosServlet -->
+    <servlet>
+        <servlet-name>GastosServlet</servlet-name>
+        <servlet-class>com.dulce_gestion.controllers.GastosServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>GastosServlet</servlet-name>
+        <url-pattern>/gastos</url-pattern>
+    </servlet-mapping>
+
+    <!-- GananciasServlet -->
+    <servlet>
+        <servlet-name>GananciasServlet</servlet-name>
+        <servlet-class>com.dulce_gestion.controllers.GananciasServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>GananciasServlet</servlet-name>
+        <url-pattern>/ganancias</url-pattern>
+    </servlet-mapping>
+
+    <!-- VentasServlet -->
+    <servlet>
+        <servlet-name>VentasServlet</servlet-name>
+        <servlet-class>com.dulce_gestion.controllers.VentasServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>VentasServlet</servlet-name>
+        <url-pattern>/ventas</url-pattern>
+    </servlet-mapping>
 
     <!-- ========== SESIÓN ========== -->
     <session-config>

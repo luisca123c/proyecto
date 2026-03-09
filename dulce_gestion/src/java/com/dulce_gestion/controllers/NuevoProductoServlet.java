@@ -8,6 +8,7 @@ import com.dulce_gestion.models.Usuario;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
+import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,18 +18,10 @@ import jakarta.servlet.http.Part;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-/*
- * Servlet para /productos/nuevo.
- * Solo accesible para SuperAdministrador y Administrador.
- * Usa @MultipartConfig para recibir el archivo de imagen.
- */
-@MultipartConfig(maxFileSize = 5 * 1024 * 1024) // 5 MB max
+@MultipartConfig(maxFileSize = 5 * 1024 * 1024)
 public class NuevoProductoServlet extends HttpServlet {
 
     private static final String VISTA = "/WEB-INF/jsp/productos/nuevo.jsp";
@@ -87,12 +80,9 @@ public class NuevoProductoServlet extends HttpServlet {
         }
 
         try {
-            // Crear el producto y obtener su nuevo ID
             int nuevoId = new CrearProductoDAO().crear(nombre, descripcion, stock,
                                                         precio, estado, fechaVenc,
                                                         idCategoria, idUnidad);
-
-            // Procesar imagen si fue enviada
             Part imagenPart = request.getPart("imagen");
             if (imagenPart != null && imagenPart.getSize() > 0) {
                 guardarImagen(request, imagenPart, nuevoId, nombre);
@@ -109,24 +99,31 @@ public class NuevoProductoServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/productos?exito=creado");
     }
 
-    /*
-     * Guarda el archivo en la carpeta externa definida en Uploads.java
-     * y registra la URL relativa en la BD.
-     */
     private void guardarImagen(HttpServletRequest request, Part part,
                                 int idProducto, String nombreProducto)
             throws IOException, SQLException {
 
-        File carpeta = Uploads.carpetaProductos(request.getServletContext());
-
         String ext           = obtenerExtension(part.getSubmittedFileName());
         String nombreArchivo = "producto_" + idProducto + ext;
-        File   destino       = new File(carpeta, nombreArchivo);
 
-        part.write(destino.getAbsolutePath());
+        // Guardar en build/web/ (activo ahora)
+        File carpeta = Uploads.carpetaProductos(request.getServletContext());
+        part.write(new File(carpeta, nombreArchivo).getAbsolutePath());
 
-        String urlRelativa = Uploads.urlRelativa(nombreArchivo);
-        new ImagenProductoDAO().guardarOActualizar(idProducto, urlRelativa, nombreProducto);
+        // Copiar también al fuente para que persista tras Clean & Build
+        File fuente = Uploads.carpetaProductosFuente(request.getServletContext());
+        if (fuente != null) {
+            try {
+                java.nio.file.Files.copy(
+                    new File(carpeta, nombreArchivo).toPath(),
+                    new File(fuente, nombreArchivo).toPath(),
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING
+                );
+            } catch (Exception ignored) {}
+        }
+
+        new ImagenProductoDAO().guardarOActualizar(idProducto,
+                Uploads.urlRelativa(nombreArchivo), nombreProducto);
     }
 
     private String obtenerExtension(String filename) {
@@ -140,7 +137,6 @@ public class NuevoProductoServlet extends HttpServlet {
             request.setAttribute("categorias", dao.listarCategorias());
             request.setAttribute("unidades",   dao.listarUnidades());
         } catch (SQLException e) {
-            e.printStackTrace();
             request.setAttribute("categorias", List.of());
             request.setAttribute("unidades",   List.of());
         }

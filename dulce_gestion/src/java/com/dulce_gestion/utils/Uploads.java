@@ -1,51 +1,62 @@
 package com.dulce_gestion.utils;
 
+import jakarta.servlet.ServletContext;
 import java.io.File;
 
 /*
- * Las imágenes se guardan en:
- *   [directorio_deploy_tomcat]/dulce_gestion_uploads/productos/
+ * Las imágenes se guardan DENTRO del proyecto en:
+ *   web/assets/images/productos/
  *
- * getRealPath("/") apunta a donde Tomcat desplegó la app, por ejemplo:
- *   D:/ruta/proyecto/build/web/
+ * Al estar dentro del deploy de Tomcat, son accesibles como
+ * recursos estáticos normales:
+ *   <img src="${pageContext.request.contextPath}/assets/images/productos/producto_3.jpg">
  *
- * La carpeta "dulce_gestion_uploads" queda al mismo nivel que "build/web/",
- * es decir fuera del build — Tomcat no la borra al redesplegar.
- * Funciona igual en cualquier equipo sin configurar nada.
+ * Esto las hace completamente portables — al mover el proyecto
+ * a otro equipo las imágenes viajan con él.
+ *
+ * NOTA: Al hacer Clean & Build en NetBeans, la carpeta build/web/
+ * se recrea desde web/, así que las imágenes nuevas subidas en
+ * tiempo de ejecución quedan en build/web/assets/images/productos/.
+ * Para que persistan en el fuente, se guardan en AMBAS rutas.
  */
 public class Uploads {
 
-    public static final String CARPETA_PRODUCTOS = "productos";
+    public static final String RUTA_RELATIVA = "assets/images/productos";
 
     /*
-     * Retorna la carpeta física donde se guardan las imágenes de productos.
-     * Crea la carpeta automáticamente si no existe.
+     * Carpeta física donde guardar imágenes nuevas (en el deploy activo).
+     * Esta es la carpeta que Tomcat está sirviendo en este momento.
      */
-    public static File carpetaProductos(jakarta.servlet.ServletContext ctx) {
-        // Subir dos niveles desde build/web/ → raíz del proyecto
-        File webDir   = new File(ctx.getRealPath("/"));   // .../build/web
-        File buildDir = webDir.getParentFile();            // .../build
-        File projDir  = buildDir.getParentFile();          // raíz del proyecto
-
-        File uploads  = new File(projDir, "dulce_gestion_uploads/productos");
-        if (!uploads.exists()) uploads.mkdirs();
-        return uploads;
-    }
-
-    /*
-     * Directorio base de uploads (para que ImagenServlet resuelva rutas).
-     */
-    public static File directorioBase(jakarta.servlet.ServletContext ctx) {
+    public static File carpetaProductos(ServletContext ctx) {
         File webDir  = new File(ctx.getRealPath("/"));
-        File projDir = webDir.getParentFile().getParentFile();
-        return new File(projDir, "dulce_gestion_uploads");
+        File carpeta = new File(webDir, RUTA_RELATIVA);
+        if (!carpeta.exists()) carpeta.mkdirs();
+        return carpeta;
     }
 
     /*
-     * URL relativa para <img src="...">.
-     * Ejemplo: "uploads/productos/producto_3.jpg"
+     * También guarda en el fuente del proyecto para que persista
+     * después de un Clean & Build.
+     * Si no se puede (ej: deploy en servidor externo), no falla.
+     */
+    public static File carpetaProductosFuente(ServletContext ctx) {
+        try {
+            // build/web/ -> build/ -> proyecto/ -> web/assets/images/productos
+            File buildWeb = new File(ctx.getRealPath("/"));
+            File proyecto = buildWeb.getParentFile().getParentFile();
+            File fuente   = new File(proyecto, "web/" + RUTA_RELATIVA);
+            if (!fuente.exists()) fuente.mkdirs();
+            return fuente;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /*
+     * URL relativa para usar en <img src="...">.
+     * Ejemplo: "assets/images/productos/producto_3.jpg"
      */
     public static String urlRelativa(String nombreArchivo) {
-        return "uploads/productos/" + nombreArchivo;
+        return RUTA_RELATIVA + "/" + nombreArchivo;
     }
 }

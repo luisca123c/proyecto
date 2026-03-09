@@ -1,7 +1,5 @@
 package com.dulce_gestion.controllers;
 
-import com.dulce_gestion.utils.Uploads;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -13,7 +11,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 /*
- * Sirve las imágenes subidas desde la carpeta externa del proyecto.
+ * Sirve imágenes de productos.
+ * Las imágenes están en: web/assets/images/productos/
+ * Son accesibles directamente como recursos estáticos, pero este
+ * servlet actúa como fallback para URLs del tipo /uploads/productos/...
+ * (compatibilidad con registros antiguos en BD).
+ *
  * URL: /dulce_gestion/uploads/productos/producto_X.jpg
  */
 @WebServlet("/uploads/*")
@@ -29,10 +32,12 @@ public class ImagenServlet extends HttpServlet {
             return;
         }
 
-        File base    = Uploads.directorioBase(getServletContext());
-        File archivo = new File(base, pathInfo);
+        // Buscar primero en assets/images (ruta nueva)
+        File webDir  = new File(getServletContext().getRealPath("/"));
+        File archivo = new File(webDir, "assets/images" + pathInfo);
 
         // Seguridad: evitar path traversal
+        File base = new File(webDir, "assets/images");
         if (!archivo.getCanonicalPath().startsWith(base.getCanonicalPath())) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
