@@ -225,37 +225,12 @@
 
       </form>
     </div>
+  <!-- Datos del servidor para el JS externo -->
+  <div id="prod-data" hidden
+       data-tiene-imagen="<%= tieneImagen %>"
+       data-img-path="<%= tieneImagen ? ctx + "/" + prod.getPathImagen() : "" %>"></div>
   </main>
 
 </body>
-<script>
-  const inputNombre = document.getElementById('inputNombre');
-  const previewNombre = document.getElementById('previewNombre');
-  const inputImagen = document.getElementById('inputImagen');
-  const imgPreview  = document.getElementById('imgPreview');
-  <% if (tieneImagen) { %>
-  const chkEliminar = document.getElementById('chkEliminar');
-  chkEliminar.addEventListener('change', function () {
-    if (this.checked) {
-      imgPreview.innerHTML = '<i class="fi fi-sr-ice-cream"></i>';
-    } else {
-      imgPreview.innerHTML = '<img src="<%= ctx %>/<%= prod.getPathImagen() %>" alt="Preview">';
-    }
-  });
-  <% } %>
-
-  inputNombre.addEventListener('input', () => {
-    previewNombre.textContent = inputNombre.value.trim() || 'Producto';
-  });
-
-  inputImagen.addEventListener('change', function () {
-    if (this.files && this.files[0]) {
-      const reader = new FileReader();
-      reader.onload = e => {
-        imgPreview.innerHTML = '<img src="' + e.target.result + '" alt="Preview">';
-      };
-      reader.readAsDataURL(this.files[0]);
-    }
-  });
-</script>
+<script src="<%= ctx %>/assets/js/productos/editar.js" defer></script>
 </html>

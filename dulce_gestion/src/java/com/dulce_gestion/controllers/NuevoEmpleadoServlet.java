@@ -13,37 +13,123 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.SQLException;
 
-/*
- * Servlet para /empleados/nuevo
- * GET  → muestra el formulario vacío
- * POST → valida y crea el nuevo usuario en la BD
+/**
+ * ============================================================
+ * SERVLET: NuevoEmpleadoServlet
+ * URL:     /empleados/nuevo
+ * MÉTODOS: GET, POST
+ * ============================================================
  *
- * Solo SuperAdministrador puede acceder a esta ruta.
+ * ¿QUÉ HACE?
+ * ----------
+ * Maneja la creación de nuevos usuarios en el sistema.
+ *   GET  → muestra el formulario vacío para crear un empleado/administrador
+ *   POST → valida los datos del formulario y crea el usuario en la BD
+ *
+ * ¿QUIÉN PUEDE ACCEDER?
+ * ----------------------
+ * Pueden acceder a la ruta:  SuperAdministrador Y Administrador.
+ *
+ * Sin embargo, hay una restricción adicional en el POST:
+ *   - Solo SuperAdmin puede crear Administradores.
+ *   - Admin solo puede crear Empleados.
+ *
+ * Esta doble verificación es intencional: no se bloquea el acceso
+ * de los Admins al formulario, pero si intentan crear un Admin,
+ * el POST lo rechaza con un mensaje de error claro.
+ *
+ * ¿POR QUÉ SE PASA "esSuperAdmin" AL JSP?
+ * -----------------------------------------
+ * El formulario de nuevo empleado tiene un campo <select> para el Rol.
+ * Si el solicitante es Administrador, ese campo debe mostrar solo "Empleado".
+ * Si es SuperAdministrador, puede elegir entre "Administrador" y "Empleado".
+ *
+ * El JSP usa el atributo esSuperAdmin para renderizar las opciones correctas:
+ *   <% if ((Boolean) request.getAttribute("esSuperAdmin")) { %>
+ *     <option value="Administrador">Administrador</option>
+ *   <% } %>
+ *   <option value="Empleado">Empleado</option>
+ *
+ * ¿POR QUÉ SE VERIFICA CORREO Y TELÉFONO ANTES DE CREAR?
+ * --------------------------------------------------------
+ * La BD tiene restricciones UNIQUE en correos y telefonos.
+ * Si intentáramos insertar un duplicado sin verificar antes,
+ * la BD lanzaría una excepción de clave duplicada (SQLException).
+ *
+ * Verificar con correoExiste() y telefonoExiste() ANTES del INSERT
+ * permite dar mensajes de error específicos y claros al usuario,
+ * en lugar de un genérico "Error al guardar".
  */
 @WebServlet("/empleados/nuevo")
 public class NuevoEmpleadoServlet extends HttpServlet {
 
+    /** Ruta interna del JSP del formulario */
     private static final String VISTA = "/WEB-INF/jsp/empleados/nuevo.jsp";
 
-    /* ── GET: mostrar formulario ─────────────────────────────── */
+    // =========================================================
+    // GET /empleados/nuevo
+    // =========================================================
+
+    /**
+     * Muestra el formulario vacío para crear un nuevo empleado o administrador.
+     *
+     * Solo pasa el atributo "esSuperAdmin" al JSP para que renderice
+     * las opciones correctas en el selector de rol.
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        if (!verificarSuperAdmin(request, response)) return;
-        HttpSession sesion = request.getSession(false);
-        Usuario sol = (Usuario) sesion.getAttribute("usuario");
-        request.setAttribute("esSuperAdmin", "SuperAdministrador".equals(sol.getNombreRol()));
+        // Verificar que el solicitante es Admin o SuperAdmin
+        if (!verificarAcceso(request, response)) return;
+
+        // Pasar al JSP si el solicitante es SuperAdmin (para mostrar la opción "Administrador")
+        setEsSuperAdmin(request);
+
         request.getRequestDispatcher(VISTA).forward(request, response);
     }
 
-    /* ── POST: procesar formulario ───────────────────────────── */
+    // =========================================================
+    // POST /empleados/nuevo
+    // =========================================================
+
+    /**
+     * Valida los datos del formulario y crea el nuevo usuario en la BD.
+     *
+     * FLUJO PASO A PASO:
+     *
+     * Paso 1 — Verificar acceso (Admin o SuperAdmin).
+     *
+     * Paso 2 — Leer todos los campos del formulario:
+     *   nombreCompleto, telefono, genero, correo, contrasena, estado, rol.
+     *
+     * Paso 3 — Validar que ningún campo esté vacío.
+     *   Si falta alguno → reenviar al formulario con error.
+     *
+     * Paso 4 — Validar longitud mínima de la contraseña (6 caracteres).
+     *
+     * Paso 5 — Verificar permisos de rol:
+     *   Si el solicitante es Admin y quiere crear un Admin → rechazar.
+     *
+     * Paso 6 — Verificar unicidad de correo y teléfono en la BD.
+     *   Si ya existen → reenviar con error específico.
+     *
+     * Paso 7 — Convertir texto a IDs:
+     *   dao.obtenerIdRol("Empleado")  → 3 (o el ID que corresponda)
+     *   dao.obtenerIdGenero("Masculino") → 1 (o el ID que corresponda)
+     *
+     * Paso 8 — Llamar a dao.crear() que inserta en 4 tablas en una transacción.
+     *
+     * Paso 9 — Redirigir a /empleados?exito=creado.
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        if (!verificarSuperAdmin(request, response)) return;
+        // ── Paso 1: verificar acceso ─────────────────────────────────────
+        if (!verificarAcceso(request, response)) return;
 
+        // ── Paso 2: leer parámetros del formulario ───────────────────────
         String nombreCompleto = request.getParameter("nombreCompleto");
         String telefono       = request.getParameter("telefono");
         String genero         = request.getParameter("genero");
@@ -52,17 +138,19 @@ public class NuevoEmpleadoServlet extends HttpServlet {
         String estado         = request.getParameter("estado");
         String rol            = request.getParameter("rol");
 
-        // Validación: todos los campos obligatorios
+        // ── Paso 3: validar que todos los campos obligatorios tienen valor ─
         if (estaVacio(nombreCompleto) || estaVacio(telefono) || estaVacio(genero)
                 || estaVacio(correo) || estaVacio(contrasena)
                 || estaVacio(estado) || estaVacio(rol)) {
 
-            setEsSuperAdmin(request);
+            setEsSuperAdmin(request); // Para que el JSP muestre las opciones de rol correctas
             request.setAttribute("error", "Todos los campos son obligatorios.");
             request.getRequestDispatcher(VISTA).forward(request, response);
             return;
         }
 
+        // ── Paso 4: validar longitud mínima de la contraseña ─────────────
+        // .trim() elimina espacios antes de contar la longitud
         if (contrasena.trim().length() < 6) {
             setEsSuperAdmin(request);
             request.setAttribute("error", "La contraseña debe tener al menos 6 caracteres.");
@@ -70,9 +158,11 @@ public class NuevoEmpleadoServlet extends HttpServlet {
             return;
         }
 
-        // Solo SuperAdmin puede crear Administradores
-        HttpSession session = request.getSession(false);
-        Usuario solicitante  = (Usuario) session.getAttribute("usuario");
+        // ── Paso 5: verificar que un Admin no intente crear un Admin ──────
+        HttpSession session   = request.getSession(false);
+        Usuario solicitante   = (Usuario) session.getAttribute("usuario");
+
+        // Solo SuperAdministrador puede asignar el rol Administrador a otro usuario
         if ("Administrador".equals(rol)
                 && !"SuperAdministrador".equals(solicitante.getNombreRol())) {
             setEsSuperAdmin(request);
@@ -81,70 +171,103 @@ public class NuevoEmpleadoServlet extends HttpServlet {
             return;
         }
 
+        // ── Paso 6: verificar unicidad antes de insertar ─────────────────
         CrearEmpleadoDAO dao = new CrearEmpleadoDAO();
         try {
+            // Verificar que el correo no esté ya registrado por otro usuario
             if (dao.correoExiste(correo)) {
                 setEsSuperAdmin(request);
-            request.setAttribute("error", "El correo ya está registrado.");
+                request.setAttribute("error", "El correo ya está registrado.");
                 request.getRequestDispatcher(VISTA).forward(request, response);
                 return;
             }
+
+            // Verificar que el teléfono no esté ya registrado por otro usuario
             if (dao.telefonoExiste(telefono)) {
                 setEsSuperAdmin(request);
-            request.setAttribute("error", "El teléfono ya está registrado.");
+                request.setAttribute("error", "El teléfono ya está registrado.");
                 request.getRequestDispatcher(VISTA).forward(request, response);
                 return;
             }
 
-            int idRol    = dao.obtenerIdRol(rol);
-            int idGenero = dao.obtenerIdGenero(genero);
+            // ── Paso 7: convertir nombre de rol y género a sus IDs en la BD ─
+            int idRol    = dao.obtenerIdRol(rol);       // "Empleado" → 3
+            int idGenero = dao.obtenerIdGenero(genero); // "Masculino" → 1
 
+            // ── Paso 8: crear el usuario en 4 tablas (transacción) ────────
+            // La contraseña se hashea internamente en el DAO con SHA-256
             dao.crear(nombreCompleto, telefono, idGenero,
                       correo, contrasena, estado, idRol);
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            e.printStackTrace(); // Log en consola de Tomcat
             setEsSuperAdmin(request);
             request.setAttribute("error", "Error al guardar. Intenta de nuevo.");
             request.getRequestDispatcher(VISTA).forward(request, response);
             return;
         }
 
-        // Éxito → volver a la lista con mensaje
+        // ── Paso 9: redirigir a la lista con mensaje de éxito ────────────
+        // El parámetro ?exito=creado lo lee el JSP de la lista para mostrar notificación
         response.sendRedirect(request.getContextPath() + "/empleados?exito=creado");
     }
 
-    /* ── Helpers ─────────────────────────────────────────────── */
+    // =========================================================
+    // MÉTODOS AUXILIARES (HELPERS)
+    // =========================================================
 
-    /*
-     * Permite acceso a SuperAdministrador y Administrador.
-     * Solo SuperAdmin puede crear Admins — eso se valida más adelante en el POST.
+    /**
+     * Verifica que el solicitante es SuperAdministrador o Administrador.
+     * Los Empleados son redirigidos al dashboard y se retorna false.
+     * Los no autenticados son redirigidos al login y se retorna false.
+     *
+     * El servlet que llama a este método debe retornar inmediatamente si
+     * el resultado es false (ya se hizo la redirección).
+     *
+     * @return true si tiene permiso, false si ya se redirigió
      */
-    private boolean verificarSuperAdmin(HttpServletRequest req, HttpServletResponse res)
+    private boolean verificarAcceso(HttpServletRequest req, HttpServletResponse res)
             throws IOException {
         HttpSession session = req.getSession(false);
         Usuario u = (session != null) ? (Usuario) session.getAttribute("usuario") : null;
+
         if (u == null) {
+            // Sin sesión → redirigir al login
             res.sendRedirect(req.getContextPath() + "/login");
             return false;
         }
+
         String rol = u.getNombreRol();
         if (!"SuperAdministrador".equals(rol) && !"Administrador".equals(rol)) {
+            // Es Empleado → no tiene acceso a gestión de usuarios
             res.sendRedirect(req.getContextPath() + "/dashboard");
             return false;
         }
-        return true;
+
+        return true; // Tiene permiso
     }
 
+    /**
+     * Retorna true si el string es null o está compuesto solo de espacios.
+     * Se usa para validar que los campos del formulario tienen contenido.
+     */
     private boolean estaVacio(String valor) {
         return valor == null || valor.isBlank();
     }
 
+    /**
+     * Pone el atributo "esSuperAdmin" en el request para que el JSP
+     * muestre u oculte la opción "Administrador" en el selector de rol.
+     *
+     * Se llama tanto en el GET como al reenviar el formulario con error.
+     */
     private void setEsSuperAdmin(HttpServletRequest req) {
         HttpSession s = req.getSession(false);
         if (s != null) {
             Usuario u = (Usuario) s.getAttribute("usuario");
-            req.setAttribute("esSuperAdmin", u != null && "SuperAdministrador".equals(u.getNombreRol()));
+            // true si el usuario actual es SuperAdmin, false si es Admin
+            req.setAttribute("esSuperAdmin",
+                u != null && "SuperAdministrador".equals(u.getNombreRol()));
         }
     }
 }

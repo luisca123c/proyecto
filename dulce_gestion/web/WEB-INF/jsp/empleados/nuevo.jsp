@@ -121,7 +121,7 @@
                    type="text" name="nombreCompleto"
                    placeholder="Nombre completo"
                    value="<%= vNombre %>"
-                   id="inputNombre"
+                   id="inputNombre" data-fallback="Nombre"
                    required>
             <i class="fi fi-sr-edit nv-campo__icono-edit"></i>
           </div>
@@ -233,12 +233,5 @@
   </main>
 
 </body>
-<script>
-  // Preview del nombre mientras se escribe
-  const inputNombre   = document.getElementById('inputNombre');
-  const previewNombre = document.getElementById('previewNombre');
-  inputNombre.addEventListener('input', () => {
-    previewNombre.textContent = inputNombre.value.trim() || 'Nombre';
-  });
-</script>
+<script src="<%= ctx %>/assets/js/empleados/preview-nombre.js" defer></script>
 </html>

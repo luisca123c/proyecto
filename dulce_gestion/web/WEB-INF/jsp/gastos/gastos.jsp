@@ -222,7 +222,10 @@
         <% } %>
       </div>
 
-    </div>
+    </div>  <!-- Datos del servidor para el JS externo -->
+  <div id="gastos-data" hidden
+       data-abrir="<% if (abrirEditar) { %>editar<% } else if (abrirCrear) { %>crear<% } %>"></div>
+
   </main>
 
   <!-- ── MODAL CREAR ── -->
@@ -303,20 +306,6 @@
     </div>
   </div>
 
-  <script>
-    function abrirCrear()  { document.getElementById('modalCrear').classList.add('activo'); }
-    function cerrarCrear() { document.getElementById('modalCrear').classList.remove('activo'); }
-    function cerrarEditar(){ document.getElementById('modalEditar').classList.remove('activo'); }
-
-    document.getElementById('modalCrear').addEventListener('click', function(e){ if(e.target===this) cerrarCrear(); });
-    document.getElementById('modalEditar').addEventListener('click', function(e){ if(e.target===this) cerrarEditar(); });
-
-    <% if (abrirEditar) { %>
-    window.addEventListener('DOMContentLoaded', function(){ document.getElementById('modalEditar').classList.add('activo'); });
-    <% } else if (abrirCrear) { %>
-    window.addEventListener('DOMContentLoaded', function(){ abrirCrear(); });
-    <% } %>
-  </script>
-
 </body>
+<script src="<%= ctx %>/assets/js/gastos/gastos.js" defer></script>
 </html>

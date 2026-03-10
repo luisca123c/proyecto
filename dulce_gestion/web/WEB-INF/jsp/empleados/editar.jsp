@@ -122,7 +122,7 @@
           <label class="nv-campo__label">Nombre Completo</label>
           <div class="nv-campo__input-wrapper">
             <input class="nv-campo__input" type="text" name="nombreCompleto"
-                   id="inputNombre" value="<%= vNombre %>" required>
+                   id="inputNombre" data-fallback="Nombre" value="<%= vNombre %>" required>
             <i class="fi fi-sr-edit nv-campo__icono-edit"></i>
           </div>
         </div>
@@ -215,11 +215,5 @@
   </main>
 
 </body>
-<script>
-  const inputNombre   = document.getElementById('inputNombre');
-  const previewNombre = document.getElementById('previewNombre');
-  inputNombre.addEventListener('input', () => {
-    previewNombre.textContent = inputNombre.value.trim() || 'Nombre';
-  });
-</script>
+<script src="<%= ctx %>/assets/js/empleados/preview-nombre.js" defer></script>
 </html>

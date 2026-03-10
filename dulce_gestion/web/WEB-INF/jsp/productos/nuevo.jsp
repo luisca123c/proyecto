@@ -212,24 +212,5 @@
   </main>
 
 </body>
-<script>
-  const inputNombre   = document.getElementById('inputNombre');
-  const previewNombre = document.getElementById('previewNombre');
-  const inputImagen   = document.getElementById('inputImagen');
-  const imgPreview    = document.getElementById('imgPreview');
-
-  inputNombre.addEventListener('input', () => {
-    previewNombre.textContent = inputNombre.value.trim() || 'Nuevo Producto';
-  });
-
-  inputImagen.addEventListener('change', function () {
-    if (this.files && this.files[0]) {
-      const reader = new FileReader();
-      reader.onload = e => {
-        imgPreview.innerHTML = '<img src="' + e.target.result + '" alt="Preview">';
-      };
-      reader.readAsDataURL(this.files[0]);
-    }
-  });
-</script>
+<script src="<%= ctx %>/assets/js/productos/nuevo.js" defer></script>
 </html>

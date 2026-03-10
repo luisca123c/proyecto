@@ -21,39 +21,135 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.List;
 
-@MultipartConfig(maxFileSize = 5 * 1024 * 1024)
+/**
+ * ============================================================
+ * SERVLET: EditarProductoServlet
+ * URL:     /productos/editar?id=X
+ * MÉTODOS: GET, POST
+ * ============================================================
+ *
+ * ¿QUÉ HACE?
+ * ----------
+ * Maneja la edición de un producto existente, incluyendo:
+ *   - Cambio de datos (nombre, precio, stock, categoría, etc.)
+ *   - Reemplazo de la imagen actual por una nueva
+ *   - Eliminación de la imagen existente (checkbox "Eliminar imagen")
+ *
+ *   GET  → carga el producto por ID y muestra el formulario prellenado
+ *   POST → aplica los cambios en la BD y gestiona la imagen
+ *
+ * ¿QUIÉN PUEDE ACCEDER?
+ * ----------------------
+ * Solo SuperAdministrador y Administrador.
+ * Los Empleados son redirigidos a /productos.
+ *
+ * ¿CÓMO FUNCIONA EL MANEJO DE IMÁGENES EN LA EDICIÓN?
+ * -----------------------------------------------------
+ * Hay tres escenarios al guardar la edición:
+ *
+ *   Escenario A — El usuario marca "Eliminar imagen":
+ *     1. Borrar el archivo físico del disco (build/web/ y web/)
+ *     2. Eliminar el registro en imagenes_producto
+ *     → El producto queda sin imagen
+ *
+ *   Escenario B — El usuario sube una imagen nueva:
+ *     1. Borrar el archivo anterior del disco (si existía)
+ *     2. Guardar el nuevo archivo en disco
+ *     3. Actualizar el registro en imagenes_producto (UPSERT)
+ *     → El producto tiene la nueva imagen
+ *
+ *   Escenario C — El usuario no toca la imagen:
+ *     La Part "imagen" llega con size=0 o nombre vacío.
+ *     No se hace nada con la imagen.
+ *     → El producto mantiene su imagen actual
+ *
+ * ¿POR QUÉ SE BORRA LA IMAGEN FÍSICA ANTES DEL UPDATE?
+ * -------------------------------------------------------
+ * Si el nuevo archivo tiene el mismo nombre (producto_5.jpg),
+ * part.write() simplemente lo sobreescribe. Pero si la imagen anterior
+ * tenía otra extensión (ej: .png y la nueva es .jpg), quedarían dos
+ * archivos: producto_5.png (viejo) y producto_5.jpg (nuevo).
+ * Borrar primero evita acumular archivos huérfanos en el servidor.
+ */
+@MultipartConfig(maxFileSize = 5 * 1024 * 1024) // Máximo 5 MB por archivo
 public class EditarProductoServlet extends HttpServlet {
 
+    /** Ruta interna del JSP del formulario de edición */
     private static final String VISTA = "/WEB-INF/jsp/productos/editar.jsp";
 
+    // =========================================================
+    // GET /productos/editar?id=X
+    // =========================================================
+
+    /**
+     * Carga el producto por ID y muestra el formulario prellenado.
+     *
+     * FLUJO PASO A PASO:
+     * 1. Verificar acceso (Admin o SuperAdmin).
+     * 2. Leer y validar el parámetro ?id= de la URL.
+     * 3. Buscar el producto en la BD. Si no existe → redirigir a la lista.
+     * 4. Cargar las opciones de los <select> (categorías, unidades).
+     * 5. Forward al JSP con el producto y los selectores.
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
         if (!verificarAcceso(request, response)) return;
 
-        String idParam = request.getParameter("id");
-        if (estaVacio(idParam)) { response.sendRedirect(request.getContextPath() + "/productos"); return; }
+        String idParam = request.getParameter("id"); // ID del producto desde la URL
+        if (estaVacio(idParam)) {
+            response.sendRedirect(request.getContextPath() + "/productos");
+            return;
+        }
 
         try {
+            // Buscar el producto completo (con imagen, categoría y unidad)
             Producto prod = new ProductoDAO().buscarPorId(Integer.parseInt(idParam));
-            if (prod == null) { response.sendRedirect(request.getContextPath() + "/productos"); return; }
-            request.setAttribute("producto", prod);
-            cargarSelectores(request);
+            if (prod == null) {
+                // El producto no existe (¿fue eliminado?) → volver a la lista
+                response.sendRedirect(request.getContextPath() + "/productos");
+                return;
+            }
+            request.setAttribute("producto", prod); // Para prellenar el formulario
+            cargarSelectores(request);              // Para los <select> de categoría y unidad
             request.getRequestDispatcher(VISTA).forward(request, response);
+
         } catch (Exception e) {
             e.printStackTrace();
             response.sendRedirect(request.getContextPath() + "/productos");
         }
     }
 
+    // =========================================================
+    // POST /productos/editar
+    // =========================================================
+
+    /**
+     * Aplica los cambios al producto en la BD y gestiona la imagen.
+     *
+     * FLUJO PASO A PASO:
+     *
+     * Paso 1 — Verificar acceso.
+     * Paso 2 — Setear charset UTF-8 para caracteres especiales.
+     * Paso 3 — Leer todos los campos del formulario.
+     * Paso 4 — Validar campos obligatorios no vacíos.
+     * Paso 5 — Parsear tipos numéricos (id, stock, precio, etc.).
+     * Paso 6 — Validar que stock y precio no sean negativos.
+     * Paso 7 — Actualizar datos del producto en la BD (EditarProductoDAO).
+     * Paso 8 — Gestionar la imagen (escenario A, B o C descrito en el Javadoc de clase).
+     * Paso 9 — Redirigir a /productos?exito=editado.
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
         if (!verificarAcceso(request, response)) return;
+
+        // ── Paso 2: charset para caracteres especiales ───────────────────
         request.setCharacterEncoding("UTF-8");
 
+        // ── Paso 3: leer parámetros del formulario ───────────────────────
         String idParam      = request.getParameter("id");
         String nombre       = request.getParameter("nombre");
         String descripcion  = request.getParameter("descripcion");
@@ -64,6 +160,7 @@ public class EditarProductoServlet extends HttpServlet {
         String categoriaStr = request.getParameter("idCategoria");
         String unidadStr    = request.getParameter("idUnidad");
 
+        // ── Paso 4: validar campos obligatorios ──────────────────────────
         if (estaVacio(nombre) || estaVacio(stockStr) || estaVacio(precioStr)
                 || estaVacio(estado) || estaVacio(fechaVenc)
                 || estaVacio(categoriaStr) || estaVacio(unidadStr)) {
@@ -71,11 +168,12 @@ public class EditarProductoServlet extends HttpServlet {
             return;
         }
 
+        // ── Paso 5: parsear tipos numéricos ──────────────────────────────
         int id; int stock; BigDecimal precio; int idCategoria; int idUnidad;
         try {
             id          = Integer.parseInt(idParam.trim());
             stock       = Integer.parseInt(stockStr.trim());
-            precio      = new BigDecimal(precioStr.trim());
+            precio      = new BigDecimal(precioStr.trim()); // BigDecimal para precisión monetaria
             idCategoria = Integer.parseInt(categoriaStr.trim());
             idUnidad    = Integer.parseInt(unidadStr.trim());
         } catch (NumberFormatException e) {
@@ -83,28 +181,39 @@ public class EditarProductoServlet extends HttpServlet {
             return;
         }
 
+        // ── Paso 6: validar que no sean negativos ─────────────────────────
         if (stock < 0 || precio.compareTo(BigDecimal.ZERO) < 0) {
             reenviarConError(request, response, "Stock y precio no pueden ser negativos.", idParam);
             return;
         }
 
         try {
+            // ── Paso 7: actualizar los datos del producto en la BD ────────
             new EditarProductoDAO().actualizar(id, nombre, descripcion, stock,
                                                precio, estado, fechaVenc, idCategoria, idUnidad);
 
-            // ── Eliminar imagen si se marcó el checkbox ──
-            String eliminarImg = request.getParameter("eliminarImagen");
+            // ── Paso 8: gestionar la imagen ───────────────────────────────
+
+            String eliminarImg = request.getParameter("eliminarImagen"); // Checkbox del form
+
             if ("1".equals(eliminarImg)) {
-                eliminarImagenFisica(request, id);
-                new ImagenProductoDAO().eliminar(id);
+                // ── Escenario A: el usuario quiere eliminar la imagen actual ─
+                eliminarImagenFisica(request, id); // Borrar archivo del disco
+                new ImagenProductoDAO().eliminar(id); // Borrar registro en BD
+
             } else {
-                // ── Guardar nueva imagen si se subió ──
+                // ── Escenario B o C: verificar si se subió una nueva imagen ─
                 Part imagenPart = request.getPart("imagen");
-                if (imagenPart != null && imagenPart.getSize() > 0
+                boolean hayNuevaImagen = imagenPart != null
+                        && imagenPart.getSize() > 0
                         && imagenPart.getSubmittedFileName() != null
-                        && !imagenPart.getSubmittedFileName().isBlank()) {
+                        && !imagenPart.getSubmittedFileName().isBlank();
+
+                if (hayNuevaImagen) {
+                    // ── Escenario B: subir nueva imagen ──────────────────
                     guardarImagen(request, imagenPart, id, nombre);
                 }
+                // ── Escenario C: sin cambios en la imagen → no hacer nada ─
             }
 
         } catch (SQLException e) {
@@ -113,26 +222,36 @@ public class EditarProductoServlet extends HttpServlet {
             return;
         }
 
+        // ── Paso 9: redirigir con mensaje de éxito ────────────────────────
         response.sendRedirect(request.getContextPath() + "/productos?exito=editado");
     }
 
-    /* ── Guardar imagen en build/web/ Y en fuente del proyecto ── */
+    // =========================================================
+    // MÉTODOS AUXILIARES (HELPERS)
+    // =========================================================
+
+    /**
+     * Guarda un archivo de imagen en disco (build/web/ y web/) y actualiza el registro en BD.
+     *
+     * Primero borra la imagen anterior (si la hay) para evitar archivos huérfanos.
+     * Luego guarda el nuevo archivo y actualiza imagenes_producto.
+     */
     private void guardarImagen(HttpServletRequest request, Part part,
                                 int idProducto, String nombreProducto)
             throws IOException, SQLException {
 
-        // Borrar archivo anterior si existe
+        // Borrar imagen anterior antes de guardar la nueva (evita archivos con diferente extensión)
         eliminarImagenFisica(request, idProducto);
 
         String ext           = obtenerExtension(part.getSubmittedFileName());
         String nombreArchivo = "producto_" + idProducto + ext;
 
-        // 1. Guardar en build/web/ (activo en Tomcat ahora mismo)
+        // Guardar en build/web/ → activo en Tomcat inmediatamente
         File carpetaDeploy = Uploads.carpetaProductos(request.getServletContext());
         File archivoDeploy = new File(carpetaDeploy, nombreArchivo);
         part.write(archivoDeploy.getAbsolutePath());
 
-        // 2. Copiar al fuente web/ para que persista tras Clean & Build
+        // Copiar al fuente web/ → persiste tras Clean & Build de NetBeans
         File carpetaFuente = Uploads.carpetaProductosFuente(request.getServletContext());
         if (carpetaFuente != null) {
             try {
@@ -141,48 +260,76 @@ public class EditarProductoServlet extends HttpServlet {
                     new File(carpetaFuente, nombreArchivo).toPath(),
                     java.nio.file.StandardCopyOption.REPLACE_EXISTING
                 );
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                // No es crítico si falla la copia al fuente
+            }
         }
 
+        // Actualizar el registro en imagenes_producto (UPSERT: UPDATE si existe, INSERT si no)
         new ImagenProductoDAO().guardarOActualizar(idProducto,
                 Uploads.urlRelativa(nombreArchivo), nombreProducto);
     }
 
-    /* ── Borra el archivo físico en ambas carpetas ── */
+    /**
+     * Borra el archivo físico de imagen de ambas carpetas (build/web/ y web/).
+     * Consulta primero el path actual en la BD para saber el nombre del archivo.
+     * Si no hay imagen registrada, no hace nada.
+     */
     private void eliminarImagenFisica(HttpServletRequest request, int idProducto) {
         try {
+            // Obtener el path registrado en BD para este producto
             String urlRelativa = new ImagenProductoDAO().obtenerPath(idProducto);
-            if (urlRelativa == null || urlRelativa.isBlank()) return;
+            if (urlRelativa == null || urlRelativa.isBlank()) return; // Sin imagen → nada que borrar
+
+            // Extraer solo el nombre del archivo del path (ej: "producto_5.jpg")
             String nombreArchivo = new File(urlRelativa).getName();
 
-            File f1 = new File(Uploads.carpetaProductos(request.getServletContext()), nombreArchivo);
-            if (f1.exists()) f1.delete();
+            // Borrar de build/web/assets/images/productos/
+            File archivoDeploy = new File(Uploads.carpetaProductos(request.getServletContext()), nombreArchivo);
+            if (archivoDeploy.exists()) archivoDeploy.delete();
 
+            // Borrar de web/assets/images/productos/ (el fuente del proyecto)
             File carpetaFuente = Uploads.carpetaProductosFuente(request.getServletContext());
             if (carpetaFuente != null) {
-                File f2 = new File(carpetaFuente, nombreArchivo);
-                if (f2.exists()) f2.delete();
+                File archivoFuente = new File(carpetaFuente, nombreArchivo);
+                if (archivoFuente.exists()) archivoFuente.delete();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+            // Si falla la eliminación del disco, el proceso continúa
+            // (la imagen huérfana no es crítica)
+        }
     }
 
+    /**
+     * Extrae la extensión del nombre de archivo en minúsculas.
+     * "foto.JPG" → ".jpg" | si no tiene extensión → ".jpg" por defecto
+     */
     private String obtenerExtension(String filename) {
         if (filename == null || !filename.contains(".")) return ".jpg";
         return filename.substring(filename.lastIndexOf(".")).toLowerCase();
     }
 
+    /**
+     * Recarga el producto desde la BD y reenvía al formulario con el mensaje de error.
+     * Asegura que el formulario muestre los datos actuales del producto aunque haya un error.
+     */
     private void reenviarConError(HttpServletRequest request, HttpServletResponse response,
                                    String error, String idParam)
             throws ServletException, IOException {
         try {
+            // Recargar el producto para prellenar el formulario
             Producto prod = new ProductoDAO().buscarPorId(Integer.parseInt(idParam));
             request.setAttribute("producto", prod);
         } catch (Exception ignored) {}
-        cargarSelectores(request);
+
+        cargarSelectores(request); // Los selectores se pierden entre peticiones → recargar
         request.setAttribute("error", error);
         request.getRequestDispatcher(VISTA).forward(request, response);
     }
 
+    /**
+     * Carga las listas de categorías y unidades para los <select> del formulario.
+     */
     private void cargarSelectores(HttpServletRequest request) {
         try {
             ProductoDAO dao = new ProductoDAO();
@@ -194,6 +341,10 @@ public class EditarProductoServlet extends HttpServlet {
         }
     }
 
+    /**
+     * Verifica que el usuario en sesión es Admin o SuperAdmin.
+     * Redirige y retorna false si no tiene permiso.
+     */
     private boolean verificarAcceso(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         HttpSession session = request.getSession(false);
@@ -207,5 +358,6 @@ public class EditarProductoServlet extends HttpServlet {
         return true;
     }
 
+    /** Retorna true si el string es null o solo espacios. */
     private boolean estaVacio(String v) { return v == null || v.isBlank(); }
 }
