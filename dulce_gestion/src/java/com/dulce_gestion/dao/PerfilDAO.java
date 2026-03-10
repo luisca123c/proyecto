@@ -10,17 +10,70 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-/*
- * DAO para obtener y actualizar información de perfil de usuarios
+/**
+ * ============================================================
+ * DAO: PerfilDAO
+ * Tablas leídas:      usuarios, correos, roles, perfil_usuario,
+ *                     telefonos, generos
+ * Tablas escritas:    correos, telefonos, perfil_usuario, usuarios
+ * Usado por:          PerfilServlet, EditarPerfilServlet, VerPerfilServlet
+ * ============================================================
+ *
+ * ¿QUÉ HACE?
+ * ----------
+ * Maneja las operaciones del perfil personal de un usuario:
+ *   - Cargar el perfil completo (todos los campos) para mostrar en pantalla
+ *   - Actualizar datos personales (nombre, teléfono, género, correo)
+ *   - Cambiar contraseña con verificación de la actual
+ *   - Listar géneros para el <select> del formulario
+ *
+ * ¿EN QUÉ SE DIFERENCIA DE EditarEmpleadoDAO?
+ * ---------------------------------------------
+ * EditarEmpleadoDAO lo usa un ADMIN para editar a OTRO usuario.
+ * PerfilDAO lo usa el propio usuario para editar SU PROPIO perfil.
+ *
+ * Las diferencias clave:
+ *   - PerfilDAO incluye fechas de alta (fecha_creacion, fecha_actualizacion)
+ *     que el formulario de perfil muestra como información de solo lectura.
+ *   - PerfilDAO tiene cambiarContrasena() que verifica la actual antes de
+ *     actualizarla. Un admin no necesita saber la contraseña actual del
+ *     empleado que está editando.
+ *   - actualizarPerfil() en PerfilDAO no permite cambiar el rol ni el estado,
+ *     ya que un usuario no puede cambiar sus propios permisos.
+ *
+ * ¿POR QUÉ actualizarPerfil() ABRE CONEXIONES SEPARADAS PARA CADA UPDATE?
+ * --------------------------------------------------------------------------
+ * A diferencia de CrearEmpleadoDAO o EditarEmpleadoDAO que usan una
+ * sola conexión con transacción, aquí cada UPDATE tiene su propia conexión.
+ * Esto simplifica el código pero significa que si el tercer UPDATE falla,
+ * los dos anteriores ya están confirmados (sin ROLLBACK).
+ * Para el perfil propio esto es aceptable: un fallo parcial es poco
+ * probable y los datos quedan en estado consistente en la mayoría de casos.
+ * Si se requiriera atomicidad estricta, se debería refactorizar con transacción.
  */
 public class PerfilDAO {
 
-    /*
-     * Obtiene el perfil completo de un usuario por su ID
+    /**
+     * Carga el perfil completo de un usuario por su ID.
+     *
+     * Trae todos los campos necesarios para la pantalla de perfil:
+     * datos básicos, teléfono, género, fechas de alta y actualización.
+     *
+     * ¿POR QUÉ SE NECESITA ESTE MÉTODO SI YA HAY UN OBJETO EN SESIÓN?
+     * -----------------------------------------------------------------
+     * El objeto Usuario guardado en sesión durante el login solo tiene
+     * los campos básicos (id, correo, rol, estado, nombreCompleto).
+     * No incluye teléfono, género ni fechas de alta porque no se necesitan
+     * para verificar autenticación. PerfilServlet llama a este método
+     * para cargar el perfil completo cuando el usuario navega a /perfil.
+     *
+     * @param idUsuario  ID del usuario cuyo perfil se quiere cargar
+     * @return           objeto Usuario con todos los campos, o null si no existe
+     * @throws SQLException si hay error al consultar la BD
      */
     public Usuario obtenerPerfil(int idUsuario) throws SQLException {
         String sql = """
-                SELECT 
+                SELECT
                     u.id,
                     c.correo,
                     u.estado,
@@ -47,19 +100,23 @@ public class PerfilDAO {
             ps.setInt(1, idUsuario);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return mapearUsuario(rs);
+                    return mapearUsuario(rs); // Delegar el mapeo al helper privado
                 }
             }
         }
         return null;
     }
 
-    /*
-     * Obtiene lista de todos los usuarios (para SuperAdmin)
+    /**
+     * Lista todos los usuarios del sistema.
+     * Se usaría para una pantalla de administración general (SuperAdmin).
+     *
+     * @return  lista completa de usuarios ordenada por nombre
+     * @throws SQLException si hay error al consultar la BD
      */
     public List<Usuario> listarTodosUsuarios() throws SQLException {
         String sql = """
-                SELECT 
+                SELECT
                     u.id,
                     c.correo,
                     u.estado,
@@ -90,8 +147,15 @@ public class PerfilDAO {
         return usuarios;
     }
 
-    /*
-     * Obtiene lista de generos para select HTML
+    /**
+     * Retorna la lista de géneros disponibles para el <select> del formulario.
+     *
+     * Devuelve un array de String[] con [id, nombre] por cada género
+     * para que el JSP pueda generar las opciones del select:
+     *   <option value="1">Masculino</option>
+     *
+     * @return  lista de [id, nombre] por cada género
+     * @throws SQLException si hay error al consultar la BD
      */
     public List<String[]> listarGeneros() throws SQLException {
         List<String[]> lista = new ArrayList<>();
@@ -106,14 +170,35 @@ public class PerfilDAO {
         return lista;
     }
 
-    /*
-     * Actualiza el perfil del usuario (nombre, teléfono, género, correo)
-     * Retorna true si la actualización fue exitosa
+    /**
+     * Actualiza los datos personales del usuario: nombre, teléfono, género y correo.
+     *
+     * OPERACIONES:
+     * 1. Obtener los IDs de la fila en correos, telefonos y perfil_usuario
+     *    para el usuario dado.
+     * 2. UPDATE correos   → nuevo correo (normalizado a minúsculas)
+     * 3. UPDATE telefonos → nuevo teléfono
+     * 4. UPDATE perfil_usuario → nuevo nombre, nuevo género, actualizar timestamp
+     *
+     * ¿POR QUÉ SE ACTUALIZA fecha_actualizacion = CURRENT_TIMESTAMP?
+     * ----------------------------------------------------------------
+     * La tabla perfil_usuario lleva registro de cuándo se modificó por última vez.
+     * CURRENT_TIMESTAMP es una función de MySQL que retorna la fecha y hora actuales.
+     * Al incluirla en el UPDATE, se registra automáticamente el momento de la edición
+     * sin necesidad de calcularlo en Java.
+     *
+     * @param idUsuario      ID del usuario a actualizar
+     * @param nombreCompleto nuevo nombre completo
+     * @param telefono       nuevo teléfono
+     * @param idGenero       ID del nuevo género (FK a tabla generos)
+     * @param correo         nuevo correo (se normaliza a minúsculas)
+     * @return               true si se actualizaron los datos, false si el usuario no existe
+     * @throws SQLException  si hay error al consultar o actualizar la BD
      */
-    public boolean actualizarPerfil(int idUsuario, String nombreCompleto, 
+    public boolean actualizarPerfil(int idUsuario, String nombreCompleto,
                                      String telefono, int idGenero, String correo) throws SQLException {
-        
-        // Primero obtener IDs de correo, teléfono e ID de perfil
+
+        // Obtener los IDs de las tablas relacionadas para poder hacer los UPDATEs
         String sqlObtener = """
                 SELECT u.id_correo, p.id_telefono, p.id
                 FROM usuarios u
@@ -121,54 +206,53 @@ public class PerfilDAO {
                 WHERE u.id = ?
                 """;
 
-        int idCorreo = -1;
-        int idTelefono = -1;
-        int idPerfil = -1;
+        int idCorreo = -1, idTelefono = -1, idPerfil = -1;
 
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(sqlObtener)) {
             ps.setInt(1, idUsuario);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    idCorreo = rs.getInt("id_correo");
+                    idCorreo   = rs.getInt("id_correo");
                     idTelefono = rs.getInt("id_telefono");
-                    idPerfil = rs.getInt("id");
+                    idPerfil   = rs.getInt("id");
                 }
             }
         }
 
+        // Si no se encontraron los IDs, el usuario no existe → no actualizar
         if (idCorreo == -1 || idTelefono == -1 || idPerfil == -1) {
             return false;
         }
 
-        // Actualizar correo
-        String sqlCorreo = "UPDATE correos SET correo = ? WHERE id = ?";
+        // Actualizar correo (normalizado a minúsculas sin espacios)
         try (Connection con = DB.obtenerConexion();
-             PreparedStatement ps = con.prepareStatement(sqlCorreo)) {
+             PreparedStatement ps = con.prepareStatement(
+                     "UPDATE correos SET correo = ? WHERE id = ?")) {
             ps.setString(1, correo.toLowerCase().trim());
             ps.setInt(2, idCorreo);
             ps.executeUpdate();
         }
 
         // Actualizar teléfono
-        String sqlTelefono = "UPDATE telefonos SET telefono = ? WHERE id = ?";
         try (Connection con = DB.obtenerConexion();
-             PreparedStatement ps = con.prepareStatement(sqlTelefono)) {
+             PreparedStatement ps = con.prepareStatement(
+                     "UPDATE telefonos SET telefono = ? WHERE id = ?")) {
             ps.setString(1, telefono.trim());
             ps.setInt(2, idTelefono);
             ps.executeUpdate();
         }
 
-        // Actualizar perfil (nombre, género)
-        String sqlPerfil = """
-                UPDATE perfil_usuario 
-                SET nombre_completo = ?, 
-                    id_genero = ?,
-                    fecha_actualizacion = CURRENT_TIMESTAMP
-                WHERE id = ?
-                """;
+        // Actualizar nombre, género y timestamp en perfil_usuario
+        // CURRENT_TIMESTAMP registra automáticamente el momento de la modificación
         try (Connection con = DB.obtenerConexion();
-             PreparedStatement ps = con.prepareStatement(sqlPerfil)) {
+             PreparedStatement ps = con.prepareStatement("""
+                     UPDATE perfil_usuario
+                     SET nombre_completo = ?,
+                         id_genero = ?,
+                         fecha_actualizacion = CURRENT_TIMESTAMP
+                     WHERE id = ?
+                     """)) {
             ps.setString(1, nombreCompleto.trim());
             ps.setInt(2, idGenero);
             ps.setInt(3, idPerfil);
@@ -178,49 +262,80 @@ public class PerfilDAO {
         return true;
     }
 
-    /*
-     * Cambia la contraseña del usuario
-     * Valida que la contraseña actual sea correcta
+    /**
+     * Cambia la contraseña del usuario, verificando primero que la contraseña
+     * actual sea correcta.
+     *
+     * FLUJO:
+     * 1. Hashear la contraseña actual con SHA-256.
+     * 2. Verificar que en la BD exista una fila con id + hash actuales.
+     *    → Si no coincide: la contraseña actual ingresada es incorrecta → retornar false.
+     * 3. Hashear la nueva contraseña.
+     * 4. UPDATE usuarios SET contrasena = nuevo hash.
+     *
+     * ¿POR QUÉ SE VERIFICA LA CONTRASEÑA ACTUAL?
+     * -------------------------------------------
+     * Previene que alguien con acceso momentáneo a la sesión (ej: dejó
+     * la pantalla abierta) cambie la contraseña sin saber la actual.
+     * Es un requisito de seguridad estándar en cualquier sistema.
+     *
+     * @param idUsuario          ID del usuario que cambia su contraseña
+     * @param contrasennaActual  contraseña actual en texto plano
+     * @param contrasenaNueva    nueva contraseña en texto plano
+     * @return                   true si el cambio fue exitoso,
+     *                           false si la contraseña actual era incorrecta
+     * @throws SQLException      si hay error al consultar o actualizar la BD
      */
-    public boolean cambiarContrasena(int idUsuario, String contrasennaActual, 
+    public boolean cambiarContrasena(int idUsuario, String contrasennaActual,
                                       String contrasenaNueva) throws SQLException {
-        
-        // Hashear las contraseñas
+
         String hashActual = UsuarioDAO.hashSHA256(contrasennaActual);
-        String hashNueva = UsuarioDAO.hashSHA256(contrasenaNueva);
+        String hashNueva  = UsuarioDAO.hashSHA256(contrasenaNueva);
 
         if (hashActual == null || hashNueva == null) {
-            return false;
+            return false; // No se pudo hashear (SHA-256 no disponible)
         }
 
-        // Verificar que la contraseña actual sea correcta
+        // Verificar que la contraseña actual sea correcta en la BD
+        // Si no coincide, no se continúa con el cambio
         String sqlVerificar = "SELECT id FROM usuarios WHERE id = ? AND contrasena = ?";
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(sqlVerificar)) {
             ps.setInt(1, idUsuario);
-            ps.setString(2, hashActual);
+            ps.setString(2, hashActual); // Hash de la contraseña actual ingresada
             try (ResultSet rs = ps.executeQuery()) {
                 if (!rs.next()) {
-                    // La contraseña actual no coincide
+                    // No hubo coincidencia → la contraseña actual es incorrecta
                     return false;
                 }
             }
         }
 
-        // Actualizar a la nueva contraseña
+        // La verificación pasó → actualizar con la nueva contraseña
         String sqlActualizar = "UPDATE usuarios SET contrasena = ? WHERE id = ?";
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(sqlActualizar)) {
-            ps.setString(1, hashNueva);
+            ps.setString(1, hashNueva); // Hash de la nueva contraseña
             ps.setInt(2, idUsuario);
             ps.executeUpdate();
         }
 
-        return true;
+        return true; // Contraseña cambiada exitosamente
     }
 
-    /*
-     * Mapea un ResultSet a objeto Usuario
+    /**
+     * Convierte una fila del ResultSet en un objeto Usuario.
+     *
+     * ¿POR QUÉ ESTE MÉTODO PRIVADO?
+     * --------------------------------
+     * obtenerPerfil() y listarTodosUsuarios() hacen el mismo SELECT y
+     * necesitan mapear las columnas a un objeto Usuario de la misma manera.
+     * Centralizar el mapeo aquí evita duplicar esas ~10 líneas en cada método
+     * y asegura que si se agrega un campo nuevo, solo se cambia en un lugar.
+     *
+     * @param rs  ResultSet posicionado en la fila a mapear
+     * @return    objeto Usuario con los campos del ResultSet
+     * @throws SQLException si algún nombre de columna no existe en el ResultSet
      */
     private Usuario mapearUsuario(ResultSet rs) throws SQLException {
         Usuario u = new Usuario();
@@ -231,7 +346,7 @@ public class PerfilDAO {
         u.setNombreRol(rs.getString("nombre_rol"));
         u.setNombreCompleto(rs.getString("nombre_completo"));
         u.setTelefono(rs.getString("telefono"));
-        u.setGenero(rs.getString("nombre_genero"));
+        u.setGenero(rs.getString("nombre_genero")); // Alias del JOIN con generos
         return u;
     }
 }

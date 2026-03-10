@@ -10,27 +10,82 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-/*
- * DAO (Data Access Object) de usuarios.
- * Concentra las consultas SQL de la tabla usuarios,
- * separando esa logica de los Servlets.
+/**
+ * ============================================================
+ * DAO: UsuarioDAO
+ * Tabla principal:    usuarios
+ * Tablas del JOIN:    correos, roles, perfil_usuario
+ * Usado por:          LoginServlet
+ * ============================================================
+ *
+ * ¿QUÉ HACE?
+ * ----------
+ * Concentra las operaciones de autenticación y hashing de contraseñas.
+ * Es el DAO raíz del sistema: sin él ningún usuario puede entrar.
+ *
+ * ¿POR QUÉ SE SEPARA LA LÓGICA DE BD DEL SERVLET?
+ * -------------------------------------------------
+ * LoginServlet solo debería leer el formulario, llamar al DAO y
+ * decidir qué hacer con el resultado.
+ * Si el SQL estuviera en el Servlet, cualquier cambio de esquema
+ * (nueva tabla, nuevo JOIN) obligaría a tocar el Servlet.
+ * Al estar aquí, el Servlet queda limpio y este DAO es reusable
+ * desde cualquier parte del proyecto.
+ *
+ * ¿POR QUÉ hashSHA256() ES ESTÁTICO (static)?
+ * ---------------------------------------------
+ * Otros DAOs también hashean contraseñas (CrearEmpleadoDAO,
+ * EditarEmpleadoDAO, PerfilDAO). Al ser estático pueden llamarlo
+ * sin instanciar UsuarioDAO:
+ *   UsuarioDAO.hashSHA256(contrasena)
  */
 public class UsuarioDAO {
 
-    /*
-     * Busca un usuario en la BD con el correo y contrasena dados.
-     * La contrasena se hashea con SHA-256 antes de compararla,
-     * porque en la BD nunca se guarda en texto plano.
+    /**
+     * Autentica un usuario verificando correo y contraseña contra la BD.
      *
-     * Usa PreparedStatement con "?" para evitar inyeccion SQL.
-     * Retorna el Usuario si las credenciales son correctas, null si no.
+     * FLUJO INTERNO:
+     * 1. Hashear la contraseña recibida con SHA-256.
+     * 2. Buscar en la BD una fila donde correo + hash coincidan.
+     * 3. Si hay resultado → construir y retornar el objeto Usuario.
+     *    Si no → retornar null (credenciales inválidas).
+     *
+     * ¿POR QUÉ UN JOIN DE 4 TABLAS?
+     * --------------------------------
+     * La BD normaliza la información del usuario:
+     *   usuarios        → id, estado, contrasena, id_rol, id_correo
+     *   correos         → id, correo  (separado para evitar duplicados)
+     *   roles           → id, nombre  (SuperAdministrador / Administrador / Empleado)
+     *   perfil_usuario  → id, nombre_completo, id_usuario, ...
+     *
+     * Con un solo JOIN se trae todo lo necesario para poblar el objeto
+     * Usuario y guardarlo en sesión, sin consultas adicionales.
+     *
+     * ¿POR QUÉ PreparedStatement CON "?"?
+     * -------------------------------------
+     * Previene inyección SQL. Si el correo fuera concatenado directamente
+     * en el SQL, un usuario podría escribir: ' OR '1'='1 y acceder sin
+     * contraseña. Con PreparedStatement, MySQL trata el input como valor
+     * literal, nunca como parte del SQL.
+     *
+     * ¿POR QUÉ try-with-resources?
+     * -----------------------------
+     * Cierra la conexión automáticamente al salir del bloque, incluso
+     * si ocurre una excepción. Sin esto → fuga de conexiones → el pool
+     * se agota y la aplicación deja de responder.
+     *
+     * @param correo     correo del usuario (se normaliza con trim + toLowerCase)
+     * @param contrasena contraseña en texto plano (se hashea internamente)
+     * @return           objeto Usuario con todos sus datos, o null si las
+     *                   credenciales son incorrectas
+     * @throws SQLException si hay error al conectar o consultar la BD
      */
     public Usuario autenticar(String correo, String contrasena) throws SQLException {
 
         String hashContrasena = hashSHA256(contrasena);
         if (hashContrasena == null) return null;
 
-        // JOIN entre 4 tablas para traer todos los datos del usuario en una sola consulta
+        // JOIN entre 4 tablas para obtener todos los campos del usuario en una consulta
         String sql = """
                 SELECT u.id,
                        c.correo,
@@ -46,46 +101,85 @@ public class UsuarioDAO {
                   AND u.contrasena = ?
                 """;
 
-        // try-with-resources cierra la conexion automaticamente al salir del bloque
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setString(1, correo.trim().toLowerCase());
-            ps.setString(2, hashContrasena);
+            ps.setString(1, correo.trim().toLowerCase()); // Sin espacios y todo minúsculas
+            ps.setString(2, hashContrasena);              // Hash de 64 chars hex
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
+                    // Hay coincidencia → construir el objeto con los datos devueltos
                     Usuario u = new Usuario();
                     u.setId(rs.getInt("id"));
                     u.setCorreo(rs.getString("correo"));
-                    u.setEstado(rs.getString("estado"));
+                    u.setEstado(rs.getString("estado"));           // "Activo" o "Inactivo"
                     u.setIdRol(rs.getInt("id_rol"));
-                    u.setNombreRol(rs.getString("nombre_rol"));
+                    u.setNombreRol(rs.getString("nombre_rol"));    // "SuperAdministrador", etc.
                     u.setNombreCompleto(rs.getString("nombre_completo"));
                     return u;
                 }
             }
         }
 
-        return null;
+        return null; // Sin coincidencia → credenciales incorrectas
     }
 
-    /*
-     * Convierte un texto a su hash SHA-256 en hexadecimal (64 caracteres).
-     * Es unidireccional: no se puede recuperar la contrasena original a partir del hash.
+    /**
+     * Convierte una cadena de texto a su hash SHA-256 en formato hexadecimal.
+     *
+     * ¿QUÉ ES SHA-256?
+     * -----------------
+     * Función hash criptográfica unidireccional: dada cualquier entrada,
+     * produce siempre el mismo resultado de 64 caracteres hexadecimales.
+     * No se puede "deshacer" el hash para obtener el texto original.
+     *
+     * Ejemplo:
+     *   "hola123" → "a29c491e...8f4b2d6c"  (siempre el mismo resultado)
+     *   "Hola123" → "2b7e151f...f4b3c2a1"  (completamente diferente)
+     *
+     * ¿POR QUÉ StandardCharsets.UTF_8?
+     * ----------------------------------
+     * texto.getBytes() sin argumento usa el charset del sistema operativo,
+     * que varía entre Windows, Linux y Mac. Con UTF_8 explícito el hash
+     * es idéntico en todas las plataformas: una contraseña creada en
+     * Windows funciona igual en Linux.
+     *
+     * ¿POR QUÉ String.format("%02x", b)?
+     * ------------------------------------
+     * MessageDigest retorna 32 bytes en bruto. %02x convierte cada byte
+     * a su representación hexadecimal de exactamente 2 dígitos:
+     *   byte 10  → "0a"   (sin el cero a la izquierda quedaría "a")
+     *   byte 255 → "ff"
+     * 32 bytes × 2 chars/byte = 64 caracteres hex en total.
+     *
+     * ¿POR QUÉ RuntimeException Y NO SQLException?
+     * ----------------------------------------------
+     * SHA-256 está incluido en todos los JDKs desde Java 1.4.
+     * Si no está disponible hay un problema grave en la JVM, no un
+     * error de BD recuperable. RuntimeException no obliga a los
+     * llamadores a capturar algo que nunca debería ocurrir.
+     *
+     * @param texto  cadena a hashear (contraseña en texto plano)
+     * @return       hash SHA-256 en hexadecimal (64 caracteres)
+     * @throws RuntimeException si SHA-256 no está disponible en la JVM
      */
     public static String hashSHA256(String texto) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
+
+            // Convertir el texto a bytes UTF-8 y calcular el hash (array de 32 bytes)
             byte[] bytes = md.digest(texto.getBytes(java.nio.charset.StandardCharsets.UTF_8));
 
+            // Convertir cada byte a su representación hex de 2 dígitos
             StringBuilder sb = new StringBuilder();
             for (byte b : bytes) {
-                sb.append(String.format("%02x", b)); // Cada byte a 2 digitos hex
+                sb.append(String.format("%02x", b)); // Ej: byte 10 → "0a"
             }
-            return sb.toString();
+            return sb.toString(); // Cadena de 64 caracteres hexadecimales
 
         } catch (NoSuchAlgorithmException e) {
+            // SHA-256 siempre está en Java estándar. Si llega aquí el JDK está roto.
             throw new RuntimeException("SHA-256 no disponible.", e);
         }
     }
