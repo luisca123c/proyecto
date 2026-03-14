@@ -216,4 +216,5 @@
 
 </body>
 <script src="<%= ctx %>/assets/js/empleados/preview-nombre.js" defer></script>
+<script src="<%= ctx %>/assets/js/validaciones.js" defer></script>
 </html>

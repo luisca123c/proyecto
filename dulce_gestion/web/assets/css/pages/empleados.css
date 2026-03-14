@@ -66,12 +66,13 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 16px;
+  padding: 14px 18px;
   border-radius: var(--radius-md);
-  background-color: rgba(169, 50, 38, 0.08);
-  color: var(--color-danger);
+  background: linear-gradient(135deg, #c62828 0%, #e53935 100%);
+  color: #ffffff;
   font-weight: 600;
   font-size: 0.9rem;
+  box-shadow: 0 4px 12px rgba(198, 40, 40, 0.35);
 }
 
 /* -----------------------------------------------------------
@@ -376,12 +377,13 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 16px;
+  padding: 14px 18px;
   border-radius: var(--radius-md);
-  background-color: rgba(46, 125, 50, 0.1);
-  color: var(--color-success);
+  background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%);
+  color: #ffffff;
   font-weight: 600;
   font-size: 0.9rem;
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.35);
 }
 
 /* Botón editar dentro de la card */

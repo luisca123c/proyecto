@@ -75,8 +75,8 @@
     .gastos-vacio i { font-size:2.5rem; display:block; margin-bottom:10px; }
 
     /* Mensajes */
-    .msg-exito { display:flex; align-items:center; gap:10px; padding:12px 16px; border-radius:8px; background:rgba(46,125,50,0.1); border-left:4px solid var(--color-success); color:#1b5e20; font-weight:600; }
-    .msg-error { display:flex; align-items:center; gap:10px; padding:12px 16px; border-radius:8px; background:rgba(169,50,38,0.1); border-left:4px solid var(--color-danger); color:var(--color-danger); font-weight:600; }
+    .msg-exito { display:flex; align-items:center; gap:10px; padding:14px 18px; border-radius:8px; background:linear-gradient(135deg,#2e7d32 0%,#388e3c 100%); color:#ffffff; font-weight:600; box-shadow:0 4px 12px rgba(46,125,50,0.35); }
+    .msg-error { display:flex; align-items:center; gap:10px; padding:14px 18px; border-radius:8px; background:linear-gradient(135deg,#c62828 0%,#e53935 100%); color:#ffffff; font-weight:600; box-shadow:0 4px 12px rgba(198,40,40,0.35); }
 
     /* Modal */
     .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:999; align-items:center; justify-content:center; }

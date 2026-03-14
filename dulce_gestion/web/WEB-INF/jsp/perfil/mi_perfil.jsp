@@ -232,4 +232,5 @@
 
 </body>
 <script src="<%= ctx %>/assets/js/perfil/mi_perfil.js" defer></script>
+<script src="<%= ctx %>/assets/js/validaciones.js" defer></script>
 </html>
