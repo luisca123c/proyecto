@@ -69,6 +69,7 @@
       <a class="sidebar__link" href="<%= ctx %>/gastos">
         <i class="fi fi-sr-receipt"></i><span>Gastos</span>
       </a>
+      <a class="sidebar__link" href="<%= ctx %>/compras"><i class="fi fi-sr-shop"></i><span>Compras</span></a>
       <a class="sidebar__link" href="<%= ctx %>/ganancias">
         <i class="fi fi-sr-chart-line-up"></i><span>Ganancias</span>
       </a>
@@ -105,6 +106,11 @@
         <a class="dashboard-card" href="<%= ctx %>/gastos">
           <i class="dashboard-card__icono fi fi-sr-receipt"></i>
           <span class="dashboard-card__texto">Gastos</span>
+        </a>
+
+        <a class="dashboard-card" href="<%= ctx %>/compras">
+          <i class="dashboard-card__icono fi fi-sr-shop"></i>
+          <span class="dashboard-card__texto">Compras</span>
         </a>
 
         <a class="dashboard-card" href="<%= ctx %>/ganancias">

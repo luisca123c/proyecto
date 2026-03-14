@@ -203,6 +203,26 @@
         <url-pattern>/ventas</url-pattern>
     </servlet-mapping>
 
+    <!-- ComprasServlet -->
+    <servlet>
+        <servlet-name>ComprasServlet</servlet-name>
+        <servlet-class>com.dulce_gestion.controllers.ComprasServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ComprasServlet</servlet-name>
+        <url-pattern>/compras</url-pattern>
+    </servlet-mapping>
+
+    <!-- ComprasDetalleServlet (AJAX) -->
+    <servlet>
+        <servlet-name>ComprasDetalleServlet</servlet-name>
+        <servlet-class>com.dulce_gestion.controllers.ComprasDetalleServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ComprasDetalleServlet</servlet-name>
+        <url-pattern>/compras/detalle</url-pattern>
+    </servlet-mapping>
+
     <!-- ========== SESIÓN ========== -->
     <session-config>
         <session-timeout>30</session-timeout>

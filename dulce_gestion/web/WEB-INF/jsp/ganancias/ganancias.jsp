@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="com.dulce_gestion.models.Usuario,
+                 com.dulce_gestion.dao.GananciasDAO.FilaCompra,
                  com.dulce_gestion.dao.GananciasDAO.ResumenPeriodo,
                  com.dulce_gestion.dao.GananciasDAO.FilaVenta,
                  com.dulce_gestion.dao.GananciasDAO.FilaGasto,
@@ -114,6 +115,7 @@
     .gan-card__icono { font-size:1.3rem; margin-bottom:2px; }
     .c-ventas  .gan-card__icono, .c-ventas  .gan-card__valor { color:var(--color-principal-morado); }
     .c-gastos  .gan-card__icono, .c-gastos  .gan-card__valor { color:var(--color-danger); }
+    .c-compras .gan-card__icono, .c-compras .gan-card__valor { color:#7b3f00; }
     .c-positivo .gan-card__icono, .c-positivo .gan-card__valor { color:var(--color-success); }
     .c-negativo .gan-card__icono, .c-negativo .gan-card__valor { color:var(--color-danger); }
 
@@ -180,6 +182,7 @@
       <a class="sidebar__link" href="<%= ctx %>/ventas"><i class="fi fi-sr-shopping-cart"></i><span>Ventas</span></a>
       <% if (esSuperAdmin || esAdmin) { %>
       <a class="sidebar__link" href="<%= ctx %>/gastos"><i class="fi fi-sr-receipt"></i><span>Gastos</span></a>
+      <a class="sidebar__link" href="<%= ctx %>/compras"><i class="fi fi-sr-shop"></i><span>Compras</span></a>
       <a class="sidebar__link sidebar__link--activo" href="<%= ctx %>/ganancias"><i class="fi fi-sr-chart-line-up"></i><span>Ganancias</span></a>
       <% } %>
       <a class="sidebar__link" href="<%= ctx %>/perfil"><i class="fi fi-sr-user"></i><span>Perfil</span></a>
@@ -246,6 +249,11 @@
           <i class="fi fi-sr-receipt gan-card__icono"></i>
           <div class="gan-card__label">Gastos</div>
           <div class="gan-card__valor">$<%= String.format("%,.0f", r.totalGastos) %></div>
+        </div>
+        <div class="gan-card c-compras">
+          <i class="fi fi-sr-shop gan-card__icono"></i>
+          <div class="gan-card__label">Compras insumos</div>
+          <div class="gan-card__valor">$<%= String.format("%,.0f", r.totalCompras) %></div>
         </div>
         <div class="gan-card <%= r.ganancia.compareTo(BigDecimal.ZERO) >= 0 ? "c-positivo" : "c-negativo" %>">
           <i class="fi fi-sr-coins gan-card__icono"></i>
@@ -333,6 +341,46 @@
             <tr>
               <td colspan="4" style="padding:10px 16px;color:#666;">Total gastos</td>
               <td class="td-r td-g" style="padding:10px 16px;">$<%= String.format("%,.0f", r.totalGastos) %></td>
+            </tr>
+          </tfoot>
+        </table>
+        <% } %>
+      </div>
+      <% } %>
+
+      <!-- Tabla compras de insumos (solo admins) -->
+      <% if (esAdminOSuper) { %>
+      <div class="gan-seccion">
+        <div class="gan-seccion__header" style="background:#7b3f00;">
+          <i class="fi fi-sr-shop" style="color:white"></i>
+          <span class="gan-seccion__titulo">Compras de insumos del periodo</span>
+          <span class="gan-seccion__badge"><%= r.compras.size() %></span>
+        </div>
+        <% if (r.compras.isEmpty()) { %>
+        <div class="gan-vacio"><i class="fi fi-sr-shop"></i>No hay compras en este periodo.</div>
+        <% } else { %>
+        <table class="gan-tabla">
+          <thead>
+            <tr>
+              <th>#</th><th>Fecha</th><th>Descripcion</th><th>Metodo pago</th>
+              <th style="text-align:right">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% for (FilaCompra fc : r.compras) { %>
+            <tr>
+              <td class="td-id">#<%= fc.id %></td>
+              <td><%= fc.fecha %></td>
+              <td><%= fc.descripcion != null ? fc.descripcion : "-" %></td>
+              <td><span class="badge-mp"><%= fc.metodoPago %></span></td>
+              <td class="td-r" style="color:#7b3f00;font-weight:700;">$<%= String.format("%,.0f", fc.total) %></td>
+            </tr>
+            <% } %>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="4" style="padding:10px 16px;color:#666;">Total compras</td>
+              <td style="padding:10px 16px;text-align:right;font-weight:700;color:#7b3f00;">$<%= String.format("%,.0f", r.totalCompras) %></td>
             </tr>
           </tfoot>
         </table>

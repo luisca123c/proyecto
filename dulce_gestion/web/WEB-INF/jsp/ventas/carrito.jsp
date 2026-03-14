@@ -128,6 +128,7 @@
       <a class="sidebar__link sidebar__link--activo" href="<%= ctx %>/ventas"><i class="fi fi-sr-shopping-cart"></i><span>Ventas</span></a>
       <% if (esSuperAdmin || esAdmin) { %>
       <a class="sidebar__link" href="<%= ctx %>/gastos"><i class="fi fi-sr-receipt"></i><span>Gastos</span></a>
+      <a class="sidebar__link" href="<%= ctx %>/compras"><i class="fi fi-sr-shop"></i><span>Compras</span></a>
       <a class="sidebar__link" href="<%= ctx %>/ganancias"><i class="fi fi-sr-chart-line-up"></i><span>Ganancias</span></a>
       <% } %>
       <a class="sidebar__link" href="<%= ctx %>/perfil"><i class="fi fi-sr-user"></i><span>Perfil</span></a>

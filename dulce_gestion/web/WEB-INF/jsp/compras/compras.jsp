@@ -1,6 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="com.dulce_gestion.models.Usuario,
-                 com.dulce_gestion.dao.GastosDAO.FilaGasto,
+                 com.dulce_gestion.dao.ComprasDAO.FilaCompra,
                  java.util.List,
                  java.math.BigDecimal" %>
 <%
@@ -9,28 +9,28 @@
     boolean esSuperAdmin = "SuperAdministrador".equals(sesionUsuario.getNombreRol());
     boolean esAdmin      = "Administrador".equals(sesionUsuario.getNombreRol());
 
-    List<FilaGasto> gastos  = (List<FilaGasto>) request.getAttribute("gastos");
-    List<String[]>  metodos = (List<String[]>)  request.getAttribute("metodos");
-    FilaGasto       ge      = (FilaGasto)        request.getAttribute("gastoEditar");
-    String error   = (String) request.getAttribute("error");
-    String exitoP  = request.getParameter("exito");
+    List<FilaCompra> compras = (List<FilaCompra>) request.getAttribute("compras");
+    List<String[]>   metodos = (List<String[]>)   request.getAttribute("metodos");
+    FilaCompra       ce      = (FilaCompra)        request.getAttribute("compraEditar");
+    String error        = (String) request.getAttribute("error");
+    String exitoP       = request.getParameter("exito");
     boolean exitoCreado  = "creado".equals(exitoP);
     boolean exitoEditado = "editado".equals(exitoP);
 
     BigDecimal totalGeneral = BigDecimal.ZERO;
-    if (gastos != null) for (FilaGasto g : gastos) totalGeneral = totalGeneral.add(g.total);
+    if (compras != null) for (FilaCompra c : compras) totalGeneral = totalGeneral.add(c.total);
 
     String hoy = new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date());
 
-    boolean abrirEditar  = (ge != null);
-    boolean abrirCrear   = (error != null && !abrirEditar);
+    boolean abrirEditar = (ce != null);
+    boolean abrirCrear  = (error != null && !abrirEditar);
 %>
 <!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Gastos | Dulce Gestion</title>
+  <title>Compras | Dulce Gestion</title>
   <link rel="stylesheet" href="<%= ctx %>/assets/css/styles.css">
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.2.0/uicons-solid-rounded/css/uicons-solid-rounded.css">
   <style>
@@ -38,47 +38,32 @@
     .modulo-encabezado { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
     .modulo-titulo { font-size:1.3rem; font-weight:700; color:var(--color-texto-oscuro); display:flex; align-items:center; gap:10px; }
     .modulo-titulo i { color:var(--color-principal-morado); }
-
-    /* Tarjeta total */
     .gastos-total { background:white; border-radius:var(--radius-md); box-shadow:0 2px 8px rgba(0,0,0,0.07); padding:18px 22px; display:flex; align-items:center; justify-content:space-between; }
     .gastos-total__label { font-size:0.82rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#aaa; }
     .gastos-total__valor { font-size:1.6rem; font-weight:800; color:var(--color-danger); }
     .gastos-total__icono { font-size:1.8rem; color:var(--color-danger); opacity:0.15; }
-
-    /* Botón */
     .btn-agregar { display:inline-flex; align-items:center; gap:8px; padding:10px 20px; background:var(--color-principal-morado); color:white; border:none; border-radius:8px; font-weight:700; font-size:0.9rem; cursor:pointer; transition:background 0.2s; }
     .btn-agregar:hover { background:var(--color-morado-medio); }
-
-    /* Sección tabla */
     .gastos-seccion { background:white; border-radius:var(--radius-md); box-shadow:0 2px 8px rgba(0,0,0,0.07); overflow:hidden; }
     .gastos-seccion__header { background:var(--color-principal-morado); padding:12px 18px; display:flex; align-items:center; gap:10px; }
     .gastos-seccion__titulo { color:white; font-weight:700; font-size:0.92rem; }
     .gastos-seccion__badge { background:rgba(255,255,255,0.25); color:white; font-size:0.75rem; font-weight:700; padding:2px 8px; border-radius:10px; margin-left:auto; }
-
     .gastos-tabla { width:100%; border-collapse:collapse; }
     .gastos-tabla th { padding:10px 16px; font-size:0.76rem; font-weight:700; text-transform:uppercase; letter-spacing:0.4px; color:#888; background:#fafafa; border-bottom:1px solid #f0f0f0; text-align:left; }
     .gastos-tabla td { padding:12px 16px; font-size:0.88rem; color:var(--color-texto-oscuro); border-bottom:1px solid #f5f5f5; vertical-align:middle; }
     .gastos-tabla tr:last-child td { border-bottom:none; }
     .gastos-tabla tr:hover td { background:#faf8ff; }
-    .td-id    { color:#ccc; font-size:0.76rem; width:36px; }
+    .td-id { color:#ccc; font-size:0.76rem; width:36px; }
     .td-total { text-align:right; font-weight:700; color:var(--color-danger); }
-    .td-desc  { max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .td-desc { max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .badge-mp { display:inline-block; padding:3px 10px; border-radius:20px; font-size:0.75rem; font-weight:600; background:rgba(75,0,130,0.08); color:var(--color-principal-morado); }
     .gastos-tabla tfoot td { background:#fafafa; font-weight:700; border-top:2px solid #f0f0f0; }
-
-    /* Botón editar en fila */
     .btn-editar-fila { display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:6px; border:none; background:rgba(75,0,130,0.1); color:var(--color-principal-morado); cursor:pointer; font-size:0.85rem; transition:background 0.15s; text-decoration:none; }
     .btn-editar-fila:hover { background:rgba(75,0,130,0.2); }
-
-    /* Vacío */
     .gastos-vacio { padding:36px; text-align:center; color:#ccc; }
     .gastos-vacio i { font-size:2.5rem; display:block; margin-bottom:10px; }
-
-    /* Mensajes */
-    .msg-exito { display:flex; align-items:center; gap:10px; padding:14px 18px; border-radius:8px; background:linear-gradient(135deg,#2e7d32 0%,#388e3c 100%); color:#ffffff; font-weight:600; box-shadow:0 4px 12px rgba(46,125,50,0.35); }
-    .msg-error { display:flex; align-items:center; gap:10px; padding:14px 18px; border-radius:8px; background:linear-gradient(135deg,#c62828 0%,#e53935 100%); color:#ffffff; font-weight:600; box-shadow:0 4px 12px rgba(198,40,40,0.35); }
-
-    /* Modal */
+    .msg-exito { display:flex; align-items:center; gap:10px; padding:14px 18px; border-radius:8px; background:linear-gradient(135deg,#2e7d32 0%,#388e3c 100%); color:#fff; font-weight:600; box-shadow:0 4px 12px rgba(46,125,50,0.35); }
+    .msg-error { display:flex; align-items:center; gap:10px; padding:14px 18px; border-radius:8px; background:linear-gradient(135deg,#c62828 0%,#e53935 100%); color:#fff; font-weight:600; box-shadow:0 4px 12px rgba(198,40,40,0.35); }
     .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:999; align-items:center; justify-content:center; }
     .modal-overlay.activo { display:flex; }
     .modal-caja { background:white; border-radius:12px; padding:28px; width:440px; max-width:95vw; box-shadow:0 8px 32px rgba(0,0,0,0.2); display:flex; flex-direction:column; gap:16px; }
@@ -95,6 +80,8 @@
     .btn-guardar--editar { background:var(--color-success); }
     .btn-guardar--editar:hover { background:var(--color-success-hover); }
     .btn-cancelar { padding:11px 18px; border:1.5px solid #e0e0e0; border-radius:8px; background:white; color:#666; font-weight:600; font-size:0.9rem; cursor:pointer; }
+    /* Validacion */
+    .val-error { display:block; color:#e53935; font-size:12px; margin-top:4px; }
   </style>
 </head>
 <body class="layout-app">
@@ -132,8 +119,8 @@
       <a class="sidebar__link" href="<%= ctx %>/productos"><i class="fi fi-sr-box-open"></i><span>Productos</span></a>
       <a class="sidebar__link" href="<%= ctx %>/ventas"><i class="fi fi-sr-shopping-cart"></i><span>Ventas</span></a>
       <% if (esSuperAdmin || esAdmin) { %>
-      <a class="sidebar__link sidebar__link--activo" href="<%= ctx %>/gastos"><i class="fi fi-sr-receipt"></i><span>Gastos</span></a>
-      <a class="sidebar__link" href="<%= ctx %>/compras"><i class="fi fi-sr-shop"></i><span>Compras</span></a>
+      <a class="sidebar__link" href="<%= ctx %>/gastos"><i class="fi fi-sr-receipt"></i><span>Gastos</span></a>
+      <a class="sidebar__link sidebar__link--activo" href="<%= ctx %>/compras"><i class="fi fi-sr-shop"></i><span>Compras</span></a>
       <a class="sidebar__link" href="<%= ctx %>/ganancias"><i class="fi fi-sr-chart-line-up"></i><span>Ganancias</span></a>
       <% } %>
       <a class="sidebar__link" href="<%= ctx %>/perfil"><i class="fi fi-sr-user"></i><span>Perfil</span></a>
@@ -146,16 +133,16 @@
     <div class="gastos-wrapper">
 
       <div class="modulo-encabezado">
-        <h1 class="modulo-titulo"><i class="fi fi-sr-receipt"></i> Gastos</h1>
+        <h1 class="modulo-titulo"><i class="fi fi-sr-shop"></i> Compras de Insumos</h1>
         <button class="btn-agregar" onclick="abrirCrear()">
-          <i class="fi fi-sr-add"></i> Registrar gasto
+          <i class="fi fi-sr-add"></i> Registrar compra
         </button>
       </div>
 
       <% if (exitoCreado) { %>
-      <div class="msg-exito"><i class="fi fi-sr-check-circle"></i> Gasto registrado correctamente.</div>
+      <div class="msg-exito"><i class="fi fi-sr-check-circle"></i> Compra registrada correctamente.</div>
       <% } else if (exitoEditado) { %>
-      <div class="msg-exito"><i class="fi fi-sr-check-circle"></i> Gasto actualizado correctamente.</div>
+      <div class="msg-exito"><i class="fi fi-sr-check-circle"></i> Compra actualizada correctamente.</div>
       <% } %>
       <% if (error != null && !error.isBlank()) { %>
       <div class="msg-error"><i class="fi fi-sr-triangle-warning"></i> <%= error %></div>
@@ -164,24 +151,24 @@
       <!-- Tarjeta total -->
       <div class="gastos-total">
         <div>
-          <div class="gastos-total__label">Total acumulado</div>
+          <div class="gastos-total__label">Total invertido en insumos</div>
           <div class="gastos-total__valor">$<%= String.format("%,.0f", totalGeneral) %></div>
         </div>
-        <i class="fi fi-sr-receipt gastos-total__icono"></i>
+        <i class="fi fi-sr-shop gastos-total__icono"></i>
       </div>
 
       <!-- Tabla -->
       <div class="gastos-seccion">
         <div class="gastos-seccion__header">
           <i class="fi fi-sr-list" style="color:white"></i>
-          <span class="gastos-seccion__titulo">Historial de gastos</span>
-          <span class="gastos-seccion__badge"><%= gastos != null ? gastos.size() : 0 %></span>
+          <span class="gastos-seccion__titulo">Historial de compras</span>
+          <span class="gastos-seccion__badge"><%= compras != null ? compras.size() : 0 %></span>
         </div>
 
-        <% if (gastos == null || gastos.isEmpty()) { %>
+        <% if (compras == null || compras.isEmpty()) { %>
         <div class="gastos-vacio">
-          <i class="fi fi-sr-receipt"></i>
-          <p>No hay gastos registrados aun.</p>
+          <i class="fi fi-sr-shop"></i>
+          <p>No hay compras registradas aun.</p>
         </div>
         <% } else { %>
         <table class="gastos-tabla">
@@ -193,19 +180,17 @@
             </tr>
           </thead>
           <tbody>
-            <% for (FilaGasto g : gastos) { %>
+            <% for (FilaCompra c : compras) { %>
             <tr>
-              <td class="td-id">#<%= g.id %></td>
-              <td><%= g.fecha %></td>
-              <td class="td-desc" title="<%= g.descripcion != null ? g.descripcion : "" %>">
-                <%= g.descripcion != null ? g.descripcion : "—" %>
-              </td>
-              <td><span class="badge-mp"><%= g.metodoPago %></span></td>
-              <td><%= g.registradoPor %></td>
-              <td class="td-total">$<%= String.format("%,.0f", g.total) %></td>
+              <td class="td-id">#<%= c.id %></td>
+              <td><%= c.fecha %></td>
+              <td class="td-desc"><%= c.descripcion %></td>
+              <td><span class="badge-mp"><%= c.metodoPago %></span></td>
+              <td><%= c.registradoPor %></td>
+              <td class="td-total">$<%= String.format("%,.0f", c.total) %></td>
               <td>
-                <a href="<%= ctx %>/gastos?editar=<%= g.id %>"
-                   class="btn-editar-fila" title="Editar gasto">
+                <a href="<%= ctx %>/compras?editar=<%= c.id %>"
+                   class="btn-editar-fila" title="Editar compra">
                   <i class="fi fi-sr-pencil"></i>
                 </a>
               </td>
@@ -223,21 +208,20 @@
         <% } %>
       </div>
 
-    </div>  <!-- Datos del servidor para el JS externo -->
-  <div id="gastos-data" hidden
+    </div>
+  <div id="compras-data" hidden
        data-abrir="<% if (abrirEditar) { %>editar<% } else if (abrirCrear) { %>crear<% } %>"></div>
-
   </main>
 
   <!-- ── MODAL CREAR ── -->
   <div class="modal-overlay" id="modalCrear">
     <div class="modal-caja">
-      <div class="modal-titulo"><i class="fi fi-sr-add"></i> Registrar gasto</div>
-      <form method="POST" action="<%= ctx %>/gastos">
+      <div class="modal-titulo"><i class="fi fi-sr-add"></i> Registrar compra de insumos</div>
+      <form method="POST" action="<%= ctx %>/compras" id="formCrear" novalidate>
         <input type="hidden" name="accion" value="crear">
         <div class="campo">
           <label>Descripcion *</label>
-          <textarea name="descripcion" placeholder="Ej: Compra de ingredientes..." required></textarea>
+          <textarea name="descripcion" placeholder="Ej: Compra de leche y azucar..." required maxlength="150"></textarea>
         </div>
         <div class="campo">
           <label>Monto *</label>
@@ -266,27 +250,25 @@
   <!-- ── MODAL EDITAR ── -->
   <div class="modal-overlay" id="modalEditar">
     <div class="modal-caja">
-      <div class="modal-titulo"><i class="fi fi-sr-pencil"></i> Editar gasto</div>
-      <form method="POST" action="<%= ctx %>/gastos">
+      <div class="modal-titulo"><i class="fi fi-sr-pencil"></i> Editar compra</div>
+      <form method="POST" action="<%= ctx %>/compras" id="formEditar" novalidate>
         <input type="hidden" name="accion" value="editar">
-        <input type="hidden" name="idGasto"         id="e_idGasto"         value="<%= ge != null ? ge.id : "" %>">
-        <input type="hidden" name="idDetalleCompra" id="e_idDetalleCompra" value="<%= ge != null ? ge.idDetalleCompra : "" %>">
-        <input type="hidden" name="idCompra"        id="e_idCompra"        value="<%= ge != null ? ge.idCompra : "" %>">
+        <input type='hidden' name='idCompra' id='e_idCompra' value='<%= ce != null ? ce.id : "" %>'>
         <div class="campo">
           <label>Descripcion *</label>
-          <textarea name="descripcion" id="e_descripcion" required><%= ge != null && ge.descripcion != null ? ge.descripcion : "" %></textarea>
+          <textarea name="descripcion" id="e_descripcion" required maxlength="150"><%= ce != null && ce.descripcion != null ? ce.descripcion : "" %></textarea>
         </div>
         <div class="campo">
           <label>Monto *</label>
           <input type="number" name="total" id="e_total" min="1" step="0.01" required
-                 value="<%= ge != null ? ge.total : "" %>">
+                 value='<%= ce != null ? ce.total : "" %>'>
         </div>
         <div class="campo">
           <label>Metodo de pago *</label>
           <select name="idMetodoPago" id="e_metodo" required>
             <% if (metodos != null) for (String[] m : metodos) { %>
             <option value="<%= m[0] %>"
-              <%= (ge != null && ge.idMetodoPago == Integer.parseInt(m[0])) ? "selected" : "" %>>
+              <%= (ce != null && ce.idMetodoPago == Integer.parseInt(m[0])) ? "selected" : "" %>>
               <%= m[1] %>
             </option>
             <% } %>
@@ -295,7 +277,7 @@
         <div class="campo">
           <label>Fecha *</label>
           <input type="date" name="fecha" id="e_fecha" max="<%= hoy %>" required
-                 value="<%= ge != null ? ge.fechaRaw : hoy %>">
+                 value="<%= ce != null ? ce.fechaRaw : hoy %>">
         </div>
         <div class="modal-botones">
           <button type="submit" class="btn-guardar btn-guardar--editar">
@@ -308,5 +290,5 @@
   </div>
 
 </body>
-<script src="<%= ctx %>/assets/js/gastos/gastos.js" defer></script>
+<script src="<%= ctx %>/assets/js/compras/compras.js" defer></script>
 </html>

@@ -77,15 +77,26 @@ public class GananciasDAO {
      * GananciasServlet pone este objeto en el request con nombre "resumen"
      * y el JSP accede directamente a sus campos: resumen.totalVentas, etc.
      */
+    /** Representa una fila del historial de compras de insumos del período. */
+    public static class FilaCompra {
+        public int        id;
+        public String     fecha;
+        public String     descripcion;
+        public String     metodoPago;
+        public BigDecimal total;
+    }
+
     public static class ResumenPeriodo {
         public BigDecimal      totalVentas  = BigDecimal.ZERO;
         public BigDecimal      totalGastos  = BigDecimal.ZERO;
-        public BigDecimal      ganancia     = BigDecimal.ZERO; // totalVentas - totalGastos
-        public String          fechaInicio;                    // "yyyy-MM-dd" inicio del período
-        public String          fechaFin;                       // "yyyy-MM-dd" fin del período
-        public String          labelPeriodo;                   // Texto para mostrar: "Semana 10/03 - 16/03/2025"
+        public BigDecimal      totalCompras = BigDecimal.ZERO;
+        public BigDecimal      ganancia     = BigDecimal.ZERO; // totalVentas - totalGastos - totalCompras
+        public String          fechaInicio;
+        public String          fechaFin;
+        public String          labelPeriodo;
         public List<FilaVenta> ventas       = new ArrayList<>();
         public List<FilaGasto> gastos       = new ArrayList<>();
+        public List<FilaCompra> compras     = new ArrayList<>();
     }
 
     // =========================================================
@@ -241,7 +252,34 @@ public class GananciasDAO {
         }
 
         // Ganancia neta = ingresos por ventas menos egresos por gastos
-        r.ganancia = r.totalVentas.subtract(r.totalGastos);
+        // Fase 4 — Consultar compras de insumos del período (solo admins)
+        if (esAdminOSuperAdmin) {
+            String sqlCompras =
+                "SELECT ci.id, DATE_FORMAT(ci.fecha_compra,'%d/%m/%Y %H:%i') AS fecha, " +
+                "ci.descripcion, mp.nombre AS metodo_pago, ci.total " +
+                "FROM compras_insumos ci " +
+                "JOIN metodo_pago mp ON mp.id = ci.id_metodo_pago " +
+                "WHERE DATE(ci.fecha_compra) BETWEEN ? AND ? ORDER BY ci.fecha_compra DESC";
+            try (Connection conC = DB.obtenerConexion();
+                 PreparedStatement psC = conC.prepareStatement(sqlCompras)) {
+                psC.setString(1, r.fechaInicio);
+                psC.setString(2, r.fechaFin);
+                try (ResultSet rsC = psC.executeQuery()) {
+                    while (rsC.next()) {
+                        FilaCompra fc = new FilaCompra();
+                        fc.id          = rsC.getInt("id");
+                        fc.fecha       = rsC.getString("fecha");
+                        fc.descripcion = rsC.getString("descripcion");
+                        fc.metodoPago  = rsC.getString("metodo_pago");
+                        fc.total       = rsC.getBigDecimal("total");
+                        r.compras.add(fc);
+                        r.totalCompras = r.totalCompras.add(fc.total);
+                    }
+                }
+            }
+        }
+
+        r.ganancia = r.totalVentas.subtract(r.totalGastos).subtract(r.totalCompras);
         return r;
     }
 
