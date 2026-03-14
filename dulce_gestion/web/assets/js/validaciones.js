@@ -30,14 +30,32 @@ function valLimpiarError(input) {
   input.style.borderColor = '';
 }
 
+/* ── Toggle mostrar/ocultar contraseña ───────────────────────────────── */
+function togglePass(btn) {
+  var input = btn.previousElementSibling;
+  if (!input || input.tagName !== 'INPUT') {
+    input = btn.parentElement.querySelector('input[type="password"], input[type="text"]');
+  }
+  if (!input) return;
+  var mostrar = input.type === 'password';
+  input.type = mostrar ? 'text' : 'password';
+  var icon = btn.querySelector('i');
+  if (icon) {
+    icon.className = mostrar ? 'fi fi-sr-eye-crossed' : 'fi fi-sr-eye';
+  }
+}
+
 /* ── Constantes de límites (deben coincidir con la BD) ────────────────── */
 const LIMITE = {
-  nombre:   100,   // perfil_usuario.nombre_completo VARCHAR(100)
-  correo:   100,   // correos.correo VARCHAR(100)
-  telefono:  10,   // telefonos.telefono VARCHAR(20) — máx dígitos prácticos
-  telMin:     7,   // mínimo dígitos
-  producto: 200,   // productos.nombre VARCHAR(200)
-  pasMin:     8,   // mínimo contraseña
+  nombre:     100,  // perfil_usuario.nombre_completo VARCHAR(100)
+  correo:     100,  // correos.correo VARCHAR(100)
+  telefono:    10,  // telefonos.telefono VARCHAR(20) — máx dígitos prácticos
+  telMin:       7,  // mínimo dígitos
+  producto:   200,  // productos.nombre VARCHAR(200)
+  prodDesc:   200,  // productos.descripcion VARCHAR(200)
+  gastoDesc:  150,  // detalle_compra.descripcion / compras_insumos.descripcion VARCHAR(150)
+  pasMin:       8,  // mínimo contraseña (perfil)
+  pasMinEmp:    6,  // mínimo contraseña (crear/editar empleado)
 };
 
 const REGEX_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -141,7 +159,36 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  /* ── NOMBRE DE PRODUCTO ──────────────────────────────────────────── */
+  /* ── DESCRIPCIÓN DE PRODUCTO (opcional, máx 200) ───────────────── */
+  document.querySelectorAll('input[name="descripcion"]').forEach(function (input) {
+    input.setAttribute('maxlength', LIMITE.prodDesc);
+    input.addEventListener('blur', function () {
+      if (this.value.length > LIMITE.prodDesc) {
+        valMostrarError(this, `Máximo ${LIMITE.prodDesc} caracteres.`);
+      } else {
+        valLimpiarError(this);
+      }
+    });
+  });
+
+  /* ── DESCRIPCIÓN DE GASTOS/COMPRAS (obligatoria, máx 150) ───────── */
+  document.querySelectorAll('textarea[name="descripcion"]').forEach(function (input) {
+    input.setAttribute('maxlength', LIMITE.gastoDesc);
+    input.addEventListener('blur', function () {
+      if (this.value.trim() === '') {
+        valMostrarError(this, 'La descripción es obligatoria.');
+      } else if (this.value.length > LIMITE.gastoDesc) {
+        valMostrarError(this, `Máximo ${LIMITE.gastoDesc} caracteres (tienes ${this.value.length}).`);
+      } else {
+        valLimpiarError(this);
+      }
+    });
+    input.addEventListener('input', function () {
+      if (this.value.length <= LIMITE.gastoDesc && this.value.trim() !== '') valLimpiarError(this);
+    });
+  });
+
+    /* ── NOMBRE DE PRODUCTO ──────────────────────────────────────────── */
   document.querySelectorAll('input[name="nombre"]').forEach(function (input) {
     if (input.type === 'hidden') return;
     input.setAttribute('maxlength', LIMITE.producto);

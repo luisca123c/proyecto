@@ -119,7 +119,7 @@
           <label class="nv-campo__label">Nombre Completo Empleado</label>
           <div class="nv-campo__input-wrapper">
             <input class="nv-campo__input"
-                   type="text" name="nombreCompleto"
+                   type="text" name="nombreCompleto" maxlength="100"
                    placeholder="Nombre completo"
                    value="<%= vNombre %>"
                    id="inputNombre" data-fallback="Nombre"
@@ -133,7 +133,7 @@
           <label class="nv-campo__label">Teléfono Empleado</label>
           <div class="nv-campo__input-wrapper">
             <input class="nv-campo__input"
-                   type="tel" name="telefono"
+                   type="tel" name="telefono" maxlength="10"
                    placeholder="Número de teléfono"
                    value="<%= vTelefono %>"
                    required>
@@ -172,7 +172,7 @@
           <label class="nv-campo__label">Correo</label>
           <div class="nv-campo__input-wrapper">
             <input class="nv-campo__input"
-                   type="email" name="correo"
+                   type="email" name="correo" maxlength="100"
                    placeholder="correo@ejemplo.com"
                    value="<%= vCorreo %>"
                    required>
@@ -185,10 +185,12 @@
           <label class="nv-campo__label">Contraseña</label>
           <div class="nv-campo__input-wrapper">
             <input class="nv-campo__input"
-                   type="password" name="contrasena"
+                   type="password" name="contrasena" maxlength="100"
                    placeholder="Mínimo 6 caracteres"
                    required>
-            <i class="fi fi-sr-edit nv-campo__icono-edit"></i>
+            <button type="button" onclick="togglePass(this)" class="nv-campo__icono-edit" title="Mostrar/ocultar" style="background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;color:#aaa;">
+              <i class="fi fi-sr-eye"></i>
+            </button>
           </div>
         </div>
 

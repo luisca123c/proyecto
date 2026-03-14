@@ -152,18 +152,18 @@
 
                                 <div style="margin-bottom: 18px;">
                                     <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Nombre Completo</label>
-                                    <input type="text" name="nombreCompleto" value="<%= perfil.getNombreCompleto() %>"
+                                    <input type="text" name="nombreCompleto" maxlength="100" value="<%= perfil.getNombreCompleto() %>"
                                         <%= esEmpleado ? "readonly style=\"width: 100%; padding: 11px 14px; border: 1px solid #ddd; border-radius: 6px; color: #888; font-size: 13px; background:#f5f5f5; cursor:not-allowed;\"" : "required style=\"width: 100%; padding: 11px 14px; border: 1px solid #ddd; border-radius: 6px; color: #333; font-size: 13px;\"" %>>
                                 </div>
 
                                 <div style="margin-bottom: 18px;">
                                     <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Correo Electrónico</label>
-                                    <input type="email" name="correo" value="<%= perfil.getCorreo() %>" required style="width: 100%; padding: 11px 14px; border: 1px solid #ddd; border-radius: 6px; color: #333; font-size: 13px; transition: all 0.3s ease;">
+                                    <input type="email" name="correo" maxlength="100" value="<%= perfil.getCorreo() %>" required style="width: 100%; padding: 11px 14px; border: 1px solid #ddd; border-radius: 6px; color: #333; font-size: 13px; transition: all 0.3s ease;">
                                 </div>
 
                                 <div style="margin-bottom: 18px;">
                                     <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Teléfono</label>
-                                    <input type="tel" name="telefono" value="<%= perfil.getTelefono() %>" required style="width: 100%; padding: 11px 14px; border: 1px solid #ddd; border-radius: 6px; color: #333; font-size: 13px; transition: all 0.3s ease;">
+                                    <input type="tel" name="telefono" maxlength="10" value="<%= perfil.getTelefono() %>" required style="width: 100%; padding: 11px 14px; border: 1px solid #ddd; border-radius: 6px; color: #333; font-size: 13px; transition: all 0.3s ease;">
                                 </div>
 
                                 <div style="margin-bottom: 18px;">
@@ -202,17 +202,32 @@
 
                                 <div style="margin-bottom: 18px;">
                                     <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Contraseña Actual</label>
-                                    <input type="password" name="contrasennaActual" required style="width: 100%; padding: 11px 14px; border: 1px solid #ddd; border-radius: 6px; color: #333; font-size: 13px;">
+                                    <div style="position:relative;">
+                                        <input type="password" name="contrasennaActual" required style="width: 100%; padding: 11px 14px; border: 1px solid #ddd; border-radius: 6px; color: #333; font-size: 13px;">
+                                        <button type="button" onclick="togglePass(this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#aaa;padding:4px;display:flex;align-items:center;" title="Mostrar/ocultar">
+                                          <i class="fi fi-sr-eye"></i>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div style="margin-bottom: 18px;">
                                     <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Contraseña Nueva</label>
-                                    <input type="password" name="contrasennaNueva" required style="width: 100%; padding: 11px 14px; border: 1px solid #ddd; border-radius: 6px; color: #333; font-size: 13px;">
+                                    <div style="position:relative;">
+                                        <input type="password" name="contrasennaNueva" required style="width: 100%; padding: 11px 14px; border: 1px solid #ddd; border-radius: 6px; color: #333; font-size: 13px;">
+                                        <button type="button" onclick="togglePass(this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#aaa;padding:4px;display:flex;align-items:center;" title="Mostrar/ocultar">
+                                          <i class="fi fi-sr-eye"></i>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div style="margin-bottom: 18px;">
                                     <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Confirmar Contraseña Nueva</label>
-                                    <input type="password" name="contrasennaNuevaConfirm" required style="width: 100%; padding: 11px 14px; border: 1px solid #ddd; border-radius: 6px; color: #333; font-size: 13px;">
+                                    <div style="position:relative;">
+                                        <input type="password" name="contrasennaNuevaConfirm" required style="width: 100%; padding: 11px 14px; border: 1px solid #ddd; border-radius: 6px; color: #333; font-size: 13px;">
+                                        <button type="button" onclick="togglePass(this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#aaa;padding:4px;display:flex;align-items:center;" title="Mostrar/ocultar">
+                                          <i class="fi fi-sr-eye"></i>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div style="display: flex; gap: 12px; margin-top: 28px;">

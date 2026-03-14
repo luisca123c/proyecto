@@ -120,7 +120,7 @@
         <div class="nv-campo">
           <label class="nv-campo__label">Nombre Completo</label>
           <div class="nv-campo__input-wrapper">
-            <input class="nv-campo__input" type="text" name="nombreCompleto"
+            <input class="nv-campo__input" type="text" name="nombreCompleto" maxlength="100"
                    id="inputNombre" data-fallback="Nombre" value="<%= vNombre %>" required>
             <i class="fi fi-sr-edit nv-campo__icono-edit"></i>
           </div>
@@ -130,7 +130,7 @@
         <div class="nv-campo">
           <label class="nv-campo__label">Teléfono</label>
           <div class="nv-campo__input-wrapper">
-            <input class="nv-campo__input" type="tel" name="telefono"
+            <input class="nv-campo__input" type="tel" name="telefono" maxlength="10"
                    value="<%= vTelefono %>" required>
             <i class="fi fi-sr-edit nv-campo__icono-edit"></i>
           </div>
@@ -153,7 +153,7 @@
         <div class="nv-campo">
           <label class="nv-campo__label">Correo</label>
           <div class="nv-campo__input-wrapper">
-            <input class="nv-campo__input" type="email" name="correo"
+            <input class="nv-campo__input" type="email" name="correo" maxlength="100"
                    value="<%= vCorreo %>" required>
             <i class="fi fi-sr-edit nv-campo__icono-edit"></i>
           </div>
@@ -163,9 +163,11 @@
         <div class="nv-campo">
           <label class="nv-campo__label">Nueva Contraseña <span style="opacity:.6;font-weight:400">(dejar vacío para no cambiar)</span></label>
           <div class="nv-campo__input-wrapper">
-            <input class="nv-campo__input" type="password" name="contrasena"
+            <input class="nv-campo__input" type="password" name="contrasena" maxlength="100"
                    placeholder="Mínimo 6 caracteres">
-            <i class="fi fi-sr-edit nv-campo__icono-edit"></i>
+            <button type="button" onclick="togglePass(this)" class="nv-campo__icono-edit" title="Mostrar/ocultar" style="background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;color:#aaa;">
+              <i class="fi fi-sr-eye"></i>
+            </button>
           </div>
         </div>
 

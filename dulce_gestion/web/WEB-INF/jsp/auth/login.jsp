@@ -52,7 +52,7 @@
 
             <div class="form-group">
               <label for="correo">Correo o usuario:</label>
-              <div class="input-wrapper">
+              <div class="input-wrapper" style="position:relative;">
                 <i class="fi fi-sr-envelope"></i>
                 <input type="text"
                        id="correo"
@@ -65,7 +65,7 @@
 
             <div class="form-group">
               <label for="contrasena">Contraseña:</label>
-              <div class="input-wrapper">
+              <div class="input-wrapper" style="position:relative;">
                 <i class="fi fi-sr-lock"></i>
                 <input type="password"
                        id="contrasena"
@@ -73,6 +73,9 @@
                        placeholder="Ingresa la contraseña"
                        autocomplete="current-password"
                        required>
+                <button type="button" class="btn-toggle-pass" onclick="togglePass(this)" title="Mostrar/ocultar contraseña">
+                  <i class="fi fi-sr-eye"></i>
+                </button>
               </div>
             </div>
 
@@ -100,6 +103,7 @@
   <script type="module"
           src="${pageContext.request.contextPath}/assets/js/login/index.js">
   </script>
+  <script src="${pageContext.request.contextPath}/assets/js/validaciones.js" defer></script>
 
 </body>
 </html>

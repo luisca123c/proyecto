@@ -93,7 +93,8 @@
   position: relative;
 }
 
-.input-wrapper i {
+/* Solo el ícono DIRECTO del wrapper (candado/sobre), NO el de dentro del botón */
+.input-wrapper > i {
   position: absolute;
   left: 13px;
   top: 50%;
@@ -105,7 +106,7 @@
 
 .input-wrapper input {
   width: 100%;
-  padding: 12px 14px 12px 40px; /* espacio para el ícono */
+  padding: 12px 40px 12px 40px; /* espacio para íconos izq y der */
   border-radius: var(--radius-md);
   border: none;
   background-color: var(--color-card);
@@ -122,6 +123,22 @@
 
 .input-wrapper input:focus {
   box-shadow: var(--focus-ring);
+}
+
+/* Botón toggle mostrar/ocultar contraseña */
+.input-wrapper .btn-toggle-pass {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-principal-morado);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
 }
 
 /* Botón ocupa todo el ancho */

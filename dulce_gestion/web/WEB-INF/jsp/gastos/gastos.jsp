@@ -237,7 +237,7 @@
         <input type="hidden" name="accion" value="crear">
         <div class="campo">
           <label>Descripcion *</label>
-          <textarea name="descripcion" placeholder="Ej: Compra de ingredientes..." required></textarea>
+          <textarea name="descripcion" placeholder="Ej: Compra de ingredientes..." required maxlength="150"></textarea>
         </div>
         <div class="campo">
           <label>Monto *</label>
@@ -274,7 +274,7 @@
         <input type="hidden" name="idCompra"        id="e_idCompra"        value="<%= ge != null ? ge.idCompra : "" %>">
         <div class="campo">
           <label>Descripcion *</label>
-          <textarea name="descripcion" id="e_descripcion" required><%= ge != null && ge.descripcion != null ? ge.descripcion : "" %></textarea>
+          <textarea name="descripcion" id="e_descripcion" required maxlength="150"><%= ge != null && ge.descripcion != null ? ge.descripcion : "" %></textarea>
         </div>
         <div class="campo">
           <label>Monto *</label>

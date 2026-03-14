@@ -61,10 +61,10 @@
       <a class="sidebar__link" href="<%= ctx %>/ventas">
         <i class="fi fi-sr-shopping-cart"></i><span>Ventas</span>
       </a>
-      <div class="sidebar__separador"></div>
       <a class="sidebar__link" href="<%= ctx %>/perfil">
         <i class="fi fi-sr-user"></i><span>Perfil</span>
       </a>
+      <div class="sidebar__separador"></div>
       <a class="sidebar__link sidebar__link--salir" href="<%= ctx %>/logout">
         <i class="fi fi-sr-sign-out-alt"></i><span>Cerrar sesión</span>
       </a>
