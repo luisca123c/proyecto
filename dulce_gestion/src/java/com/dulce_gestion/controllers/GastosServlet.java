@@ -172,6 +172,11 @@ public class GastosServlet extends HttpServlet {
             // fecha viene como "yyyy-MM-dd" del input type="date"
             // new Date() obtiene la hora actual del servidor
             String horaActual    = new SimpleDateFormat("HH:mm:ss").format(new Date());
+            // Validar que la fecha no sea futura
+            java.time.LocalDate fechaDate = java.time.LocalDate.parse(fecha);
+            if (fechaDate.isAfter(java.time.LocalDate.now())) {
+                throw new IllegalArgumentException("La fecha no puede ser una fecha futura.");
+            }
             String fechaDatetime = fecha + " " + horaActual; // "2025-03-15 14:30:00"
 
             // ── Paso 5: ejecutar la acción correspondiente ────────────────

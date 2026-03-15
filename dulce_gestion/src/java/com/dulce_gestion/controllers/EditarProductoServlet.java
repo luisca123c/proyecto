@@ -182,6 +182,21 @@ public class EditarProductoServlet extends HttpServlet {
         }
 
         // ── Paso 6: validar que no sean negativos ─────────────────────────
+        // Validar que fechaVencimiento no sea en el pasado
+        try {
+            java.time.LocalDate fv = java.time.LocalDate.parse(fechaVenc);
+            if (fv.isBefore(java.time.LocalDate.now())) {
+                throw new IllegalArgumentException("La fecha de vencimiento no puede ser anterior a hoy.");
+            }
+        } catch (java.time.format.DateTimeParseException ex) {
+            // formato inválido — el servlet lo rechazará igualmente
+        } catch (IllegalArgumentException ex) {
+            cargarSelectores(request);
+            request.setAttribute("error", ex.getMessage());
+            request.getRequestDispatcher(VISTA).forward(request, response);
+            return;
+        }
+
         if (stock < 0 || precio.compareTo(BigDecimal.ZERO) < 0) {
             reenviarConError(request, response, "Stock y precio no pueden ser negativos.", idParam);
             return;

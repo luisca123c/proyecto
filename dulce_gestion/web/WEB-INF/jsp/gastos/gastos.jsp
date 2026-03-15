@@ -309,4 +309,5 @@
 
 </body>
 <script src="<%= ctx %>/assets/js/gastos/gastos.js" defer></script>
+<script src="<%= ctx %>/assets/js/validaciones.js" defer></script>
 </html>

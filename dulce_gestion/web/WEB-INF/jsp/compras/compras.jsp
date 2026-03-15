@@ -291,4 +291,5 @@
 
 </body>
 <script src="<%= ctx %>/assets/js/compras/compras.js" defer></script>
+<script src="<%= ctx %>/assets/js/validaciones.js" defer></script>
 </html>

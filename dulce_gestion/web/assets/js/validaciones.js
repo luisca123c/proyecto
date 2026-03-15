@@ -269,6 +269,23 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
+  /* ── FECHA DE GASTO/COMPRA (no puede ser futura) ─────────────────── */
+  document.querySelectorAll('input[name="fecha"]').forEach(function (input) {
+    function validarFecha() {
+      if (!input.value) { valLimpiarError(input); return; }
+      const hoy     = new Date(); hoy.setHours(0,0,0,0);
+      const elegida = new Date(input.value + 'T00:00:00');
+      if (elegida > hoy) {
+        valMostrarError(input, 'La fecha no puede ser una fecha futura.');
+      } else {
+        valLimpiarError(input);
+      }
+    }
+    input.addEventListener('change', validarFecha);
+    input.addEventListener('blur',   validarFecha);
+    input.addEventListener('input',  validarFecha);
+  });
+
   /* ── CONTRASEÑA NUEVA (perfil) ───────────────────────────────────── */
   document.querySelectorAll('input[name="contrasennaNueva"]').forEach(function (input) {
     input.addEventListener('blur', function () {
@@ -369,12 +386,21 @@ document.addEventListener('DOMContentLoaded', function () {
         return null;
       });
 
-      // Fecha vencimiento
+      // Fecha vencimiento (no puede ser en el pasado)
       check('input[name="fechaVencimiento"]', inp => {
         if (!inp.value) return null;
         const hoy     = new Date(); hoy.setHours(0,0,0,0);
         const elegida = new Date(inp.value + 'T00:00:00');
-        if (elegida < hoy) return 'La fecha no puede ser anterior a hoy.';
+        if (elegida < hoy) return 'La fecha de vencimiento no puede ser anterior a hoy.';
+        return null;
+      });
+
+      // Fecha de gasto/compra (no puede ser futura)
+      check('input[name="fecha"]', inp => {
+        if (!inp.value) return null;
+        const hoy     = new Date(); hoy.setHours(0,0,0,0);
+        const elegida = new Date(inp.value + 'T00:00:00');
+        if (elegida > hoy) return 'La fecha no puede ser una fecha futura.';
         return null;
       });
 

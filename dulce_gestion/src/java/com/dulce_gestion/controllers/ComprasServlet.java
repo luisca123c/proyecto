@@ -61,6 +61,11 @@ public class ComprasServlet extends HttpServlet {
                 throw new IllegalArgumentException("El monto debe ser mayor a cero.");
 
             int idMetodoPago = Integer.parseInt(metodoPagoStr);
+            // Validar que la fecha no sea futura
+            java.time.LocalDate fechaDate = java.time.LocalDate.parse(fecha);
+            if (fechaDate.isAfter(java.time.LocalDate.now())) {
+                throw new IllegalArgumentException("La fecha no puede ser una fecha futura.");
+            }
             String fechaHora = fecha + " " + new SimpleDateFormat("HH:mm:ss").format(new Date());
 
             if ("editar".equals(accion)) {
