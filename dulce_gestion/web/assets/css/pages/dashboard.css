@@ -154,9 +154,10 @@
 ----------------------------------------------------------- */
 @media (min-width: 768px) {
   .sidebar {
-    position: static;        /* el grid lo ubica en su área */
+    position: sticky;        /* se pega al top mientras el contenido hace scroll */
+    top: 0;
     left: auto;
-    height: 100%;
+    height: 100vh;
     min-height: 100vh;
     transition: none;
   }

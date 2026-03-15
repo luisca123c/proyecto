@@ -16,6 +16,7 @@
     </filter-mapping>
 
     <!-- ========== SERVLETS ========== -->
+
     <servlet>
         <servlet-name>LoginServlet</servlet-name>
         <servlet-class>com.dulce_gestion.controllers.LoginServlet</servlet-class>
@@ -43,7 +44,8 @@
         <url-pattern>/logout</url-pattern>
     </servlet-mapping>
 
-    <!-- NUEVO: EmpleadosServlet -->
+    <!-- ========== EMPLEADOS ========== -->
+
     <servlet>
         <servlet-name>EmpleadosServlet</servlet-name>
         <servlet-class>com.dulce_gestion.controllers.EmpleadosServlet</servlet-class>
@@ -53,7 +55,6 @@
         <url-pattern>/empleados</url-pattern>
     </servlet-mapping>
 
-    <!-- NuevoEmpleadoServlet -->
     <servlet>
         <servlet-name>NuevoEmpleadoServlet</servlet-name>
         <servlet-class>com.dulce_gestion.controllers.NuevoEmpleadoServlet</servlet-class>
@@ -63,7 +64,6 @@
         <url-pattern>/empleados/nuevo</url-pattern>
     </servlet-mapping>
 
-    <!-- EditarEmpleadoServlet -->
     <servlet>
         <servlet-name>EditarEmpleadoServlet</servlet-name>
         <servlet-class>com.dulce_gestion.controllers.EditarEmpleadoServlet</servlet-class>
@@ -73,7 +73,6 @@
         <url-pattern>/empleados/editar</url-pattern>
     </servlet-mapping>
 
-    <!-- EliminarEmpleadoServlet -->
     <servlet>
         <servlet-name>EliminarEmpleadoServlet</servlet-name>
         <servlet-class>com.dulce_gestion.controllers.EliminarEmpleadoServlet</servlet-class>
@@ -83,7 +82,8 @@
         <url-pattern>/empleados/eliminar</url-pattern>
     </servlet-mapping>
 
-    <!-- ProductosServlet -->
+    <!-- ========== PRODUCTOS ========== -->
+
     <servlet>
         <servlet-name>ProductosServlet</servlet-name>
         <servlet-class>com.dulce_gestion.controllers.ProductosServlet</servlet-class>
@@ -93,7 +93,6 @@
         <url-pattern>/productos</url-pattern>
     </servlet-mapping>
 
-    <!-- NuevoProductoServlet -->
     <servlet>
         <servlet-name>NuevoProductoServlet</servlet-name>
         <servlet-class>com.dulce_gestion.controllers.NuevoProductoServlet</servlet-class>
@@ -108,7 +107,6 @@
         <url-pattern>/productos/nuevo</url-pattern>
     </servlet-mapping>
 
-    <!-- EditarProductoServlet -->
     <servlet>
         <servlet-name>EditarProductoServlet</servlet-name>
         <servlet-class>com.dulce_gestion.controllers.EditarProductoServlet</servlet-class>
@@ -123,7 +121,6 @@
         <url-pattern>/productos/editar</url-pattern>
     </servlet-mapping>
 
-    <!-- EliminarProductoServlet -->
     <servlet>
         <servlet-name>EliminarProductoServlet</servlet-name>
         <servlet-class>com.dulce_gestion.controllers.EliminarProductoServlet</servlet-class>
@@ -132,7 +129,9 @@
         <servlet-name>EliminarProductoServlet</servlet-name>
         <url-pattern>/productos/eliminar</url-pattern>
     </servlet-mapping>
+
     <!-- ========== PERFIL ========== -->
+
     <servlet>
         <servlet-name>PerfilServlet</servlet-name>
         <servlet-class>com.dulce_gestion.controllers.PerfilServlet</servlet-class>
@@ -140,8 +139,8 @@
     <servlet-mapping>
         <servlet-name>PerfilServlet</servlet-name>
         <url-pattern>/perfil</url-pattern>
+    </servlet-mapping>
 
-    <!-- VerPerfilServlet -->
     <servlet>
         <servlet-name>VerPerfilServlet</servlet-name>
         <servlet-class>com.dulce_gestion.controllers.VerPerfilServlet</servlet-class>
@@ -149,7 +148,6 @@
     <servlet-mapping>
         <servlet-name>VerPerfilServlet</servlet-name>
         <url-pattern>/perfil/ver</url-pattern>
-    </servlet-mapping>
     </servlet-mapping>
 
     <servlet>
@@ -159,41 +157,10 @@
     <servlet-mapping>
         <servlet-name>EditarPerfilServlet</servlet-name>
         <url-pattern>/perfil/editar</url-pattern>
-
-    <!-- VerPerfilServlet -->
-    <servlet>
-        <servlet-name>VerPerfilServlet</servlet-name>
-        <servlet-class>com.dulce_gestion.controllers.VerPerfilServlet</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>VerPerfilServlet</servlet-name>
-        <url-pattern>/perfil/ver</url-pattern>
-    </servlet-mapping>
     </servlet-mapping>
 
-    
+    <!-- ========== VENTAS / CARRITO ========== -->
 
-    <!-- GastosServlet -->
-    <servlet>
-        <servlet-name>GastosServlet</servlet-name>
-        <servlet-class>com.dulce_gestion.controllers.GastosServlet</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>GastosServlet</servlet-name>
-        <url-pattern>/gastos</url-pattern>
-    </servlet-mapping>
-
-    <!-- GananciasServlet -->
-    <servlet>
-        <servlet-name>GananciasServlet</servlet-name>
-        <servlet-class>com.dulce_gestion.controllers.GananciasServlet</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>GananciasServlet</servlet-name>
-        <url-pattern>/ganancias</url-pattern>
-    </servlet-mapping>
-
-    <!-- VentasServlet -->
     <servlet>
         <servlet-name>VentasServlet</servlet-name>
         <servlet-class>com.dulce_gestion.controllers.VentasServlet</servlet-class>
@@ -203,7 +170,26 @@
         <url-pattern>/ventas</url-pattern>
     </servlet-mapping>
 
-    <!-- ComprasServlet -->
+    <servlet>
+        <servlet-name>HistorialServlet</servlet-name>
+        <servlet-class>com.dulce_gestion.controllers.HistorialServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>HistorialServlet</servlet-name>
+        <url-pattern>/historial</url-pattern>
+    </servlet-mapping>
+
+    <!-- ========== GASTOS / COMPRAS / GANANCIAS ========== -->
+
+    <servlet>
+        <servlet-name>GastosServlet</servlet-name>
+        <servlet-class>com.dulce_gestion.controllers.GastosServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>GastosServlet</servlet-name>
+        <url-pattern>/gastos</url-pattern>
+    </servlet-mapping>
+
     <servlet>
         <servlet-name>ComprasServlet</servlet-name>
         <servlet-class>com.dulce_gestion.controllers.ComprasServlet</servlet-class>
@@ -213,14 +199,24 @@
         <url-pattern>/compras</url-pattern>
     </servlet-mapping>
 
-    <!-- ComprasDetalleServlet (AJAX) -->
     <servlet>
-        <servlet-name>ComprasDetalleServlet</servlet-name>
-        <servlet-class>com.dulce_gestion.controllers.ComprasDetalleServlet</servlet-class>
+        <servlet-name>GananciasServlet</servlet-name>
+        <servlet-class>com.dulce_gestion.controllers.GananciasServlet</servlet-class>
     </servlet>
     <servlet-mapping>
-        <servlet-name>ComprasDetalleServlet</servlet-name>
-        <url-pattern>/compras/detalle</url-pattern>
+        <servlet-name>GananciasServlet</servlet-name>
+        <url-pattern>/ganancias</url-pattern>
+    </servlet-mapping>
+
+    <!-- ========== IMÁGENES ========== -->
+
+    <servlet>
+        <servlet-name>ImagenServlet</servlet-name>
+        <servlet-class>com.dulce_gestion.controllers.ImagenServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ImagenServlet</servlet-name>
+        <url-pattern>/uploads/*</url-pattern>
     </servlet-mapping>
 
     <!-- ========== SESIÓN ========== -->

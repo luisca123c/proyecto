@@ -51,8 +51,8 @@ const LIMITE = {
   correo:     100,  // correos.correo VARCHAR(100)
   telefono:    10,  // telefonos.telefono VARCHAR(20) — máx dígitos prácticos
   telMin:       7,  // mínimo dígitos
-  producto:   200,  // productos.nombre VARCHAR(200)
-  prodDesc:   200,  // productos.descripcion VARCHAR(200)
+  producto:    50,  // productos.nombre VARCHAR(50)
+  prodDesc:   100,  // productos.descripcion VARCHAR(100)
   gastoDesc:  150,  // detalle_compra.descripcion / compras_insumos.descripcion VARCHAR(150)
   pasMin:       8,  // mínimo contraseña (perfil)
   pasMinEmp:    6,  // mínimo contraseña (crear/editar empleado)

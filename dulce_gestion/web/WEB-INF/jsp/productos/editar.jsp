@@ -72,8 +72,9 @@
         <i class="fi fi-sr-box-open"></i><span>Productos</span>
       </a>
       <a class="sidebar__link" href="<%= ctx %>/ventas">
-        <i class="fi fi-sr-shopping-cart"></i><span>Ventas</span>
+        <i class="fi fi-sr-shopping-cart"></i><span>Carrito</span>
       </a>
+      <a class="sidebar__link" href="<%= ctx %>/historial"><i class="fi fi-sr-chart-histogram"></i><span>Ventas</span></a>
       <% if (puedeEditar) { %>
       <a class="sidebar__link" href="<%= ctx %>/gastos">
         <i class="fi fi-sr-receipt"></i><span>Gastos</span>
@@ -143,7 +144,7 @@
         <div class="nv-campo">
           <label class="nv-campo__label">Nombre *</label>
           <div class="nv-campo__input-wrapper">
-            <input class="nv-campo__input" type="text" name="nombre"
+            <input class="nv-campo__input" type="text" name="nombre" maxlength="50"
                    id="inputNombre" value="<%= vNombre %>" required>
             <i class="fi fi-sr-edit nv-campo__icono-edit"></i>
           </div>
@@ -152,7 +153,7 @@
         <div class="nv-campo">
           <label class="nv-campo__label">Descripcion</label>
           <div class="nv-campo__input-wrapper">
-            <input class="nv-campo__input" type="text" name="descripcion" maxlength="200" value="<%= vDesc %>">
+            <input class="nv-campo__input" type="text" name="descripcion" maxlength="100" value="<%= vDesc %>">
             <i class="fi fi-sr-edit nv-campo__icono-edit"></i>
           </div>
         </div>

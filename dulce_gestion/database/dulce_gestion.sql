@@ -88,8 +88,8 @@ CREATE TABLE rol_permiso (
 
 CREATE TABLE productos (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(200) NOT NULL,
-    descripcion VARCHAR(200),
+    nombre VARCHAR(50) NOT NULL,
+    descripcion VARCHAR(100),
     stock_actual INT NOT NULL,
     id_unidad INT NOT NULL,
     precio_unitario DECIMAL(10,2) NOT NULL,

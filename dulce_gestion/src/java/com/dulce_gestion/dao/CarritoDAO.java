@@ -429,10 +429,20 @@ public class CarritoDAO {
                     }
                 }
 
-                // ── Paso 4: vaciar el carrito para la próxima venta ───────
+                // ── Paso 4: marcar el carrito como Inactivo (preserva los ítems para historial) ──
                 try (PreparedStatement ps = con.prepareStatement(
-                        "DELETE FROM detalle_carrito WHERE id_carrito = ?")) {
+                        "UPDATE carrito SET id_estado_carro = " +
+                        "(SELECT id FROM estado_carrito WHERE nombre = 'Inactivo') " +
+                        "WHERE id = ?")) {
                     ps.setInt(1, idCarrito);
+                    ps.executeUpdate();
+                }
+
+                // ── Paso 5: crear un carrito Activo nuevo para la próxima venta ──
+                try (PreparedStatement ps = con.prepareStatement(
+                        "INSERT INTO carrito (id_usuario, id_estado_carro) " +
+                        "VALUES (?, (SELECT id FROM estado_carrito WHERE nombre = 'Activo'))")) {
+                    ps.setInt(1, idUsuario);
                     ps.executeUpdate();
                 }
 
