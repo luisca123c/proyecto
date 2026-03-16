@@ -2,6 +2,8 @@ drop database if exists dulce_gestion;
 create database dulce_gestion;
 use dulce_gestion;
 
+-- ── CATÁLOGOS ─────────────────────────────────────────────────────────────
+
 CREATE TABLE generos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(50) UNIQUE NOT NULL
@@ -41,6 +43,25 @@ CREATE TABLE metodo_pago (
     activo TINYINT(1) NOT NULL DEFAULT 1
 );
 
+-- ── EMPRENDIMIENTOS ───────────────────────────────────────────────────────
+-- Cada emprendimiento tiene sus propios empleados, productos, ventas,
+-- gastos y compras de insumos. El SuperAdministrador gestiona todos.
+
+CREATE TABLE emprendimientos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    razon_social VARCHAR(150),
+    nit VARCHAR(30) UNIQUE,
+    direccion VARCHAR(150),
+    ciudad VARCHAR(100),
+    telefono VARCHAR(20),
+    correo VARCHAR(100),
+    estado VARCHAR(20) NOT NULL DEFAULT 'Activo',
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ── USUARIOS ──────────────────────────────────────────────────────────────
+
 CREATE TABLE correos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     correo VARCHAR(100) UNIQUE NOT NULL
@@ -57,10 +78,13 @@ CREATE TABLE usuarios (
     estado VARCHAR(50) NOT NULL,
     contrasena VARCHAR(100) NOT NULL,
     id_rol INT NOT NULL,
+    id_emprendimiento INT NULL,                  -- NULL = SuperAdministrador (no pertenece a ninguno)
     FOREIGN KEY (id_rol) REFERENCES roles(id)
         ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (id_correo) REFERENCES correos(id)
-        ON DELETE CASCADE ON UPDATE CASCADE
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (id_emprendimiento) REFERENCES emprendimientos(id)
+        ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 CREATE TABLE perfil_usuario (
@@ -89,6 +113,8 @@ CREATE TABLE rol_permiso (
         ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+-- ── OPERACIONES (ligadas al emprendimiento vía usuario o directo) ─────────
+
 CREATE TABLE productos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(50) NOT NULL,
@@ -99,9 +125,12 @@ CREATE TABLE productos (
     estado VARCHAR(100) NOT NULL,
     id_categoria INT NOT NULL,
     fecha_vencimiento DATE NOT NULL,
+    id_emprendimiento INT NOT NULL,             -- producto pertenece a un emprendimiento
     FOREIGN KEY (id_unidad) REFERENCES unidad_medida(id)
         ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (id_categoria) REFERENCES categorias(id)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (id_emprendimiento) REFERENCES emprendimientos(id)
         ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
@@ -236,12 +265,18 @@ INSERT INTO unidad_medida (nombre) VALUES ('Unidad'), ('Gramos'), ('Litros');
 
 INSERT INTO metodo_pago (nombre) VALUES ('Efectivo'), ('Nequi');
 
+-- Emprendimiento inicial de ejemplo
+INSERT INTO emprendimientos (nombre, razon_social, nit, direccion, ciudad, telefono, correo)
+VALUES ('Dulce Gestión', 'Dulce Gestión S.A.S.', '900123456-1',
+        'Calle 10 # 5-20', 'Bucaramanga', '3001234567', 'dulcegestion@gmail.com');
+
 INSERT INTO correos (correo) VALUES ('Luisca123c@gmail.com');
 
 INSERT INTO telefonos (telefono) VALUES ('3154746303');
 
-INSERT INTO usuarios (id_correo, estado, contrasena, id_rol) VALUES
-(1, 'Activo', '6243000b81daf96bbdf63efc4436fc07cb453df98a27196f7f549a9c8002635c', 1);
+-- SuperAdministrador: id_emprendimiento = NULL (gestiona todos)
+INSERT INTO usuarios (id_correo, estado, contrasena, id_rol, id_emprendimiento) VALUES
+(1, 'Activo', '6243000b81daf96bbdf63efc4436fc07cb453df98a27196f7f549a9c8002635c', 1, NULL);
 
 INSERT INTO perfil_usuario (nombre_completo, id_usuario, id_telefono, id_genero) VALUES
 ('Luis Carlos Villamizar', 1, 1, 1);
@@ -260,9 +295,10 @@ SELECT r.id, p.id FROM roles r, permisos p
 WHERE r.nombre = 'Empleado'
 AND p.descripcion IN ('VER_PRODUCTOS', 'CREAR_VENTA', 'VER_VENTAS');
 
-INSERT INTO productos (nombre, descripcion, stock_actual, id_unidad, precio_unitario, estado, id_categoria, fecha_vencimiento) VALUES
-('Helado de chocolate', 'Helado artesanal de chocolate intenso elaborado con cacao premium.', 10, 1, 1000, 'Activo', 1, '2026-09-30'),
-('Helado de maracuyá',  'Helado refrescante de maracuyá natural con sabor tropical.',          10, 1, 1000, 'Activo', 1, '2026-09-30'),
-('Helado de coco',      'Helado cremoso de coco rallado con textura suave y tropical.',        10, 1, 1000, 'Activo', 1, '2026-09-30'),
-('Helado de oreo',      'Helado cremoso con trozos de galleta Oreo y base de vainilla.',       10, 1, 1000, 'Activo', 1, '2026-09-30'),
-('Helado de arequipe',  'Helado dulce de arequipe con textura cremosa y sabor tradicional.',   10, 1, 1000, 'Activo', 1, '2026-09-30');
+-- Productos del emprendimiento inicial
+INSERT INTO productos (nombre, descripcion, stock_actual, id_unidad, precio_unitario, estado, id_categoria, fecha_vencimiento, id_emprendimiento) VALUES
+('Helado de chocolate', 'Helado artesanal de chocolate intenso elaborado con cacao premium.', 10, 1, 1000, 'Activo', 1, '2026-09-30', 1),
+('Helado de maracuyá',  'Helado refrescante de maracuyá natural con sabor tropical.',          10, 1, 1000, 'Activo', 1, '2026-09-30', 1),
+('Helado de coco',      'Helado cremoso de coco rallado con textura suave y tropical.',        10, 1, 1000, 'Activo', 1, '2026-09-30', 1),
+('Helado de oreo',      'Helado cremoso con trozos de galleta Oreo y base de vainilla.',       10, 1, 1000, 'Activo', 1, '2026-09-30', 1),
+('Helado de arequipe',  'Helado dulce de arequipe con textura cremosa y sabor tradicional.',   10, 1, 1000, 'Activo', 1, '2026-09-30', 1);
