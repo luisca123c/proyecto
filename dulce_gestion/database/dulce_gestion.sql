@@ -20,7 +20,8 @@ CREATE TABLE permisos (
 CREATE TABLE categorias (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) UNIQUE NOT NULL,
-    descripcion VARCHAR(150)
+    descripcion VARCHAR(150),
+    activo TINYINT(1) NOT NULL DEFAULT 1
 );
 
 CREATE TABLE estado_carrito (
@@ -30,12 +31,14 @@ CREATE TABLE estado_carrito (
 
 CREATE TABLE unidad_medida (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(50) UNIQUE NOT NULL
+    nombre VARCHAR(50) UNIQUE NOT NULL,
+    activo TINYINT(1) NOT NULL DEFAULT 1
 );
 
 CREATE TABLE metodo_pago (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(50) UNIQUE NOT NULL
+    nombre VARCHAR(50) UNIQUE NOT NULL,
+    activo TINYINT(1) NOT NULL DEFAULT 1
 );
 
 CREATE TABLE correos (

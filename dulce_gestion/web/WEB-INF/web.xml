@@ -208,6 +208,17 @@
         <url-pattern>/ganancias</url-pattern>
     </servlet-mapping>
 
+    <!-- ========== CONFIGURACIÓN (solo SuperAdmin) ========== -->
+
+    <servlet>
+        <servlet-name>ConfiguracionServlet</servlet-name>
+        <servlet-class>com.dulce_gestion.controllers.ConfiguracionServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ConfiguracionServlet</servlet-name>
+        <url-pattern>/configuracion</url-pattern>
+    </servlet-mapping>
+
     <!-- ========== IMÁGENES ========== -->
 
     <servlet>

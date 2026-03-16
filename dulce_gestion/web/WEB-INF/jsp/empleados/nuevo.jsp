@@ -80,6 +80,9 @@
       <a class="sidebar__link" href="<%= ctx %>/ganancias">
         <i class="fi fi-sr-chart-line-up"></i><span>Ganancias</span>
       </a>
+      <% if (esSuperAdmin) { %>
+      <a class="sidebar__link" href="<%= ctx %>/configuracion"><i class="fi fi-sr-settings"></i><span>Configuración</span></a>
+      <% } %>
       <a class="sidebar__link" href="<%= ctx %>/perfil">
         <i class="fi fi-sr-user"></i><span>Perfil</span>
       </a>

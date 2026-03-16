@@ -479,6 +479,7 @@ public class CarritoDAO {
                 FROM productos p
                 LEFT JOIN imagenes_producto i ON i.id_producto = p.id
                 WHERE p.stock_actual > 0
+                AND p.estado != 'Inactivo'
                 ORDER BY p.nombre
                 """;
         List<com.dulce_gestion.models.Producto> lista = new ArrayList<>();

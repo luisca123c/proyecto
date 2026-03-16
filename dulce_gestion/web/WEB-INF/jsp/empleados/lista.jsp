@@ -78,6 +78,9 @@
       <a class="sidebar__link" href="<%= ctx %>/ganancias">
         <i class="fi fi-sr-chart-line-up"></i><span>Ganancias</span>
       </a>
+      <% if (esSuperAdmin) { %>
+      <a class="sidebar__link" href="<%= ctx %>/configuracion"><i class="fi fi-sr-settings"></i><span>Configuración</span></a>
+      <% } %>
       <a class="sidebar__link" href="<%= ctx %>/perfil">
         <i class="fi fi-sr-user"></i><span>Perfil</span>
       </a>
@@ -118,7 +121,7 @@
       <% } %>
       <% if (exitoEliminado) { %>
       <div class="modulo-exito">
-        <i class="fi fi-sr-check"></i> Usuario eliminado correctamente.
+        <i class="fi fi-sr-check"></i> Usuario inactivado correctamente.
       </div>
       <% } %>
       <% if ("eliminacion".equals(errorParam)) { %>
@@ -173,13 +176,15 @@
              title="Editar">
             <i class="fi fi-sr-edit"></i>
           </a>
+          <% if (!"Inactivo".equals(emp.getEstado())) { %>
           <form method="POST" action="<%= ctx %>/empleados/eliminar" style="display:contents"
-                onsubmit="return confirm('¿Seguro que deseas eliminar a <%= emp.getNombreCompleto() %>? Esta acción no se puede deshacer.')">
+                onsubmit="return confirm('¿Seguro que deseas inactivar a <%= emp.getNombreCompleto() %>? El empleado quedará Inactivo y no podrá iniciar sesión.')">
             <input type="hidden" name="id" value="<%= emp.getId() %>">
-            <button type="submit" class="empleado-card__btn-eliminar" title="Eliminar">
+            <button type="submit" class="empleado-card__btn-eliminar" title="Inactivar">
               <i class="fi fi-sr-trash"></i>
             </button>
           </form>
+          <% } %>
           <% } %>
         </div>
         <% } %>

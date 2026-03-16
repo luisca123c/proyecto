@@ -86,6 +86,9 @@
         <i class="fi fi-sr-chart-line-up"></i><span>Ganancias</span>
       </a>
       <% } %>
+      <% if (esSuperAdmin) { %>
+      <a class="sidebar__link" href="<%= ctx %>/configuracion"><i class="fi fi-sr-settings"></i><span>Configuración</span></a>
+      <% } %>
       <a class="sidebar__link" href="<%= ctx %>/perfil">
         <i class="fi fi-sr-user"></i><span>Perfil</span>
       </a>
@@ -108,7 +111,7 @@
       <div class="modulo-exito"><i class="fi fi-sr-check"></i> Producto actualizado correctamente.</div>
       <% } %>
       <% if (exitoEliminado) { %>
-      <div class="alerta alerta-exito"><i class="fi fi-sr-check-circle"></i> <span>Producto eliminado correctamente</span></div>
+      <div class="alerta alerta-exito"><i class="fi fi-sr-check-circle"></i> <span>Producto inactivado correctamente</span></div>
       <% } %>
       <% if ("eliminacion".equals(errorParam)) { %>
       <div class="modulo-error"><i class="fi fi-sr-triangle-warning"></i> No se pudo eliminar. El producto tiene ventas asociadas.</div>
@@ -156,13 +159,15 @@
                  title="Editar">
                 <i class="fi fi-sr-edit"></i>
               </a>
+              <% if (!"Inactivo".equals(prod.getEstado())) { %>
               <form method="POST" action="<%= ctx %>/productos/eliminar" style="display:contents"
-                    onsubmit="return confirm('Eliminar <%= prod.getNombre() %>?')">
+                    onsubmit="return confirm('¿Inactivar el producto <%= prod.getNombre() %>? Dejará de aparecer en el catálogo.')">
                 <input type="hidden" name="id" value="<%= prod.getId() %>">
-                <button type="submit" class="pcard__btn pcard__btn--eliminar" title="Eliminar">
+                <button type="submit" class="pcard__btn pcard__btn--eliminar" title="Inactivar">
                   <i class="fi fi-sr-trash"></i>
                 </button>
               </form>
+              <% } %>
             </div>
             <% } %>
           </div>

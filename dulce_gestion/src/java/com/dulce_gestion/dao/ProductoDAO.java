@@ -81,6 +81,34 @@ public class ProductoDAO {
      * @return    objeto Producto con todos sus datos, o null si no existe
      * @throws SQLException si hay error al consultar la BD
      */
+    /**
+     * Lista solo productos con estado distinto de 'Inactivo'.
+     * Usado en el carrito de ventas para no mostrar productos eliminados.
+     */
+    public List<Producto> listarActivos() throws SQLException {
+        String sql = """
+                SELECT p.id, p.nombre, p.descripcion, p.stock_actual,
+                       p.precio_unitario, p.estado, p.fecha_vencimiento,
+                       p.id_categoria, c.nombre AS nombre_categoria,
+                       p.id_unidad,    u.nombre AS nombre_unidad,
+                       i.path_imagen,  i.alt_imagen
+                FROM productos p
+                JOIN categorias    c ON c.id = p.id_categoria
+                JOIN unidad_medida u ON u.id = p.id_unidad
+                LEFT JOIN imagenes_producto i ON i.id_producto = p.id
+                WHERE p.estado != 'Inactivo'
+                ORDER BY p.nombre
+                """;
+
+        List<Producto> lista = new ArrayList<>();
+        try (Connection con = DB.obtenerConexion();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) lista.add(mapear(rs));
+        }
+        return lista;
+    }
+
     public Producto buscarPorId(int id) throws SQLException {
         String sql = """
                 SELECT p.id, p.nombre, p.descripcion, p.stock_actual,
