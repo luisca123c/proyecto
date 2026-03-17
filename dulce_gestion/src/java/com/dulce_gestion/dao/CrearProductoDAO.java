@@ -57,13 +57,13 @@ public class CrearProductoDAO {
      */
     public int crear(String nombre, String descripcion, int stock,
                      BigDecimal precio, String estado, String fechaVencimiento,
-                     int idCategoria, int idUnidad) throws SQLException {
+                     int idCategoria, int idUnidad, int idEmprendimiento) throws SQLException {
 
         String sql = """
                 INSERT INTO productos
                     (nombre, descripcion, stock_actual, precio_unitario,
-                     estado, fecha_vencimiento, id_categoria, id_unidad)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                     estado, fecha_vencimiento, id_categoria, id_unidad, id_emprendimiento)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
         // Statement.RETURN_GENERATED_KEYS indica al driver JDBC que guarde
@@ -79,6 +79,7 @@ public class CrearProductoDAO {
             ps.setString(6, fechaVencimiento);
             ps.setInt(7, idCategoria);
             ps.setInt(8, idUnidad);
+            ps.setInt(9, idEmprendimiento);
             ps.executeUpdate();
 
             // Recuperar el ID generado por MySQL

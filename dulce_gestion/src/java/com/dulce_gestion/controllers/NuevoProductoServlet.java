@@ -1,9 +1,11 @@
 package com.dulce_gestion.controllers;
 
 import com.dulce_gestion.dao.CrearProductoDAO;
+import com.dulce_gestion.dao.EmprendimientoDAO;
 import com.dulce_gestion.dao.ImagenProductoDAO;
 import com.dulce_gestion.dao.ProductoDAO;
 import com.dulce_gestion.utils.Uploads;
+import com.dulce_gestion.models.Emprendimiento;
 import com.dulce_gestion.models.Usuario;
 
 import jakarta.servlet.ServletException;
@@ -97,9 +99,10 @@ public class NuevoProductoServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        if (!verificarAcceso(request, response)) return; // Solo Admin y SuperAdmin
+        if (!verificarAcceso(request, response)) return;
 
-        cargarSelectores(request); // Cargar opciones de los <select> del formulario
+        cargarSelectores(request);
+        cargarEmprendimientos(request);
         request.getRequestDispatcher(VISTA).forward(request, response);
     }
 
@@ -146,6 +149,9 @@ public class NuevoProductoServlet extends HttpServlet {
 
         if (!verificarAcceso(request, response)) return;
 
+        HttpSession session  = request.getSession(false);
+        Usuario solicitante  = (session != null) ? (Usuario) session.getAttribute("usuario") : null;
+
         // ── Paso 2: charset para soportar caracteres especiales ──────────
         request.setCharacterEncoding("UTF-8");
 
@@ -158,12 +164,30 @@ public class NuevoProductoServlet extends HttpServlet {
         String fechaVenc    = request.getParameter("fechaVencimiento"); // Formato yyyy-MM-dd
         String categoriaStr = request.getParameter("idCategoria");   // ID numérico del select
         String unidadStr    = request.getParameter("idUnidad");      // ID numérico del select
+        String empParam     = request.getParameter("idEmprendimiento");
+
+        // Determinar idEmprendimiento: SuperAdmin elige, Admin usa el suyo
+        int idEmprendimiento;
+        if (solicitante != null && "SuperAdministrador".equals(solicitante.getNombreRol())) {
+            if (empParam == null || empParam.isBlank()) {
+                cargarSelectores(request);
+                cargarEmprendimientos(request);
+                request.setAttribute("error", "Debes seleccionar un emprendimiento.");
+                request.getRequestDispatcher(VISTA).forward(request, response);
+                return;
+            }
+            try { idEmprendimiento = Integer.parseInt(empParam); }
+            catch (NumberFormatException e) { idEmprendimiento = 0; }
+        } else {
+            idEmprendimiento = solicitante != null ? solicitante.getIdEmprendimiento() : 0;
+        }
 
         // ── Paso 4: validar campos obligatorios ──────────────────────────
         if (estaVacio(nombre) || estaVacio(stockStr) || estaVacio(precioStr)
                 || estaVacio(estado) || estaVacio(fechaVenc)
                 || estaVacio(categoriaStr) || estaVacio(unidadStr)) {
-            cargarSelectores(request); // Re-cargar los selectores para el formulario
+            cargarSelectores(request);
+            cargarEmprendimientos(request);
             request.setAttribute("error", "Todos los campos obligatorios deben completarse.");
             request.getRequestDispatcher(VISTA).forward(request, response);
             return;
@@ -179,6 +203,7 @@ public class NuevoProductoServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             // El usuario escribió letras donde debían ir números
             cargarSelectores(request);
+            cargarEmprendimientos(request);
             request.setAttribute("error", "Stock y precio deben ser numeros validos.");
             request.getRequestDispatcher(VISTA).forward(request, response);
             return;
@@ -195,6 +220,7 @@ public class NuevoProductoServlet extends HttpServlet {
             // formato inválido — el servlet lo rechazará igualmente
         } catch (IllegalArgumentException ex) {
             cargarSelectores(request);
+            cargarEmprendimientos(request);
             request.setAttribute("error", ex.getMessage());
             request.getRequestDispatcher(VISTA).forward(request, response);
             return;
@@ -203,6 +229,7 @@ public class NuevoProductoServlet extends HttpServlet {
         if (stock < 0 || precio.compareTo(BigDecimal.ZERO) < 0) {
             // compareTo(ZERO) < 0 significa que precio es menor que 0
             cargarSelectores(request);
+            cargarEmprendimientos(request);
             request.setAttribute("error", "Stock y precio no pueden ser negativos.");
             request.getRequestDispatcher(VISTA).forward(request, response);
             return;
@@ -213,7 +240,7 @@ public class NuevoProductoServlet extends HttpServlet {
             // El DAO inserta en la tabla productos y retorna el ID AUTO_INCREMENT
             int nuevoId = new CrearProductoDAO().crear(nombre, descripcion, stock,
                                                         precio, estado, fechaVenc,
-                                                        idCategoria, idUnidad);
+                                                        idCategoria, idUnidad, idEmprendimiento);
 
             // ── Paso 8: guardar la imagen si se subió un archivo ──────────
             // getPart() requiere que @MultipartConfig esté activo (o <multipart-config> en web.xml)
@@ -227,6 +254,7 @@ public class NuevoProductoServlet extends HttpServlet {
         } catch (SQLException e) {
             e.printStackTrace();
             cargarSelectores(request);
+            cargarEmprendimientos(request);
             request.setAttribute("error", "Error al guardar el producto. Intenta de nuevo.");
             request.getRequestDispatcher(VISTA).forward(request, response);
             return;
@@ -347,4 +375,13 @@ public class NuevoProductoServlet extends HttpServlet {
      * Retorna true si el string es null o está compuesto solo de espacios.
      */
     private boolean estaVacio(String v) { return v == null || v.isBlank(); }
+
+    private void cargarEmprendimientos(HttpServletRequest req) {
+        try {
+            req.setAttribute("emprendimientos", new EmprendimientoDAO().listarActivos());
+        } catch (java.sql.SQLException e) {
+            e.printStackTrace();
+            req.setAttribute("emprendimientos", java.util.List.of());
+        }
+    }
 }

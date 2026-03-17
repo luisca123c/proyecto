@@ -1,5 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="com.dulce_gestion.models.Producto, com.dulce_gestion.models.Usuario, java.util.List" %>
+<%@ page import="com.dulce_gestion.models.Producto, com.dulce_gestion.models.Emprendimiento, com.dulce_gestion.models.Usuario, java.util.List" %>
 <%
     Usuario sesionUsuario  = (Usuario) session.getAttribute("usuario");
     String  ctx            = request.getContextPath();
@@ -15,6 +15,11 @@
     boolean exitoEditado   = "editado".equals(request.getParameter("exito"));
     boolean exitoEliminado = "eliminado".equals(request.getParameter("exito"));
     String  errorParam     = request.getParameter("error");
+    List<Emprendimiento> emprendimientos = (List<Emprendimiento>) request.getAttribute("emprendimientos");
+    Integer empFiltroAttr  = (Integer) request.getAttribute("empFiltro");
+    int     filtroActivo   = (empFiltroAttr != null) ? empFiltroAttr : 0;
+    String  nombreEmpAdmin = (!esSuperAdmin && sesionUsuario != null)
+                             ? sesionUsuario.getNombreEmprendimiento() : "";
 %>
 <!doctype html>
 <html lang="es">
@@ -123,6 +128,24 @@
       <div class="modulo-error"><i class="fi fi-sr-triangle-warning"></i> <%= errorProductos %></div>
       <% } %>
 
+      <!-- FILTRO POR EMPRENDIMIENTO (solo SuperAdmin) -->
+      <% if (esSuperAdmin && emprendimientos != null) { %>
+      <div class="emp-filtro-select-wrap">
+        <label class="emp-filtro-label" for="filtroEmpProd">
+          <i class="fi fi-sr-store-alt"></i> Emprendimiento
+        </label>
+        <select id="filtroEmpProd" class="emp-filtro-select"
+                onchange="window.location.href='<%= ctx %>/productos' + (this.value ? '?emp=' + this.value : '')">
+          <option value="" <%= filtroActivo == 0 ? "selected" : "" %>>— Todos los emprendimientos —</option>
+          <% for (Emprendimiento emp : emprendimientos) { %>
+          <option value="<%= emp.getId() %>" <%= filtroActivo == emp.getId() ? "selected" : "" %>>
+            <%= emp.getNombre() %>
+          </option>
+          <% } %>
+        </select>
+      </div>
+      <% } %>
+
       <!-- Boton agregar (solo admin) -->
       <% if (puedeEditar) { %>
       <div class="productos-acciones">
@@ -136,11 +159,21 @@
       <% if (productos == null || productos.isEmpty()) { %>
       <div class="modulo-vacio">
         <i class="fi fi-sr-box-open modulo-vacio__icono"></i>
-        <p>No hay productos registrados aun.</p>
+        <p>No hay productos registrados<% if (esSuperAdmin && filtroActivo > 0) { %> en este emprendimiento<% } else if (!esSuperAdmin) { %> en <%= nombreEmpAdmin %><% } %>.</p>
       </div>
       <% } else { %>
+      <% String empActualProd = ""; %>
       <div class="productos-grid">
         <% for (Producto prod : productos) { %>
+        <% if (esSuperAdmin && filtroActivo == 0) {
+             String nomEmpProd = prod.getNombreEmprendimiento();
+             if (!nomEmpProd.equals(empActualProd)) {
+                 empActualProd = nomEmpProd; %>
+        <div class="emp-grupo-cabecera" style="grid-column:1/-1">
+          <i class="fi fi-sr-store-alt"></i><span><%= nomEmpProd %></span>
+        </div>
+        <%   }
+           } %>
         <div class="pcard">
 
           <!-- Imagen o placeholder -->

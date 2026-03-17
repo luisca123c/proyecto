@@ -39,6 +39,20 @@ import java.util.List;
  */
 public class ProductoDAO {
 
+    // Query base: incluye JOIN con emprendimientos para filtrar y mostrar nombre
+    private static final String SELECT_BASE =
+            "SELECT p.id, p.nombre, p.descripcion, p.stock_actual, " +
+            "       p.precio_unitario, p.estado, p.fecha_vencimiento, " +
+            "       p.id_categoria, cat.nombre AS nombre_categoria, " +
+            "       p.id_unidad,    u.nombre   AS nombre_unidad, " +
+            "       i.path_imagen,  i.alt_imagen, " +
+            "       p.id_emprendimiento, e.nombre AS nombre_emprendimiento " +
+            "FROM productos p " +
+            "JOIN categorias       cat ON cat.id = p.id_categoria " +
+            "JOIN unidad_medida    u   ON u.id   = p.id_unidad " +
+            "JOIN emprendimientos  e   ON e.id   = p.id_emprendimiento " +
+            "LEFT JOIN imagenes_producto i ON i.id_producto = p.id ";
+
     /**
      * Retorna la lista completa de productos con todos sus datos asociados.
      *
@@ -51,24 +65,26 @@ public class ProductoDAO {
      * @throws SQLException si hay error al consultar la BD
      */
     public List<Producto> listarTodos() throws SQLException {
-        String sql = """
-                SELECT p.id, p.nombre, p.descripcion, p.stock_actual,
-                       p.precio_unitario, p.estado, p.fecha_vencimiento,
-                       p.id_categoria, c.nombre AS nombre_categoria,
-                       p.id_unidad,    u.nombre AS nombre_unidad,
-                       i.path_imagen,  i.alt_imagen
-                FROM productos p
-                JOIN categorias    c ON c.id = p.id_categoria
-                JOIN unidad_medida u ON u.id = p.id_unidad
-                LEFT JOIN imagenes_producto i ON i.id_producto = p.id
-                ORDER BY p.nombre
-                """;
+        return ejecutarLista(SELECT_BASE + "ORDER BY e.nombre, p.nombre");
+    }
 
+    /**
+     * Lista productos filtrados por emprendimiento.
+     * SuperAdmin con idEmp=0 ve todos; con idEmp>0 filtra por ese emprendimiento.
+     * Admin siempre pasa su propio idEmprendimiento.
+     */
+    public List<Producto> listarFiltrado(String rol, int idEmprendimiento) throws SQLException {
+        if ("SuperAdministrador".equals(rol) && idEmprendimiento == 0) {
+            return ejecutarLista(SELECT_BASE + "ORDER BY e.nombre, p.nombre");
+        }
+        String sql = SELECT_BASE + "WHERE p.id_emprendimiento = ? ORDER BY p.nombre";
         List<Producto> lista = new ArrayList<>();
         try (Connection con = DB.obtenerConexion();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) lista.add(mapear(rs)); // Cada fila → un objeto Producto
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idEmprendimiento);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) lista.add(mapear(rs));
+            }
         }
         return lista;
     }
@@ -86,43 +102,26 @@ public class ProductoDAO {
      * Usado en el carrito de ventas para no mostrar productos eliminados.
      */
     public List<Producto> listarActivos() throws SQLException {
-        String sql = """
-                SELECT p.id, p.nombre, p.descripcion, p.stock_actual,
-                       p.precio_unitario, p.estado, p.fecha_vencimiento,
-                       p.id_categoria, c.nombre AS nombre_categoria,
-                       p.id_unidad,    u.nombre AS nombre_unidad,
-                       i.path_imagen,  i.alt_imagen
-                FROM productos p
-                JOIN categorias    c ON c.id = p.id_categoria
-                JOIN unidad_medida u ON u.id = p.id_unidad
-                LEFT JOIN imagenes_producto i ON i.id_producto = p.id
-                WHERE p.estado != 'Inactivo'
-                ORDER BY p.nombre
-                """;
+        return ejecutarLista(SELECT_BASE + "WHERE p.estado != 'Inactivo' ORDER BY p.nombre");
+    }
 
+    /** Activos filtrados por emprendimiento (para el carrito de ventas). */
+    public List<Producto> listarActivosPorEmprendimiento(int idEmprendimiento) throws SQLException {
+        String sql = SELECT_BASE +
+                     "WHERE p.estado != 'Inactivo' AND p.id_emprendimiento = ? ORDER BY p.nombre";
         List<Producto> lista = new ArrayList<>();
         try (Connection con = DB.obtenerConexion();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) lista.add(mapear(rs));
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idEmprendimiento);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) lista.add(mapear(rs));
+            }
         }
         return lista;
     }
 
     public Producto buscarPorId(int id) throws SQLException {
-        String sql = """
-                SELECT p.id, p.nombre, p.descripcion, p.stock_actual,
-                       p.precio_unitario, p.estado, p.fecha_vencimiento,
-                       p.id_categoria, c.nombre AS nombre_categoria,
-                       p.id_unidad,    u.nombre AS nombre_unidad,
-                       i.path_imagen,  i.alt_imagen
-                FROM productos p
-                JOIN categorias    c ON c.id = p.id_categoria
-                JOIN unidad_medida u ON u.id = p.id_unidad
-                LEFT JOIN imagenes_producto i ON i.id_producto = p.id
-                WHERE p.id = ?
-                """;
-
+        String sql = SELECT_BASE + "WHERE p.id = ?";
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, id);
@@ -130,7 +129,7 @@ public class ProductoDAO {
                 if (rs.next()) return mapear(rs);
             }
         }
-        return null; // El producto no existe
+        return null;
     }
 
     /**
@@ -187,21 +186,33 @@ public class ProductoDAO {
      * @return    objeto Producto con todos los campos del ResultSet
      * @throws SQLException si algún nombre de columna no existe
      */
+    private List<Producto> ejecutarLista(String sql) throws SQLException {
+        List<Producto> lista = new ArrayList<>();
+        try (Connection con = DB.obtenerConexion();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) lista.add(mapear(rs));
+        }
+        return lista;
+    }
+
     private Producto mapear(ResultSet rs) throws SQLException {
         Producto p = new Producto();
         p.setId(rs.getInt("id"));
         p.setNombre(rs.getString("nombre"));
         p.setDescripcion(rs.getString("descripcion"));
         p.setStockActual(rs.getInt("stock_actual"));
-        p.setPrecioUnitario(rs.getBigDecimal("precio_unitario")); // BigDecimal para precisión monetaria
-        p.setEstado(rs.getString("estado"));                     // "Disponible", "Agotado", "Inactivo"
+        p.setPrecioUnitario(rs.getBigDecimal("precio_unitario"));
+        p.setEstado(rs.getString("estado"));
         p.setFechaVencimiento(rs.getString("fecha_vencimiento"));
         p.setIdCategoria(rs.getInt("id_categoria"));
-        p.setNombreCategoria(rs.getString("nombre_categoria"));  // Del JOIN con categorias
+        p.setNombreCategoria(rs.getString("nombre_categoria"));
         p.setIdUnidad(rs.getInt("id_unidad"));
-        p.setNombreUnidad(rs.getString("nombre_unidad"));        // Del JOIN con unidad_medida
-        p.setPathImagen(rs.getString("path_imagen"));            // Puede ser null (LEFT JOIN)
-        p.setAltImagen(rs.getString("alt_imagen"));              // Puede ser null (LEFT JOIN)
+        p.setNombreUnidad(rs.getString("nombre_unidad"));
+        p.setPathImagen(rs.getString("path_imagen"));
+        p.setAltImagen(rs.getString("alt_imagen"));
+        p.setIdEmprendimiento(rs.getInt("id_emprendimiento"));
+        p.setNombreEmprendimiento(rs.getString("nombre_emprendimiento"));
         return p;
     }
 }

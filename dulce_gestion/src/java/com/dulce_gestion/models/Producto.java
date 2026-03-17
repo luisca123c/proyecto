@@ -62,6 +62,8 @@ public class Producto {
     // ── Campos de imagenes_producto (LEFT JOIN, pueden ser null) ──────────
     private String     pathImagen;      // Ruta relativa: "assets/images/productos/producto_3.jpg"
     private String     altImagen;       // Texto alternativo para <img alt="...">
+    private int        idEmprendimiento;      // FK a emprendimientos
+    private String     nombreEmprendimiento;  // Nombre del emprendimiento (JOIN)
 
     /** Constructor vacío requerido para que los DAOs puedan crear instancias
      *  con new Producto() y poblar los campos con setters. */
@@ -113,7 +115,9 @@ public class Producto {
     public String     getPathImagen()       { return pathImagen; }
 
     /** Texto alternativo para la imagen (accesibilidad y SEO). */
-    public String     getAltImagen()        { return altImagen; }
+    public String     getAltImagen()             { return altImagen; }
+    public int        getIdEmprendimiento()      { return idEmprendimiento; }
+    public String     getNombreEmprendimiento()  { return nombreEmprendimiento != null ? nombreEmprendimiento : ""; }
 
     // =========================================================
     // SETTERS
@@ -131,5 +135,7 @@ public class Producto {
     public void setIdUnidad(int idUnidad)              { this.idUnidad = idUnidad; }
     public void setNombreUnidad(String nombre)         { this.nombreUnidad = nombre; }
     public void setPathImagen(String pathImagen)       { this.pathImagen = pathImagen; }
-    public void setAltImagen(String altImagen)         { this.altImagen = altImagen; }
+    public void setAltImagen(String altImagen)              { this.altImagen = altImagen; }
+    public void setIdEmprendimiento(int id)                 { this.idEmprendimiento = id; }
+    public void setNombreEmprendimiento(String nombre)      { this.nombreEmprendimiento = nombre; }
 }

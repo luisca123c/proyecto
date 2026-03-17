@@ -1,6 +1,8 @@
 package com.dulce_gestion.controllers;
 
+import com.dulce_gestion.dao.EmprendimientoDAO;
 import com.dulce_gestion.dao.ProductoDAO;
+import com.dulce_gestion.models.Emprendimiento;
 import com.dulce_gestion.models.Producto;
 import com.dulce_gestion.models.Usuario;
 
@@ -80,24 +82,38 @@ public class ProductosServlet extends HttpServlet {
             return;
         }
 
-        // ── Paso 2: cargar productos desde la BD ─────────────────────────
+        String rol = usuario.getNombreRol();
+        int empFiltro = 0;
+
+        // ── Paso 2: cargar productos filtrados por emprendimiento ────────
         List<Producto> productos;
         try {
-            // ProductoDAO hace JOIN con categorias, unidad_medida e imagenes_producto
-            productos = new ProductoDAO().listarTodos();
+            ProductoDAO dao = new ProductoDAO();
+            if ("SuperAdministrador".equals(rol)) {
+                String empParam = request.getParameter("emp");
+                if (empParam != null && !empParam.isBlank()) {
+                    try { empFiltro = Integer.parseInt(empParam); } catch (NumberFormatException ignored) {}
+                }
+                List<Emprendimiento> emprendimientos = new EmprendimientoDAO().listarActivos();
+                request.setAttribute("emprendimientos", emprendimientos);
+                productos = dao.listarFiltrado(rol, empFiltro);
+            } else {
+                // Admin y Empleado: solo ven productos de su emprendimiento
+                empFiltro = usuario.getIdEmprendimiento();
+                productos = dao.listarFiltrado(rol, empFiltro);
+            }
         } catch (SQLException e) {
-            e.printStackTrace(); // Log en consola de Tomcat
-            productos = List.of(); // Lista vacía para que el JSP no explote
-            // Mensaje de error que el JSP mostrará en lugar de la grilla
+            e.printStackTrace();
+            productos = List.of();
             request.setAttribute("errorProductos", "Error al cargar los productos.");
         }
 
         // ── Paso 3: poner los datos en el request para el JSP ───────────
-        request.setAttribute("productos",      productos);           // La lista de productos
-        request.setAttribute("rolSolicitante", usuario.getNombreRol()); // Para mostrar/ocultar botones
+        request.setAttribute("productos",      productos);
+        request.setAttribute("rolSolicitante", rol);
+        request.setAttribute("empFiltro",      empFiltro);
 
         // ── Paso 4: forward al JSP ──────────────────────────────────────
-        // Los parámetros ?exito= y ?error= de la URL también llegan al JSP
         request.getRequestDispatcher("/WEB-INF/jsp/productos/lista.jsp")
                .forward(request, response);
     }
