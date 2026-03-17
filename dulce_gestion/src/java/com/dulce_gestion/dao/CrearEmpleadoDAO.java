@@ -121,7 +121,7 @@ public class CrearEmpleadoDAO {
      */
     public void crear(String nombreCompleto, String telefono, int idGenero,
                       String correo, String contrasena, String estado,
-                      int idRol) throws SQLException {
+                      int idRol, int idEmprendimiento) throws SQLException {
 
         // Hashear la contraseña antes de guardarla. Nunca se guarda en texto plano.
         String hashContrasena = UsuarioDAO.hashSHA256(contrasena);
@@ -159,12 +159,13 @@ public class CrearEmpleadoDAO {
                 // ── Paso 3: insertar usuario (usa idCorreo del paso 1) ────
                 int idUsuario;
                 try (PreparedStatement ps = con.prepareStatement(
-                        "INSERT INTO usuarios (id_correo, estado, contrasena, id_rol) VALUES (?, ?, ?, ?)",
+                        "INSERT INTO usuarios (id_correo, estado, contrasena, id_rol, id_emprendimiento) VALUES (?, ?, ?, ?, ?)",
                         PreparedStatement.RETURN_GENERATED_KEYS)) {
                     ps.setInt(1, idCorreo);
                     ps.setString(2, estado);
                     ps.setString(3, hashContrasena); // Hash SHA-256, nunca texto plano
                     ps.setInt(4, idRol);
+                    ps.setInt(5, idEmprendimiento);
                     ps.executeUpdate();
                     try (ResultSet rs = ps.getGeneratedKeys()) {
                         rs.next();

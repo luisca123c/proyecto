@@ -62,6 +62,7 @@
         <i class="fi fi-sr-shopping-cart"></i><span>Carrito</span>
       </a>
       <a class="sidebar__link" href="<%= ctx %>/historial"><i class="fi fi-sr-chart-histogram"></i><span>Ventas</span></a>
+      <a class="sidebar__link" href="<%= ctx %>/emprendimientos"><i class="fi fi-sr-store-alt"></i><span>Emprendimientos</span></a>
       <a class="sidebar__link" href="<%= ctx %>/perfil">
         <i class="fi fi-sr-user"></i><span>Perfil</span>
       </a>

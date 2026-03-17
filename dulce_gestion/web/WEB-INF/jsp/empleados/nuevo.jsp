@@ -1,5 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="com.dulce_gestion.models.Usuario" %>
+<%@ page import="com.dulce_gestion.models.Usuario, com.dulce_gestion.models.Emprendimiento, java.util.List" %>
 <%
     Usuario sesionUsuario = (Usuario) session.getAttribute("usuario");
     String ctx = request.getContextPath();
@@ -13,6 +13,8 @@
     String vCorreo    = request.getParameter("correo")         != null ? request.getParameter("correo")         : "";
     String vEstado    = request.getParameter("estado")         != null ? request.getParameter("estado")         : "Activo";
     String vRol       = request.getParameter("rol")            != null ? request.getParameter("rol")            : "Empleado";
+    String vEmpId     = request.getParameter("idEmprendimiento") != null ? request.getParameter("idEmprendimiento") : "";
+    List<Emprendimiento> emprendimientos = (List<Emprendimiento>) request.getAttribute("emprendimientos");
 %>
 <!doctype html>
 <html lang="es">
@@ -80,6 +82,9 @@
       <a class="sidebar__link" href="<%= ctx %>/ganancias">
         <i class="fi fi-sr-chart-line-up"></i><span>Ganancias</span>
       </a>
+      <% if (esSuperAdmin) { %>
+      <a class="sidebar__link" href="<%= ctx %>/emprendimientos"><i class="fi fi-sr-store-alt"></i><span>Emprendimientos</span></a>
+      <% } %>
       <% if (esSuperAdmin) { %>
       <a class="sidebar__link" href="<%= ctx %>/configuracion"><i class="fi fi-sr-settings"></i><span>Configuración</span></a>
       <% } %>
@@ -223,6 +228,24 @@
             <i class="fi fi-sr-angle-down nv-campo__icono-edit"></i>
           </div>
         </div>
+
+        <!-- Emprendimiento (solo SuperAdmin) -->
+        <% if (esSuperAdmin && emprendimientos != null && !emprendimientos.isEmpty()) { %>
+        <div class="nv-campo">
+          <label class="nv-campo__label">Emprendimiento</label>
+          <div class="nv-campo__input-wrapper nv-campo__input-wrapper--select">
+            <select class="nv-campo__input" name="idEmprendimiento" required>
+              <option value="" disabled <%= vEmpId.isBlank() ? "selected" : "" %>>Selecciona emprendimiento</option>
+              <% for (Emprendimiento emp : emprendimientos) { %>
+              <option value="<%= emp.getId() %>" <%= String.valueOf(emp.getId()).equals(vEmpId) ? "selected" : "" %>>
+                <%= emp.getNombre() %>
+              </option>
+              <% } %>
+            </select>
+            <i class="fi fi-sr-angle-down nv-campo__icono-edit"></i>
+          </div>
+        </div>
+        <% } %>
 
         <!-- Botones -->
         <div class="nv-botones">

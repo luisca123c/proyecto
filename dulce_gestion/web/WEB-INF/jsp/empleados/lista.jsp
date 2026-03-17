@@ -1,17 +1,27 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="com.dulce_gestion.models.Usuario, java.util.List" %>
+<%@ page import="com.dulce_gestion.models.Usuario, com.dulce_gestion.models.Emprendimiento, java.util.List" %>
 <%
-    Usuario sesionUsuario = (Usuario) session.getAttribute("usuario");
-    String ctx = request.getContextPath();
-    String rolSolicitante = (String) request.getAttribute("rolSolicitante");
+    Usuario sesionUsuario  = (Usuario) session.getAttribute("usuario");
+    String ctx             = request.getContextPath();
+    String rolSolicitante  = (String) request.getAttribute("rolSolicitante");
     List<Usuario> empleados = (List<Usuario>) request.getAttribute("empleados");
-    String errorEmpleados = (String) request.getAttribute("errorEmpleados");
+    List<Emprendimiento> emprendimientos = (List<Emprendimiento>) request.getAttribute("emprendimientos");
+    Integer empFiltro      = (Integer) request.getAttribute("empFiltro");
+    String errorEmpleados  = (String) request.getAttribute("errorEmpleados");
+
     boolean esSuperAdmin = "SuperAdministrador".equals(rolSolicitante);
     boolean esAdmin      = "Administrador".equals(rolSolicitante);
-    boolean exitoCreado   = "creado".equals(request.getParameter("exito"));
-    boolean exitoEditado  = "editado".equals(request.getParameter("exito"));
+    int filtroActivo     = (empFiltro != null) ? empFiltro : 0;
+
+    boolean exitoCreado    = "creado".equals(request.getParameter("exito"));
+    boolean exitoEditado   = "editado".equals(request.getParameter("exito"));
     boolean exitoEliminado = "eliminado".equals(request.getParameter("exito"));
-    String errorParam     = request.getParameter("error");
+    String errorParam      = request.getParameter("error");
+
+    // Nombre del emprendimiento: siempre desde la sesión (ya viene cargado desde el login)
+    String nombreEmpAdmin = (esAdmin && sesionUsuario != null)
+                            ? sesionUsuario.getNombreEmprendimiento()
+                            : "";
 %>
 <!doctype html>
 <html lang="es">
@@ -34,7 +44,7 @@
       </label>
       <div class="header-app__marca">
         <img class="header-app__logo" src="<%= ctx %>/assets/images/Logo.png" alt="Logo Dulce Gestión">
-        <span class="header-app__titulo">Dulce Gestión</span>
+        <span class="header-app__titulo"><%= esAdmin ? nombreEmpAdmin : "Dulce Gestión" %></span>
       </div>
     </div>
     <div class="header-app__acciones">
@@ -78,6 +88,7 @@
       <a class="sidebar__link" href="<%= ctx %>/ganancias">
         <i class="fi fi-sr-chart-line-up"></i><span>Ganancias</span>
       </a>
+      <a class="sidebar__link" href="<%= ctx %>/emprendimientos"><i class="fi fi-sr-store-alt"></i><span>Emprendimientos</span></a>
       <% if (esSuperAdmin) { %>
       <a class="sidebar__link" href="<%= ctx %>/configuracion"><i class="fi fi-sr-settings"></i><span>Configuración</span></a>
       <% } %>
@@ -99,56 +110,80 @@
       <div class="modulo-encabezado">
         <h1 class="modulo-titulo">
           <i class="fi fi-sr-users"></i>
-          <%= esSuperAdmin ? "Administradores y Empleados" : "Empleados" %>
+          <% if (esSuperAdmin) { %>
+            Administradores y Empleados
+          <% } else { %>
+            Empleados — <%= nombreEmpAdmin %>
+          <% } %>
         </h1>
-        <%-- Ambos roles pueden agregar; el formulario limita quién crea Admins --%>
         <a class="boton boton--primario boton--sm" href="<%= ctx %>/empleados/nuevo">
           <i class="fi fi-sr-user-add"></i>
           Agregar empleado
         </a>
       </div>
 
-      <!-- Mensajes -->
+      <!-- Mensajes de estado -->
       <% if (exitoCreado) { %>
-      <div class="modulo-exito">
-        <i class="fi fi-sr-check"></i> Usuario creado correctamente.
-      </div>
+      <div class="modulo-exito"><i class="fi fi-sr-check"></i> Usuario creado correctamente.</div>
       <% } %>
       <% if (exitoEditado) { %>
-      <div class="modulo-exito">
-        <i class="fi fi-sr-check"></i> Usuario actualizado correctamente.
-      </div>
+      <div class="modulo-exito"><i class="fi fi-sr-check"></i> Usuario actualizado correctamente.</div>
       <% } %>
       <% if (exitoEliminado) { %>
-      <div class="modulo-exito">
-        <i class="fi fi-sr-check"></i> Usuario inactivado correctamente.
-      </div>
+      <div class="modulo-exito"><i class="fi fi-sr-check"></i> Usuario inactivado correctamente.</div>
       <% } %>
       <% if ("eliminacion".equals(errorParam)) { %>
-      <div class="modulo-error">
-        <i class="fi fi-sr-triangle-warning"></i> No se pudo eliminar. El usuario tiene registros asociados.
-      </div>
+      <div class="modulo-error"><i class="fi fi-sr-triangle-warning"></i> No se pudo eliminar. El usuario tiene registros asociados.</div>
       <% } %>
       <% if ("sinpermiso".equals(errorParam)) { %>
-      <div class="modulo-error">
-        <i class="fi fi-sr-triangle-warning"></i> No tienes permiso para eliminar este usuario.
-      </div>
+      <div class="modulo-error"><i class="fi fi-sr-triangle-warning"></i> No tienes permiso para eliminar este usuario.</div>
       <% } %>
       <% if (errorEmpleados != null) { %>
-      <div class="modulo-error">
-        <i class="fi fi-sr-triangle-warning"></i> <%= errorEmpleados %>
+      <div class="modulo-error"><i class="fi fi-sr-triangle-warning"></i> <%= errorEmpleados %></div>
+      <% } %>
+
+      <!-- FILTRO POR EMPRENDIMIENTO (solo SuperAdmin) -->
+      <% if (esSuperAdmin && emprendimientos != null) { %>
+      <div class="emp-filtro-select-wrap">
+        <label class="emp-filtro-label" for="filtroEmp">
+          <i class="fi fi-sr-store-alt"></i> Emprendimiento
+        </label>
+        <select id="filtroEmp" class="emp-filtro-select"
+                onchange="window.location.href='<%= ctx %>/empleados' + (this.value ? '?emp=' + this.value : '')">
+          <option value="" <%= filtroActivo == 0 ? "selected" : "" %>>— Todos los emprendimientos —</option>
+          <% for (Emprendimiento emp : emprendimientos) { %>
+          <option value="<%= emp.getId() %>" <%= filtroActivo == emp.getId() ? "selected" : "" %>>
+            <%= emp.getNombre() %>
+          </option>
+          <% } %>
+        </select>
       </div>
       <% } %>
 
-      <!-- Lista -->
+      <!-- LISTA DE EMPLEADOS -->
       <% if (empleados == null || empleados.isEmpty()) { %>
       <div class="modulo-vacio">
         <i class="fi fi-sr-users modulo-vacio__icono"></i>
-        <p>No hay empleados registrados aún.</p>
+        <p>No hay empleados registrados<% if (esSuperAdmin && filtroActivo > 0) { %> en este emprendimiento<% } %>.</p>
       </div>
-      <% } else { %>
+      <% } else {
+           String empActual = "";
+      %>
       <div class="empleados-lista">
-        <% for (Usuario emp : empleados) { %>
+        <% for (Usuario emp : empleados) {
+             // Encabezado de grupo por emprendimiento (solo SuperAdmin viendo todos)
+             if (esSuperAdmin && filtroActivo == 0) {
+                 String nombreEmp = emp.getNombreEmprendimiento();
+                 if (!nombreEmp.equals(empActual)) {
+                     empActual = nombreEmp;
+        %>
+        <div class="emp-grupo-cabecera">
+          <i class="fi fi-sr-store-alt"></i>
+          <span><%= nombreEmp %></span>
+        </div>
+        <%       }
+             }
+        %>
         <div class="empleado-card">
           <div class="empleado-card__avatar">
             <i class="fi fi-sr-user"></i>
@@ -162,14 +197,14 @@
               <%= emp.getEstado() %>
             </span>
           </div>
-          <!-- Botón Perfil -->
+          <!-- Botón Ver Perfil -->
           <a class="empleado-card__btn-perfil"
              href="<%= ctx %>/perfil/ver?id=<%= emp.getId() %>"
              title="Ver Perfil"
-             style="display: inline-flex; align-items: center; justify-content: center; background: #667eea; color: white; width: 32px; height: 32px; border-radius: 4px; text-decoration: none; margin-right: 6px;">
+             style="display:inline-flex;align-items:center;justify-content:center;background:#667eea;color:white;width:32px;height:32px;border-radius:4px;text-decoration:none;margin-right:6px;">
             <i class="fi fi-sr-user"></i>
           </a>
-          <%-- Botón editar: superAdmin edita todos, admin solo edita empleados --%>
+          <%-- SuperAdmin edita todos; Admin solo edita Empleados --%>
           <% if (esSuperAdmin || (esAdmin && "Empleado".equals(emp.getNombreRol()))) { %>
           <a class="empleado-card__btn-editar"
              href="<%= ctx %>/empleados/editar?id=<%= emp.getId() %>"
@@ -178,7 +213,7 @@
           </a>
           <% if (!"Inactivo".equals(emp.getEstado())) { %>
           <form method="POST" action="<%= ctx %>/empleados/eliminar" style="display:contents"
-                onsubmit="return confirm('¿Seguro que deseas inactivar a <%= emp.getNombreCompleto() %>? El empleado quedará Inactivo y no podrá iniciar sesión.')">
+                onsubmit="return confirm('¿Seguro que deseas inactivar a <%= emp.getNombreCompleto() %>?')">
             <input type="hidden" name="id" value="<%= emp.getId() %>">
             <button type="submit" class="empleado-card__btn-eliminar" title="Inactivar">
               <i class="fi fi-sr-trash"></i>
@@ -191,7 +226,7 @@
       </div>
       <% } %>
 
-      <!-- Botón agregar al fondo en móvil -->
+      <!-- Botón agregar (footer móvil) -->
       <div class="modulo-accion-footer">
         <a class="boton boton--primario" href="<%= ctx %>/empleados/nuevo">
           <i class="fi fi-sr-user-add"></i>

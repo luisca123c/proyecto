@@ -208,6 +208,35 @@
         <url-pattern>/ganancias</url-pattern>
     </servlet-mapping>
 
+    <!-- ========== EMPRENDIMIENTOS ========== -->
+
+    <servlet>
+        <servlet-name>EmprendimientosServlet</servlet-name>
+        <servlet-class>com.dulce_gestion.controllers.EmprendimientosServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>EmprendimientosServlet</servlet-name>
+        <url-pattern>/emprendimientos</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>NuevoEmprendimientoServlet</servlet-name>
+        <servlet-class>com.dulce_gestion.controllers.NuevoEmprendimientoServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>NuevoEmprendimientoServlet</servlet-name>
+        <url-pattern>/emprendimientos/nuevo</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>EditarEmprendimientoServlet</servlet-name>
+        <servlet-class>com.dulce_gestion.controllers.EditarEmprendimientoServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>EditarEmprendimientoServlet</servlet-name>
+        <url-pattern>/emprendimientos/editar</url-pattern>
+    </servlet-mapping>
+
     <!-- ========== CONFIGURACIÓN (solo SuperAdmin) ========== -->
 
     <servlet>

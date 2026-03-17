@@ -1,7 +1,10 @@
 package com.dulce_gestion.controllers;
 
 import com.dulce_gestion.dao.CrearEmpleadoDAO;
+import com.dulce_gestion.dao.EmprendimientoDAO;
+import com.dulce_gestion.models.Emprendimiento;
 import com.dulce_gestion.models.Usuario;
+import java.util.List;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -83,8 +86,9 @@ public class NuevoEmpleadoServlet extends HttpServlet {
         // Verificar que el solicitante es Admin o SuperAdmin
         if (!verificarAcceso(request, response)) return;
 
-        // Pasar al JSP si el solicitante es SuperAdmin (para mostrar la opción "Administrador")
+        // Pasar al JSP si el solicitante es SuperAdmin
         setEsSuperAdmin(request);
+        cargarEmprendimientos(request);
 
         request.getRequestDispatcher(VISTA).forward(request, response);
     }
@@ -129,6 +133,10 @@ public class NuevoEmpleadoServlet extends HttpServlet {
         // ── Paso 1: verificar acceso ─────────────────────────────────────
         if (!verificarAcceso(request, response)) return;
 
+        // Leer sesión una sola vez (se usa en varios pasos)
+        HttpSession session   = request.getSession(false);
+        Usuario solicitante   = (Usuario) session.getAttribute("usuario");
+
         // ── Paso 2: leer parámetros del formulario ───────────────────────
         String nombreCompleto = request.getParameter("nombreCompleto");
         String telefono       = request.getParameter("telefono");
@@ -137,8 +145,25 @@ public class NuevoEmpleadoServlet extends HttpServlet {
         String contrasena     = request.getParameter("contrasena");
         String estado         = request.getParameter("estado");
         String rol            = request.getParameter("rol");
+        String empParam       = request.getParameter("idEmprendimiento");
 
         // ── Paso 3: validar que todos los campos obligatorios tienen valor ─
+        // SuperAdmin debe elegir emprendimiento; Admin usa el suyo automáticamente
+        int idEmprendimiento;
+        if ("SuperAdministrador".equals(solicitante.getNombreRol())) {
+            if (estaVacio(empParam)) {
+                setEsSuperAdmin(request);
+                cargarEmprendimientos(request);
+                request.setAttribute("error", "Debes seleccionar un emprendimiento.");
+                request.getRequestDispatcher(VISTA).forward(request, response);
+                return;
+            }
+            try { idEmprendimiento = Integer.parseInt(empParam); }
+            catch (NumberFormatException e) { idEmprendimiento = 0; }
+        } else {
+            idEmprendimiento = solicitante.getIdEmprendimiento();
+        }
+
         if (estaVacio(nombreCompleto) || estaVacio(telefono) || estaVacio(genero)
                 || estaVacio(correo) || estaVacio(contrasena)
                 || estaVacio(estado) || estaVacio(rol)) {
@@ -159,9 +184,6 @@ public class NuevoEmpleadoServlet extends HttpServlet {
         }
 
         // ── Paso 5: verificar que un Admin no intente crear un Admin ──────
-        HttpSession session   = request.getSession(false);
-        Usuario solicitante   = (Usuario) session.getAttribute("usuario");
-
         // Solo SuperAdministrador puede asignar el rol Administrador a otro usuario
         if ("Administrador".equals(rol)
                 && !"SuperAdministrador".equals(solicitante.getNombreRol())) {
@@ -197,7 +219,7 @@ public class NuevoEmpleadoServlet extends HttpServlet {
             // ── Paso 8: crear el usuario en 4 tablas (transacción) ────────
             // La contraseña se hashea internamente en el DAO con SHA-256
             dao.crear(nombreCompleto, telefono, idGenero,
-                      correo, contrasena, estado, idRol);
+                      correo, contrasena, estado, idRol, idEmprendimiento);
 
         } catch (SQLException e) {
             e.printStackTrace(); // Log en consola de Tomcat
@@ -265,9 +287,22 @@ public class NuevoEmpleadoServlet extends HttpServlet {
         HttpSession s = req.getSession(false);
         if (s != null) {
             Usuario u = (Usuario) s.getAttribute("usuario");
-            // true si el usuario actual es SuperAdmin, false si es Admin
             req.setAttribute("esSuperAdmin",
                 u != null && "SuperAdministrador".equals(u.getNombreRol()));
+        }
+    }
+
+    /**
+     * Carga la lista de emprendimientos activos en el request.
+     * Solo es relevante para SuperAdmin (el JSP la ignora si no es SuperAdmin).
+     */
+    private void cargarEmprendimientos(HttpServletRequest req) {
+        try {
+            List<Emprendimiento> emps = new EmprendimientoDAO().listarActivos();
+            req.setAttribute("emprendimientos", emps);
+        } catch (java.sql.SQLException e) {
+            e.printStackTrace();
+            req.setAttribute("emprendimientos", java.util.List.of());
         }
     }
 }

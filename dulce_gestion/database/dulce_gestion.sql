@@ -363,10 +363,151 @@ INSERT INTO productos (nombre, descripcion, stock_actual, id_unidad, precio_unit
 
 -- ════════════════════════════════════════════════════════════════
 -- DATOS HISTÓRICOS (Enero–Marzo 2026)
--- Carrito, detalle_carrito y ventas: vacíos (los genera la app)
 -- Enero: GANANCIA | Febrero: GANANCIA | Marzo: PÉRDIDA
--- El emprendimiento se deriva siempre del id_usuario registrado
+-- El emprendimiento se deriva siempre del id_usuario del carrito
+-- Carritos 1-23: históricos (Inactivo=2), 24-31: activos (Activo=1)
 -- ════════════════════════════════════════════════════════════════
+
+-- ── CARRITOS HISTÓRICOS (Inactivo) ────────────────────────────
+INSERT INTO carrito (id_usuario, fecha_creacion, fecha_actualizacion, id_estado_carro) VALUES
+-- Enero emp1 (users: 2=carlos, 3=ana, 4=pedro, 5=lucia)
+(2, '2026-01-05 10:00:00', '2026-01-05 10:45:00', 2),  -- 1
+(3, '2026-01-09 11:00:00', '2026-01-09 11:30:00', 2),  -- 2
+(4, '2026-01-15 14:00:00', '2026-01-15 14:50:00', 2),  -- 3
+(5, '2026-01-20 16:00:00', '2026-01-20 16:20:00', 2),  -- 4
+(2, '2026-01-26 09:30:00', '2026-01-26 10:00:00', 2),  -- 5
+-- Enero emp2 (users: 6=sofia, 7=miguel, 8=valentina, 9=juan)
+(6, '2026-01-06 10:00:00', '2026-01-06 10:40:00', 2),  -- 6
+(7, '2026-01-12 12:00:00', '2026-01-12 12:35:00', 2),  -- 7
+(8, '2026-01-18 15:00:00', '2026-01-18 15:25:00', 2),  -- 8
+(9, '2026-01-24 17:00:00', '2026-01-24 17:15:00', 2),  -- 9
+-- Febrero emp1
+(3, '2026-02-03 10:00:00', '2026-02-03 10:55:00', 2),  -- 10
+(4, '2026-02-08 13:00:00', '2026-02-08 13:30:00', 2),  -- 11
+(5, '2026-02-13 15:00:00', '2026-02-13 15:40:00', 2),  -- 12
+(2, '2026-02-19 09:00:00', '2026-02-19 09:25:00', 2),  -- 13
+(3, '2026-02-25 11:00:00', '2026-02-25 11:20:00', 2),  -- 14
+-- Febrero emp2
+(7, '2026-02-04 10:00:00', '2026-02-04 10:50:00', 2),  -- 15
+(8, '2026-02-10 14:00:00', '2026-02-10 14:30:00', 2),  -- 16
+(9, '2026-02-16 16:00:00', '2026-02-16 16:25:00', 2),  -- 17
+(6, '2026-02-22 09:00:00', '2026-02-22 09:35:00', 2),  -- 18
+(7, '2026-02-27 11:00:00', '2026-02-27 11:40:00', 2),  -- 19
+-- Marzo emp1 (pocas ventas → pérdida)
+(4, '2026-03-04 10:00:00', '2026-03-04 10:20:00', 2),  -- 20
+(5, '2026-03-11 14:00:00', '2026-03-11 14:15:00', 2),  -- 21
+-- Marzo emp2 (pocas ventas → pérdida)
+(8, '2026-03-05 11:00:00', '2026-03-05 11:10:00', 2),  -- 22
+(9, '2026-03-12 15:00:00', '2026-03-12 15:20:00', 2);  -- 23
+
+-- ── DETALLE DE CADA CARRITO ────────────────────────────────────
+INSERT INTO detalle_carrito (id_carrito, id_producto, cantidad) VALUES
+-- Carrito 1: prod1(Helado chocolate $2500) x3, prod4(Helado oreo $3000) x1 → 10500
+(1, 1, 3), (1, 4, 1),
+-- Carrito 2: prod2(Helado maracuyá $2500) x2 → 5000
+(2, 2, 2),
+-- Carrito 3: prod3(Helado coco $2500) x3, prod5(Helado arequipe $3000) x1 → 10500
+(3, 3, 3), (3, 5, 1),
+-- Carrito 4: prod4(Helado oreo $3000) x2 → 6000
+(4, 4, 2),
+-- Carrito 5: prod1 x2, prod2 x1 → 7500
+(5, 1, 2), (5, 2, 1),
+-- Carrito 6: prod7(Cheesecake $6000) x2 → 12000
+(6, 7, 2),
+-- Carrito 7: prod9(Helado vainilla $2500) x3, prod10(Paleta mango $2000) x2 → 11500
+(7, 9, 3), (7, 10, 2),
+-- Carrito 8: prod6(Brownie $4500) x1, prod9 x1 → 7000
+(8, 6, 1), (8, 9, 1),
+-- Carrito 9: prod10 x3 → 6000
+(9, 10, 3),
+-- Carrito 10: prod1 x4, prod5 x2 → 16000
+(10, 1, 4), (10, 5, 2),
+-- Carrito 11: prod3 x3 → 7500
+(11, 3, 3),
+-- Carrito 12: prod2 x3, prod4 x1 → 10500
+(12, 2, 3), (12, 4, 1),
+-- Carrito 13: prod4 x2, prod5 x1 → 9000
+(13, 4, 2), (13, 5, 1),
+-- Carrito 14: prod1 x2, prod2 x1 → 7500
+(14, 1, 2), (14, 2, 1),
+-- Carrito 15: prod8(Torta vainilla $8000) x1, prod10 x2 → 12000
+(15, 8, 1), (15, 10, 2),
+-- Carrito 16: prod6 x2 → 9000
+(16, 6, 2),
+-- Carrito 17: prod7 x2 → 12000
+(17, 7, 2),
+-- Carrito 18: prod9 x4, prod10 x1 → 12000
+(18, 9, 4), (18, 10, 1),
+-- Carrito 19: prod6 x1, prod7 x1 → 10500
+(19, 6, 1), (19, 7, 1),
+-- Carrito 20: prod2 x2 → 5000
+(20, 2, 2),
+-- Carrito 21: prod5 x1, prod3 x1 → 5500
+(21, 5, 1), (21, 3, 1),
+-- Carrito 22: prod9 x2 → 5000
+(22, 9, 2),
+-- Carrito 23: prod10 x3 → 6000
+(23, 10, 3);
+
+-- ── VENTAS CONFIRMADAS ────────────────────────────────────────
+-- Emp1 Enero: 39500 | Emp2 Enero: 36500 (ambos GANANCIA)
+-- Emp1 Feb:   50500 | Emp2 Feb:   55500 (ambos GANANCIA)
+-- Emp1 Mar:   10500 | Emp2 Mar:   11000 (ambos PÉRDIDA)
+INSERT INTO ventas (fecha_venta, id_carrito, id_metodo_pago, total_venta) VALUES
+-- Enero emp1
+('2026-01-05 10:45:00',  1, 1,  10500.00),
+('2026-01-09 11:30:00',  2, 1,   5000.00),
+('2026-01-15 14:50:00',  3, 2,  10500.00),
+('2026-01-20 16:20:00',  4, 1,   6000.00),
+('2026-01-26 10:00:00',  5, 2,   7500.00),
+-- Enero emp2
+('2026-01-06 10:40:00',  6, 1,  12000.00),
+('2026-01-12 12:35:00',  7, 2,  11500.00),
+('2026-01-18 15:25:00',  8, 1,   7000.00),
+('2026-01-24 17:15:00',  9, 1,   6000.00),
+-- Febrero emp1
+('2026-02-03 10:55:00', 10, 1,  16000.00),
+('2026-02-08 13:30:00', 11, 2,   7500.00),
+('2026-02-13 15:40:00', 12, 1,  10500.00),
+('2026-02-19 09:25:00', 13, 1,   9000.00),
+('2026-02-25 11:20:00', 14, 2,   7500.00),
+-- Febrero emp2
+('2026-02-04 10:50:00', 15, 2,  12000.00),
+('2026-02-10 14:30:00', 16, 1,   9000.00),
+('2026-02-16 16:25:00', 17, 1,  12000.00),
+('2026-02-22 09:35:00', 18, 2,  12000.00),
+('2026-02-27 11:40:00', 19, 1,  10500.00),
+-- Marzo emp1 (pocas ventas → pérdida vs costos altos)
+('2026-03-04 10:20:00', 20, 1,   5000.00),
+('2026-03-11 14:15:00', 21, 2,   5500.00),
+-- Marzo emp2 (pocas ventas → pérdida)
+('2026-03-05 11:10:00', 22, 1,   5000.00),
+('2026-03-12 15:20:00', 23, 2,   6000.00);
+
+-- ── CARRITOS ACTIVOS (uno por usuario para operar normalmente) ─
+INSERT INTO carrito (id_usuario, fecha_creacion, id_estado_carro) VALUES
+(2, '2026-03-16 08:00:00', 1),  -- 24  carlos
+(3, '2026-03-16 08:01:00', 1),  -- 25  ana
+(4, '2026-03-16 08:02:00', 1),  -- 26  pedro
+(5, '2026-03-16 08:03:00', 1),  -- 27  lucia
+(6, '2026-03-16 08:04:00', 1),  -- 28  sofia
+(7, '2026-03-16 08:05:00', 1),  -- 29  miguel
+(8, '2026-03-16 08:06:00', 1),  -- 30  valentina
+(9, '2026-03-16 08:07:00', 1);  -- 31  juan
+
+-- ── STOCK ACTUALIZADO TRAS VENTAS HISTÓRICAS ──────────────────
+-- prod1: vendidas 11 unid  | prod2: 9  | prod3: 7  | prod4: 6  | prod5: 5
+-- prod6: vendidas  4 unid  | prod7: 5  | prod8: 1  | prod9: 10 | prod10: 11
+UPDATE productos SET stock_actual = 39 WHERE id = 1;  -- Helado chocolate
+UPDATE productos SET stock_actual = 41 WHERE id = 2;  -- Helado maracuyá
+UPDATE productos SET stock_actual = 33 WHERE id = 3;  -- Helado coco
+UPDATE productos SET stock_actual = 34 WHERE id = 4;  -- Helado oreo
+UPDATE productos SET stock_actual = 40 WHERE id = 5;  -- Helado arequipe
+UPDATE productos SET stock_actual = 26 WHERE id = 6;  -- Brownie chocolate
+UPDATE productos SET stock_actual = 20 WHERE id = 7;  -- Cheesecake fresas
+UPDATE productos SET stock_actual = 19 WHERE id = 8;  -- Torta vainilla
+UPDATE productos SET stock_actual = 25 WHERE id = 9;  -- Helado vainilla
+UPDATE productos SET stock_actual = 29 WHERE id = 10; -- Paleta mango
 
 -- ── COMPRAS DE INSUMOS ── 3 por mes, derivadas del usuario (emp1 o emp2)
 INSERT INTO compras_insumos (id_usuario, descripcion, total, id_metodo_pago, fecha_compra) VALUES

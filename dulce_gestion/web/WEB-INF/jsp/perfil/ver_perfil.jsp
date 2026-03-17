@@ -74,6 +74,7 @@
             <a class="sidebar__link" href="<%= ctx %>/ganancias">
                 <i class="fi fi-sr-chart-line-up"></i><span>Ganancias</span>
             </a>
+            <a class="sidebar__link" href="<%= ctx %>/emprendimientos"><i class="fi fi-sr-store-alt"></i><span>Emprendimientos</span></a>
             <a class="sidebar__link" href="<%= ctx %>/perfil">
                 <i class="fi fi-sr-user"></i><span>Perfil</span>
             </a>

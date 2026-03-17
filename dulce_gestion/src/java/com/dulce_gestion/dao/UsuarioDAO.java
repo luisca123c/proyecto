@@ -85,18 +85,22 @@ public class UsuarioDAO {
         String hashContrasena = hashSHA256(contrasena);
         if (hashContrasena == null) return null;
 
-        // JOIN entre 4 tablas para obtener todos los campos del usuario en una consulta
+        // JOIN entre 5 tablas para obtener todos los campos del usuario en una consulta.
+        // LEFT JOIN emprendimientos porque SuperAdmin tiene id_emprendimiento = NULL
         String sql = """
                 SELECT u.id,
                        c.correo,
                        u.estado,
                        u.id_rol,
                        r.nombre    AS nombre_rol,
-                       p.nombre_completo
+                       p.nombre_completo,
+                       COALESCE(u.id_emprendimiento, 0) AS id_emprendimiento,
+                       e.nombre    AS nombre_emprendimiento
                 FROM usuarios u
-                JOIN correos        c ON c.id         = u.id_correo
-                JOIN roles          r ON r.id         = u.id_rol
-                JOIN perfil_usuario p ON p.id_usuario = u.id
+                JOIN correos           c ON c.id         = u.id_correo
+                JOIN roles             r ON r.id         = u.id_rol
+                JOIN perfil_usuario    p ON p.id_usuario = u.id
+                LEFT JOIN emprendimientos e ON e.id      = u.id_emprendimiento
                 WHERE c.correo     = ?
                   AND u.contrasena = ?
                 """;
@@ -117,6 +121,8 @@ public class UsuarioDAO {
                     u.setIdRol(rs.getInt("id_rol"));
                     u.setNombreRol(rs.getString("nombre_rol"));    // "SuperAdministrador", etc.
                     u.setNombreCompleto(rs.getString("nombre_completo"));
+                    u.setIdEmprendimiento(rs.getInt("id_emprendimiento"));
+                    u.setNombreEmprendimiento(rs.getString("nombre_emprendimiento"));
                     return u;
                 }
             }

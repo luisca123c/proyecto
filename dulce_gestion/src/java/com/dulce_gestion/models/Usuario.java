@@ -62,6 +62,8 @@ public class Usuario {
     // ── Campos de perfil extendido (cargados solo al ver/editar el perfil) ─
     private String telefono;        // null cuando viene del login básico
     private String genero;          // null cuando viene del login básico
+    private int    idEmprendimiento;       // 0 para SuperAdministrador
+    private String nombreEmprendimiento;   // nombre del emprendimiento (para mostrar en listas)
 
     /** Constructor vacío requerido para que los DAOs puedan crear instancias
      *  con new Usuario() y luego poblar los campos con setters. */
@@ -106,17 +108,21 @@ public class Usuario {
      * Retorna "" en vez de null por la misma razón que getTelefono().
      */
     public String getGenero()         { return genero  != null ? genero   : ""; }
+    public int    getIdEmprendimiento()          { return idEmprendimiento; }
+    public String getNombreEmprendimiento()      { return nombreEmprendimiento != null ? nombreEmprendimiento : ""; }
 
     // =========================================================
     // SETTERS
     // =========================================================
 
-    public void setId(int id)                    { this.id = id; }
-    public void setCorreo(String correo)         { this.correo = correo; }
-    public void setEstado(String estado)         { this.estado = estado; }
-    public void setIdRol(int idRol)              { this.idRol = idRol; }
-    public void setNombreRol(String nombreRol)   { this.nombreRol = nombreRol; }
-    public void setNombreCompleto(String nombre) { this.nombreCompleto = nombre; }
-    public void setTelefono(String telefono)     { this.telefono = telefono; }
-    public void setGenero(String genero)         { this.genero = genero; }
+    public void setId(int id)                              { this.id = id; }
+    public void setCorreo(String correo)                   { this.correo = correo; }
+    public void setEstado(String estado)                   { this.estado = estado; }
+    public void setIdRol(int idRol)                        { this.idRol = idRol; }
+    public void setNombreRol(String nombreRol)             { this.nombreRol = nombreRol; }
+    public void setNombreCompleto(String nombre)           { this.nombreCompleto = nombre; }
+    public void setTelefono(String telefono)               { this.telefono = telefono; }
+    public void setGenero(String genero)                   { this.genero = genero; }
+    public void setIdEmprendimiento(int id)                { this.idEmprendimiento = id; }
+    public void setNombreEmprendimiento(String nombre)     { this.nombreEmprendimiento = nombre; }
 }

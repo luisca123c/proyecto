@@ -85,6 +85,9 @@
       </a>
       <% } %>
       <% if (esSuperAdmin) { %>
+      <a class="sidebar__link" href="<%= ctx %>/emprendimientos"><i class="fi fi-sr-store-alt"></i><span>Emprendimientos</span></a>
+      <% } %>
+      <% if (esSuperAdmin) { %>
       <a class="sidebar__link" href="<%= ctx %>/configuracion"><i class="fi fi-sr-settings"></i><span>Configuración</span></a>
       <% } %>
       <a class="sidebar__link" href="<%= ctx %>/perfil">
