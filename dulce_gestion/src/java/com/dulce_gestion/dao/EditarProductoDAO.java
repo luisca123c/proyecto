@@ -14,22 +14,6 @@ import java.sql.SQLException;
  * Usado por:      EditarProductoServlet
  * ============================================================
  *
- * ¿QUÉ HACE?
- * ----------
- * Actualiza los datos de un producto existente en la tabla productos.
- * Solo actualiza los campos de datos (columnas de la tabla productos).
- * La imagen se maneja por separado en EditarProductoServlet +
- * ImagenProductoDAO para mantener la separación de responsabilidades.
- *
- * ¿POR QUÉ LA IMAGEN NO SE ACTUALIZA AQUÍ?
- * ------------------------------------------
- * La imagen involucra dos operaciones distintas:
- *   1. Manejo de archivos físicos en disco (guardar/borrar)
- *   2. Actualizar la ruta en imagenes_producto (otra tabla)
- *
- * Si se pusiera todo en este DAO, mezclaría lógica de BD con lógica
- * de sistema de archivos. EditarProductoServlet orquesta ambas cosas
- * coordinando este DAO con ImagenProductoDAO y la clase Uploads.
  */
 public class EditarProductoDAO {
 

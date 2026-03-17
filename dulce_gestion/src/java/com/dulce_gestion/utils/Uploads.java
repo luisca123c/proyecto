@@ -10,52 +10,6 @@ import java.io.File;
  *            EliminarProductoServlet
  * ============================================================
  *
- * ¿QUÉ HACE?
- * ----------
- * Centraliza toda la lógica de rutas para las imágenes de productos.
- * Provee métodos estáticos para obtener las carpetas donde guardar
- * imágenes y construir la URL relativa para guardar en la BD.
- *
- * ¿POR QUÉ SE NECESITA ESTA CLASE?
- * ----------------------------------
- * Una imagen de producto debe guardarse en DOS lugares distintos:
- *
- *   1. build/web/assets/images/productos/  → carpeta activa de Tomcat
- *      Es la carpeta que Tomcat está sirviendo en este momento.
- *      Un archivo aquí es inmediatamente accesible como recurso estático.
- *
- *   2. web/assets/images/productos/        → carpeta fuente del proyecto
- *      Es la carpeta dentro del código fuente en NetBeans.
- *      Al hacer "Clean & Build", NetBeans recrea build/web/ copiando
- *      todo desde web/. Si la imagen solo está en build/web/, desaparece
- *      en el próximo build. Guardarla también en web/ la hace persistente.
- *
- * Sin esta clase, los tres Servlets que manejan imágenes tendrían que
- * conocer y calcular estas rutas internamente, duplicando la lógica.
- *
- * ¿POR QUÉ ctx.getRealPath() Y NO UNA RUTA HARDCODEADA?
- * -------------------------------------------------------
- * getRealPath("/") retorna la ruta absoluta en disco del contexto web
- * en el servidor actual. En una máquina es "C:/...", en otra es "/home/...".
- * Con una ruta hardcodeada (ej: "C:/dulce_gestion/build/web/"), el código
- * solo funcionaría en esa máquina específica. getRealPath() hace el
- * proyecto portable entre equipos sin necesidad de configuración.
- *
- * Ejemplo de lo que retorna getRealPath("/") en NetBeans + Tomcat:
- *   "C:\Users\Ana\Documents\dulce_gestion\build\web\"
- * carpetaProductos() construye a partir de ahí:
- *   "C:\Users\Ana\Documents\dulce_gestion\build\web\assets\images\productos\"
- *
- * ¿QUÉ RUTA SE GUARDA EN LA BASE DE DATOS?
- * ------------------------------------------
- * En la tabla imagenes_producto se guarda la ruta RELATIVA al contexto web:
- *   "assets/images/productos/producto_3.jpg"
- *
- * Nunca la ruta absoluta ("C:\Users\..."), porque esa solo funciona en
- * la máquina donde se creó. La ruta relativa funciona en cualquier servidor.
- *
- * El JSP la construye como URL completa:
- *   <img src="${pageContext.request.contextPath}/assets/images/productos/producto_3.jpg">
  */
 public class Uploads {
 
@@ -136,14 +90,6 @@ public class Uploads {
      * El JSP la combina con el contextPath para la URL completa:
      *   <img src="${pageContext.request.contextPath}/assets/images/productos/producto_3.jpg">
      *
-     * ¿POR QUÉ NO SE GUARDA LA URL COMPLETA CON contextPath?
-     * --------------------------------------------------------
-     * El contextPath ("/dulce_gestion") puede cambiar si el proyecto se
-     * despliega con otro nombre. La ruta relativa sin contextPath es
-     * independiente del nombre de despliegue y siempre funciona.
-     *
-     * @param nombreArchivo  nombre del archivo de imagen (ej: "producto_3.jpg")
-     * @return               ruta relativa para guardar en imagenes_producto.path_imagen
      */
     public static String urlRelativa(String nombreArchivo) {
         return RUTA_RELATIVA + "/" + nombreArchivo;

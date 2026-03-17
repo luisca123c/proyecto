@@ -15,38 +15,6 @@ import java.util.List;
  * Usado por:      GananciasServlet
  * ============================================================
  *
- * ¿QUÉ HACE?
- * ----------
- * Calcula el resumen financiero del negocio para un período de tiempo.
- * Devuelve un objeto ResumenPeriodo con ventas, gastos, totales y
- * las listas de filas para las tablas del JSP.
- *
- * ¿QUÉ PERÍODOS SOPORTA?
- * -----------------------
- *   "semana"  → lunes a domingo de la semana actual
- *   "mes"     → mes actual completo
- *   "YYYY-MM" → mes histórico específico (ej: "2025-01")
- *
- * ¿POR QUÉ SE CALCULAN LAS FECHAS EN SQL Y NO EN JAVA?
- * -------------------------------------------------------
- * MySQL tiene funciones nativas para cálculo de fechas que son eficientes
- * y exactas en la zona horaria del servidor:
- *   CURDATE()          → fecha actual del servidor BD
- *   WEEKDAY(fecha)     → 0=lunes, 1=martes, ..., 6=domingo
- *   DATE_SUB(d, INTERVAL N DAY) → restar N días a una fecha
- *   LAST_DAY(fecha)    → último día del mes de esa fecha
- *
- * Si se calculara en Java, habría que gestionar TimeZone explícitamente
- * y los resultados podrían diferir si el servidor Java y el servidor MySQL
- * están en zonas horarias distintas. Calcular en MySQL garantiza consistencia.
- *
- * ¿POR QUÉ ResumenPeriodo ES UNA CLASE INTERNA?
- * -----------------------------------------------
- * ResumenPeriodo solo tiene sentido en el contexto de GananciasDAO.
- * Ninguna otra parte del sistema la necesita. Definirla como clase
- * interna static la agrupa lógicamente con su DAO y evita crear
- * un archivo Java separado solo para un objeto de datos.
- * Lo mismo aplica para FilaVenta y FilaGasto.
  */
 public class GananciasDAO {
 
@@ -106,42 +74,6 @@ public class GananciasDAO {
     /**
      * Calcula el resumen financiero completo para el período indicado.
      *
-     * FLUJO EN 3 FASES:
-     *
-     * Fase 1 — Calcular rango de fechas según el período:
-     *   Se ejecuta una query SQL que devuelve fecha_inicio, fecha_fin y
-     *   una etiqueta legible (label) para mostrar en el encabezado del JSP.
-     *   El SQL varía según el tipo de período:
-     *     "semana"  → funciones WEEKDAY + DATE_SUB para encontrar el lunes de esta semana
-     *     "mes"     → DATE_FORMAT para el día 1, LAST_DAY para el último día
-     *     "YYYY-MM" → literal de fecha para el mes específico
-     *
-     * Fase 2 — Consultar ventas del período:
-     *   Si esAdminOSuper = true → todas las ventas de todos los usuarios
-     *   Si esAdminOSuper = false → solo las ventas del usuario dado (empleado)
-     *   Se suman en totalVentas al ir leyendo las filas.
-     *
-     * Fase 3 — Consultar gastos del período (solo si esAdminOSuper):
-     *   Los empleados no tienen acceso a información de gastos.
-     *   Se suman en totalGastos al ir leyendo las filas.
-     *
-     * Al final: ganancia = totalVentas - totalGastos
-     *
-     * ¿POR QUÉ SE CONCATENA "periodo" DIRECTAMENTE EN EL SQL DE LA FASE 1?
-     * -----------------------------------------------------------------------
-     * Para el caso "YYYY-MM", el período se embebe directamente:
-     *   DATE('2025-01-01')  LAST_DAY('2025-01-01')
-     * Esto es seguro porque GananciasServlet ya validó que el formato
-     * es exactamente "YYYY-MM" antes de pasar el parámetro.
-     * Sin embargo, si se aceptaran valores arbitrarios del usuario,
-     * se debería usar PreparedStatement.
-     *
-     * @param idUsuario         ID del usuario solicitante (para filtrar ventas de empleados)
-     * @param esAdminOSuperAdmin true → ve todas las ventas y todos los gastos
-     *                          false → solo sus propias ventas, sin gastos
-     * @param periodo           "semana", "mes", o "YYYY-MM"
-     * @return                  objeto ResumenPeriodo con todos los datos calculados
-     * @throws SQLException     si hay error al consultar la BD
      */
     public ResumenPeriodo obtenerResumen(int idUsuario, boolean esAdminOSuperAdmin,
                                          String periodo, int idEmprendimiento)
@@ -316,23 +248,6 @@ public class GananciasDAO {
     /**
      * Retorna los últimos 12 meses para el <select> del filtro de período.
      *
-     * ¿CÓMO FUNCIONA LA QUERY CON UNION?
-     * ------------------------------------
-     * MySQL no tiene una función nativa para generar una secuencia de números.
-     * Se simula con UNION de 12 valores (0 al 11), cada uno representando
-     * "hace N meses":
-     *   SELECT 0 UNION SELECT 1 UNION ... UNION SELECT 11
-     *
-     * Luego DATE_SUB(CURDATE(), INTERVAL seq MONTH) retrocede N meses
-     * desde hoy para calcular el mes correspondiente.
-     *
-     * El resultado es una lista de:
-     *   valor    → "2025-03"  (para el parámetro ?periodo= en la URL)
-     *   etiqueta → "Marzo 2025"  (para mostrar en el <select>)
-     *
-     * @return  lista de [valor, etiqueta] para los últimos 12 meses,
-     *          ordenada del más reciente al más antiguo
-     * @throws SQLException si hay error al consultar la BD
      */
     /** Retrocompatibilidad. */
     public ResumenPeriodo obtenerResumen(int idUsuario, boolean esAdmin, String periodo)

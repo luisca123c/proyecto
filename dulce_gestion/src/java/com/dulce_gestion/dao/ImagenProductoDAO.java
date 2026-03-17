@@ -15,30 +15,6 @@ import java.sql.SQLException;
  *             EliminarProductoServlet
  * ============================================================
  *
- * ¿QUÉ HACE?
- * ----------
- * Gestiona los registros de la tabla imagenes_producto.
- * Cada producto puede tener máximo UNA imagen (relación 1 a 0..1).
- * En la tabla solo se guarda la ruta relativa del archivo y su
- * texto alternativo — el archivo físico lo maneja el Servlet + Uploads.java.
- *
- * ¿POR QUÉ SE GUARDA SOLO LA RUTA Y NO EL ARCHIVO EN SÍ?
- * --------------------------------------------------------
- * Guardar archivos en la BD (BLOB) consume mucho espacio y hace las
- * consultas lentas. Es una práctica estándar guardar el archivo en el
- * sistema de archivos y solo su ruta en la BD.
- * La ruta guardada es relativa al contexto de la app:
- *   "assets/images/productos/producto_3.jpg"
- * El JSP la usa como: <img src="${ctx}/assets/images/productos/producto_3.jpg">
- *
- * ¿QUÉ ES UN UPSERT?
- * -------------------
- * Un "UPSERT" (Update + Insert) es una operación que hace UPDATE si el
- * registro ya existe, o INSERT si no existe. guardarOActualizar() implementa
- * este patrón con dos queries: primero SELECT para verificar existencia,
- * luego UPDATE o INSERT según el resultado.
- * En MySQL también se podría usar INSERT ... ON DUPLICATE KEY UPDATE,
- * pero la versión explícita es más legible y fácil de depurar.
  */
 public class ImagenProductoDAO {
 
@@ -71,23 +47,6 @@ public class ImagenProductoDAO {
      * Si ya existe un registro para el producto → UPDATE (reemplazar ruta y alt).
      * Si no existe → INSERT (primera imagen del producto).
      *
-     * FLUJO:
-     * 1. SELECT id para verificar si ya hay registro.
-     * 2. Si existe → UPDATE path_imagen y alt_imagen.
-     *    Si no existe → INSERT nuevo registro.
-     *
-     * ¿POR QUÉ DOS CONEXIONES SEPARADAS?
-     * ------------------------------------
-     * El SELECT y el UPDATE/INSERT usan conexiones distintas del pool.
-     * Esto podría causar una condición de carrera si dos peticiones
-     * simultáneas verifican la misma imagen al mismo tiempo. Para
-     * un sistema de gestión de uso interno es aceptable. Si se
-     * requiriera atomicidad, se usaría INSERT ... ON DUPLICATE KEY UPDATE.
-     *
-     * @param idProducto  ID del producto al que pertenece la imagen
-     * @param pathImagen  ruta relativa del archivo (ej: "assets/images/productos/producto_3.jpg")
-     * @param altImagen   texto alternativo para accesibilidad (<img alt="...">)
-     * @throws SQLException si hay error al consultar o insertar/actualizar
      */
     public void guardarOActualizar(int idProducto, String pathImagen, String altImagen)
             throws SQLException {

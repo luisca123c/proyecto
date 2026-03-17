@@ -16,28 +16,6 @@ import java.sql.Statement;
  * Usado por:      NuevoProductoServlet
  * ============================================================
  *
- * ¿QUÉ HACE?
- * ----------
- * Inserta un nuevo producto en la tabla productos y retorna
- * el ID generado por AUTO_INCREMENT.
- *
- * ¿POR QUÉ SE RETORNA EL ID?
- * ---------------------------
- * NuevoProductoServlet necesita el ID del producto recién creado para:
- * 1. Nombrar el archivo de imagen: "producto_{ID}.jpg"
- * 2. Registrar el path en la tabla imagenes_producto
- *
- * Si este método no retornara el ID, el servlet tendría que hacer
- * otra consulta SELECT MAX(id) o similar para obtenerlo, lo cual
- * es propenso a condiciones de carrera en entornos con múltiples usuarios.
- * RETURN_GENERATED_KEYS es la forma correcta y atómica de obtenerlo.
- *
- * ¿POR QUÉ BigDecimal PARA EL PRECIO?
- * -------------------------------------
- * float y double tienen problemas de precisión en aritmética de punto
- * flotante. Por ejemplo, 0.1 + 0.2 en float da 0.30000000000000004.
- * BigDecimal representa números decimales exactos, fundamental para
- * valores monetarios donde el centavo importa.
  */
 public class CrearProductoDAO {
 

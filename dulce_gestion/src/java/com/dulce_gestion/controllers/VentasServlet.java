@@ -27,55 +27,6 @@ import java.util.List;
  * MÉTODOS: GET, POST
  * ============================================================
  *
- * ¿QUÉ HACE?
- * ----------
- * Maneja el carrito de ventas completo. Es el servlet más versátil
- * del proyecto porque atiende múltiples acciones con un solo doPost():
- *
- *   GET  /ventas                      → muestra el carrito con catálogo
- *   POST /ventas?accion=agregar       → agrega un producto al carrito
- *   POST /ventas?accion=actualizar    → cambia la cantidad de un ítem
- *   POST /ventas?accion=eliminar      → quita un ítem del carrito
- *   POST /ventas?accion=vaciar        → vacía todo el carrito
- *   POST /ventas?accion=confirmar     → registra la venta (cierre de venta)
- *
- * ¿QUIÉN PUEDE ACCEDER?
- * ----------------------
- * Todos los roles autenticados (SuperAdmin, Admin y Empleado).
- * El carrito es PERSONAL: cada usuario tiene el suyo en la BD.
- *
- * ¿CÓMO SE MANEJAN MÚLTIPLES ACCIONES EN UN SOLO doPost()?
- * ----------------------------------------------------------
- * Cada formulario del JSP incluye un campo oculto con la acción:
- *   <input type="hidden" name="accion" value="agregar">
- *
- * doPost() lee ese parámetro y usa un switch para ejecutar la
- * lógica de cada caso. Este es el patrón "Front Controller":
- * un solo punto de entrada que delega a sub-operaciones.
- *
- * ¿POR QUÉ "confirmar" HACE REDIRECT Y LAS OTRAS ACCIONES NO?
- * -------------------------------------------------------------
- * Después de confirmar una venta, si el usuario recarga la página,
- * el navegador re-enviaría el POST (el formulario de confirmación).
- * Eso registraría la venta dos veces y descontaría el stock dos veces.
- *
- * Solución: PRG Pattern (Post-Redirect-Get).
- * Al confirmar → redirect a /ventas?exito=venta&id=X
- * Así, si el usuario recarga, solo recarga el GET que muestra el carrito vacío.
- *
- * Las otras acciones (agregar, actualizar, etc.) usan forward porque
- * no se repiten si el usuario recarga — no tienen consecuencias financieras.
- *
- * ¿QUÉ HACE cargarCarrito()?
- * ---------------------------
- * Centraliza la carga de todos los datos que necesita el JSP:
- *   idCarrito → para los forms de modificar/eliminar ítem
- *   items     → lista de CarritoItem para la tabla del carrito
- *   productos → catálogo de productos disponibles (stock > 0)
- *   metodos   → métodos de pago para el modal de confirmación
- *   total     → suma de subtotales de todos los ítems
- *
- * Se llama tanto en el GET como al terminar cada acción del POST.
  */
 @WebServlet("/ventas")
 public class VentasServlet extends HttpServlet {
@@ -111,17 +62,6 @@ public class VentasServlet extends HttpServlet {
     /**
      * Procesa la acción del carrito indicada por el parámetro "accion".
      *
-     * FLUJO GENERAL:
-     * 1. Verificar sesión activa.
-     * 2. Leer el parámetro "accion".
-     * 3. Obtener o crear el carrito activo del usuario.
-     * 4. Switch sobre la acción → ejecutar la lógica correspondiente.
-     * 5. En caso de error → poner mensaje de error en el request.
-     * 6. Recargar el carrito y hacer forward al JSP.
-     *    (Excepción: "confirmar" hace redirect en lugar de forward)
-     *
-     * @param request  contiene el formulario del carrito y el parámetro "accion"
-     * @param response para redirigir en confirmar, o forward al JSP en los demás casos
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)

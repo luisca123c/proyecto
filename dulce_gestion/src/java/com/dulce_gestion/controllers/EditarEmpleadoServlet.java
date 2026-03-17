@@ -23,43 +23,6 @@ import java.sql.SQLException;
  * MÉTODOS: GET, POST
  * ============================================================
  *
- * ¿QUÉ HACE?
- * ----------
- * Maneja la edición de los datos de un usuario existente.
- *   GET  → carga los datos del usuario y muestra el formulario prellenado
- *   POST → valida los cambios y actualiza los datos en la BD
- *
- * ¿QUIÉN PUEDE EDITAR A QUIÉN?
- * -----------------------------
- * La regla de permisos es:
- *   SuperAdministrador → puede editar Administradores y Empleados
- *   Administrador      → puede editar SOLO Empleados
- *
- * Nadie puede editarse a sí mismo desde aquí (para eso existe /perfil/editar).
- * Nadie puede editar a un SuperAdministrador.
- *
- * Esta lógica está encapsulada en el método privado puedeEditar().
- *
- * ¿QUÉ ES EL "OBJETIVO"?
- * -----------------------
- * En este servlet se usan dos usuarios:
- *   solicitante → el usuario en sesión (quien hace la edición)
- *   objetivo    → el usuario que se está editando (el afectado)
- *
- * Ambos se cargan y se verifican permisos cruzados.
- *
- * ¿POR QUÉ LA CONTRASEÑA ES OPCIONAL EN LA EDICIÓN?
- * ---------------------------------------------------
- * Al editar un empleado, el administrador puede NO cambiar la contraseña.
- * Si el campo contraseña llega vacío → se interpreta como "no cambiar".
- * EditarEmpleadoDAO.actualizar() detecta esto y omite la columna contraseña en el UPDATE.
- *
- * ¿POR QUÉ ADMIN NO PUEDE CAMBIAR EL ROL?
- * -----------------------------------------
- * Solo el SuperAdministrador puede cambiar el rol de un usuario.
- * Si el solicitante es Admin, el parámetro "rolFinal" se fuerza
- * al rol actual del objetivo (ignorando lo que llegó en el formulario).
- * Esto evita que un Admin se otorgue a sí mismo o a otro permisos superiores.
  */
 @WebServlet("/empleados/editar")
 public class EditarEmpleadoServlet extends HttpServlet {
@@ -74,16 +37,6 @@ public class EditarEmpleadoServlet extends HttpServlet {
     /**
      * Carga los datos del usuario a editar y muestra el formulario prellenado.
      *
-     * FLUJO PASO A PASO:
-     * 1. Verificar que el solicitante es Admin o SuperAdmin.
-     * 2. Leer el parámetro ?id=X de la URL.
-     * 3. Si id es inválido o falta → redirigir a la lista.
-     * 4. Buscar el usuario objetivo en la BD por ID.
-     * 5. Verificar que el solicitante tiene permiso para editar al objetivo.
-     * 6. Pasar el objeto objetivo y el flag esSuperAdmin al JSP.
-     *
-     * @param request  contiene la sesión y el parámetro ?id=
-     * @param response para redirigir si hay error, o para el forward al JSP
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -142,20 +95,6 @@ public class EditarEmpleadoServlet extends HttpServlet {
     /**
      * Valida los datos del formulario y actualiza el usuario en la BD.
      *
-     * FLUJO PASO A PASO:
-     * 1. Verificar acceso (Admin o SuperAdmin).
-     * 2. Leer todos los campos del formulario.
-     * 3. Validar que los campos obligatorios no estén vacíos.
-     * 4. Si hay nueva contraseña, validar que tiene al menos 6 caracteres.
-     * 5. Parsear el ID — si no es número, volver a la lista.
-     * 6. Verificar que el objetivo existe y puede ser editado por el solicitante.
-     * 7. Verificar unicidad de correo y teléfono (excluyendo al propio usuario).
-     * 8. Determinar el rolFinal: si Admin → usar rol actual; si SuperAdmin → usar el del form.
-     * 9. Llamar a dao.actualizar() en transacción.
-     * 10. Redirigir a /empleados?exito=editado.
-     *
-     * @param request  contiene los datos del formulario (POST)
-     * @param response para redirigir en éxito o reenviar al form en error
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -165,7 +104,6 @@ public class EditarEmpleadoServlet extends HttpServlet {
         Usuario solicitante = getSolicitante(request, response);
         if (solicitante == null) return;
 
-        // ¿El solicitante es SuperAdmin? Determina si puede cambiar el rol.
         boolean esSuperAdmin = "SuperAdministrador".equals(solicitante.getNombreRol());
 
         // ── Paso 2: leer parámetros del formulario ───────────────────────

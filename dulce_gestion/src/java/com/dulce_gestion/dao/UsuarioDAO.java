@@ -18,67 +18,17 @@ import java.sql.SQLException;
  * Usado por:          LoginServlet
  * ============================================================
  *
- * ¿QUÉ HACE?
- * ----------
- * Concentra las operaciones de autenticación y hashing de contraseñas.
- * Es el DAO raíz del sistema: sin él ningún usuario puede entrar.
- *
- * ¿POR QUÉ SE SEPARA LA LÓGICA DE BD DEL SERVLET?
- * -------------------------------------------------
- * LoginServlet solo debería leer el formulario, llamar al DAO y
- * decidir qué hacer con el resultado.
- * Si el SQL estuviera en el Servlet, cualquier cambio de esquema
- * (nueva tabla, nuevo JOIN) obligaría a tocar el Servlet.
- * Al estar aquí, el Servlet queda limpio y este DAO es reusable
- * desde cualquier parte del proyecto.
- *
- * ¿POR QUÉ hashSHA256() ES ESTÁTICO (static)?
- * ---------------------------------------------
- * Otros DAOs también hashean contraseñas (CrearEmpleadoDAO,
- * EditarEmpleadoDAO, PerfilDAO). Al ser estático pueden llamarlo
- * sin instanciar UsuarioDAO:
- *   UsuarioDAO.hashSHA256(contrasena)
  */
 public class UsuarioDAO {
 
     /**
-     * Autentica un usuario verificando correo y contraseña contra la BD.
+     * Autentica un usuario verificando correo y contraseña (SHA-256) contra la BD.
+     * Retorna null si las credenciales son incorrectas o el usuario no existe.
      *
-     * FLUJO INTERNO:
-     * 1. Hashear la contraseña recibida con SHA-256.
-     * 2. Buscar en la BD una fila donde correo + hash coincidan.
-     * 3. Si hay resultado → construir y retornar el objeto Usuario.
-     *    Si no → retornar null (credenciales inválidas).
-     *
-     * ¿POR QUÉ UN JOIN DE 4 TABLAS?
-     * --------------------------------
-     * La BD normaliza la información del usuario:
-     *   usuarios        → id, estado, contrasena, id_rol, id_correo
-     *   correos         → id, correo  (separado para evitar duplicados)
-     *   roles           → id, nombre  (SuperAdministrador / Administrador / Empleado)
-     *   perfil_usuario  → id, nombre_completo, id_usuario, ...
-     *
-     * Con un solo JOIN se trae todo lo necesario para poblar el objeto
-     * Usuario y guardarlo en sesión, sin consultas adicionales.
-     *
-     * ¿POR QUÉ PreparedStatement CON "?"?
-     * -------------------------------------
-     * Previene inyección SQL. Si el correo fuera concatenado directamente
-     * en el SQL, un usuario podría escribir: ' OR '1'='1 y acceder sin
-     * contraseña. Con PreparedStatement, MySQL trata el input como valor
-     * literal, nunca como parte del SQL.
-     *
-     * ¿POR QUÉ try-with-resources?
-     * -----------------------------
-     * Cierra la conexión automáticamente al salir del bloque, incluso
-     * si ocurre una excepción. Sin esto → fuga de conexiones → el pool
-     * se agota y la aplicación deja de responder.
-     *
-     * @param correo     correo del usuario (se normaliza con trim + toLowerCase)
-     * @param contrasena contraseña en texto plano (se hashea internamente)
-     * @return           objeto Usuario con todos sus datos, o null si las
-     *                   credenciales son incorrectas
-     * @throws SQLException si hay error al conectar o consultar la BD
+     * @param correo     correo del usuario (normalizado a minúsculas)
+     * @param contrasena contraseña en texto plano
+     * @return           Usuario con todos sus datos de sesión, o null
+     * @throws SQLException error de consulta
      */
     public Usuario autenticar(String correo, String contrasena) throws SQLException {
 
@@ -134,41 +84,6 @@ public class UsuarioDAO {
     /**
      * Convierte una cadena de texto a su hash SHA-256 en formato hexadecimal.
      *
-     * ¿QUÉ ES SHA-256?
-     * -----------------
-     * Función hash criptográfica unidireccional: dada cualquier entrada,
-     * produce siempre el mismo resultado de 64 caracteres hexadecimales.
-     * No se puede "deshacer" el hash para obtener el texto original.
-     *
-     * Ejemplo:
-     *   "hola123" → "a29c491e...8f4b2d6c"  (siempre el mismo resultado)
-     *   "Hola123" → "2b7e151f...f4b3c2a1"  (completamente diferente)
-     *
-     * ¿POR QUÉ StandardCharsets.UTF_8?
-     * ----------------------------------
-     * texto.getBytes() sin argumento usa el charset del sistema operativo,
-     * que varía entre Windows, Linux y Mac. Con UTF_8 explícito el hash
-     * es idéntico en todas las plataformas: una contraseña creada en
-     * Windows funciona igual en Linux.
-     *
-     * ¿POR QUÉ String.format("%02x", b)?
-     * ------------------------------------
-     * MessageDigest retorna 32 bytes en bruto. %02x convierte cada byte
-     * a su representación hexadecimal de exactamente 2 dígitos:
-     *   byte 10  → "0a"   (sin el cero a la izquierda quedaría "a")
-     *   byte 255 → "ff"
-     * 32 bytes × 2 chars/byte = 64 caracteres hex en total.
-     *
-     * ¿POR QUÉ RuntimeException Y NO SQLException?
-     * ----------------------------------------------
-     * SHA-256 está incluido en todos los JDKs desde Java 1.4.
-     * Si no está disponible hay un problema grave en la JVM, no un
-     * error de BD recuperable. RuntimeException no obliga a los
-     * llamadores a capturar algo que nunca debería ocurrir.
-     *
-     * @param texto  cadena a hashear (contraseña en texto plano)
-     * @return       hash SHA-256 en hexadecimal (64 caracteres)
-     * @throws RuntimeException si SHA-256 no está disponible en la JVM
      */
     /**
      * Retorna el ID del primer administrador activo de un emprendimiento.

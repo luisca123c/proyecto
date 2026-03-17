@@ -19,37 +19,6 @@ import java.util.List;
  * Usado por:          PerfilServlet, EditarPerfilServlet, VerPerfilServlet
  * ============================================================
  *
- * ¿QUÉ HACE?
- * ----------
- * Maneja las operaciones del perfil personal de un usuario:
- *   - Cargar el perfil completo (todos los campos) para mostrar en pantalla
- *   - Actualizar datos personales (nombre, teléfono, género, correo)
- *   - Cambiar contraseña con verificación de la actual
- *   - Listar géneros para el <select> del formulario
- *
- * ¿EN QUÉ SE DIFERENCIA DE EditarEmpleadoDAO?
- * ---------------------------------------------
- * EditarEmpleadoDAO lo usa un ADMIN para editar a OTRO usuario.
- * PerfilDAO lo usa el propio usuario para editar SU PROPIO perfil.
- *
- * Las diferencias clave:
- *   - PerfilDAO incluye fechas de alta (fecha_creacion, fecha_actualizacion)
- *     que el formulario de perfil muestra como información de solo lectura.
- *   - PerfilDAO tiene cambiarContrasena() que verifica la actual antes de
- *     actualizarla. Un admin no necesita saber la contraseña actual del
- *     empleado que está editando.
- *   - actualizarPerfil() en PerfilDAO no permite cambiar el rol ni el estado,
- *     ya que un usuario no puede cambiar sus propios permisos.
- *
- * ¿POR QUÉ actualizarPerfil() ABRE CONEXIONES SEPARADAS PARA CADA UPDATE?
- * --------------------------------------------------------------------------
- * A diferencia de CrearEmpleadoDAO o EditarEmpleadoDAO que usan una
- * sola conexión con transacción, aquí cada UPDATE tiene su propia conexión.
- * Esto simplifica el código pero significa que si el tercer UPDATE falla,
- * los dos anteriores ya están confirmados (sin ROLLBACK).
- * Para el perfil propio esto es aceptable: un fallo parcial es poco
- * probable y los datos quedan en estado consistente en la mayoría de casos.
- * Si se requiriera atomicidad estricta, se debería refactorizar con transacción.
  */
 public class PerfilDAO {
 
@@ -59,17 +28,6 @@ public class PerfilDAO {
      * Trae todos los campos necesarios para la pantalla de perfil:
      * datos básicos, teléfono, género, fechas de alta y actualización.
      *
-     * ¿POR QUÉ SE NECESITA ESTE MÉTODO SI YA HAY UN OBJETO EN SESIÓN?
-     * -----------------------------------------------------------------
-     * El objeto Usuario guardado en sesión durante el login solo tiene
-     * los campos básicos (id, correo, rol, estado, nombreCompleto).
-     * No incluye teléfono, género ni fechas de alta porque no se necesitan
-     * para verificar autenticación. PerfilServlet llama a este método
-     * para cargar el perfil completo cuando el usuario navega a /perfil.
-     *
-     * @param idUsuario  ID del usuario cuyo perfil se quiere cargar
-     * @return           objeto Usuario con todos los campos, o null si no existe
-     * @throws SQLException si hay error al consultar la BD
      */
     public Usuario obtenerPerfil(int idUsuario) throws SQLException {
         String sql = """
@@ -183,20 +141,6 @@ public class PerfilDAO {
      * 3. UPDATE telefonos → nuevo teléfono
      * 4. UPDATE perfil_usuario → nuevo nombre, nuevo género, actualizar timestamp
      *
-     * ¿POR QUÉ SE ACTUALIZA fecha_actualizacion = CURRENT_TIMESTAMP?
-     * ----------------------------------------------------------------
-     * La tabla perfil_usuario lleva registro de cuándo se modificó por última vez.
-     * CURRENT_TIMESTAMP es una función de MySQL que retorna la fecha y hora actuales.
-     * Al incluirla en el UPDATE, se registra automáticamente el momento de la edición
-     * sin necesidad de calcularlo en Java.
-     *
-     * @param idUsuario      ID del usuario a actualizar
-     * @param nombreCompleto nuevo nombre completo
-     * @param telefono       nuevo teléfono
-     * @param idGenero       ID del nuevo género (FK a tabla generos)
-     * @param correo         nuevo correo (se normaliza a minúsculas)
-     * @return               true si se actualizaron los datos, false si el usuario no existe
-     * @throws SQLException  si hay error al consultar o actualizar la BD
      */
     public boolean actualizarPerfil(int idUsuario, String nombreCompleto,
                                      String telefono, int idGenero, String correo) throws SQLException {
@@ -269,25 +213,6 @@ public class PerfilDAO {
      * Cambia la contraseña del usuario, verificando primero que la contraseña
      * actual sea correcta.
      *
-     * FLUJO:
-     * 1. Hashear la contraseña actual con SHA-256.
-     * 2. Verificar que en la BD exista una fila con id + hash actuales.
-     *    → Si no coincide: la contraseña actual ingresada es incorrecta → retornar false.
-     * 3. Hashear la nueva contraseña.
-     * 4. UPDATE usuarios SET contrasena = nuevo hash.
-     *
-     * ¿POR QUÉ SE VERIFICA LA CONTRASEÑA ACTUAL?
-     * -------------------------------------------
-     * Previene que alguien con acceso momentáneo a la sesión (ej: dejó
-     * la pantalla abierta) cambie la contraseña sin saber la actual.
-     * Es un requisito de seguridad estándar en cualquier sistema.
-     *
-     * @param idUsuario          ID del usuario que cambia su contraseña
-     * @param contrasennaActual  contraseña actual en texto plano
-     * @param contrasenaNueva    nueva contraseña en texto plano
-     * @return                   true si el cambio fue exitoso,
-     *                           false si la contraseña actual era incorrecta
-     * @throws SQLException      si hay error al consultar o actualizar la BD
      */
     public boolean cambiarContrasena(int idUsuario, String contrasennaActual,
                                       String contrasenaNueva) throws SQLException {
@@ -329,16 +254,6 @@ public class PerfilDAO {
     /**
      * Convierte una fila del ResultSet en un objeto Usuario.
      *
-     * ¿POR QUÉ ESTE MÉTODO PRIVADO?
-     * --------------------------------
-     * obtenerPerfil() y listarTodosUsuarios() hacen el mismo SELECT y
-     * necesitan mapear las columnas a un objeto Usuario de la misma manera.
-     * Centralizar el mapeo aquí evita duplicar esas ~10 líneas en cada método
-     * y asegura que si se agrega un campo nuevo, solo se cambia en un lugar.
-     *
-     * @param rs  ResultSet posicionado en la fila a mapear
-     * @return    objeto Usuario con los campos del ResultSet
-     * @throws SQLException si algún nombre de columna no existe en el ResultSet
      */
     private Usuario mapearUsuario(ResultSet rs) throws SQLException {
         Usuario u = new Usuario();

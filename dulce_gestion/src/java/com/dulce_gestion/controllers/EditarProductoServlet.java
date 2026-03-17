@@ -1,11 +1,14 @@
 package com.dulce_gestion.controllers;
 
 import com.dulce_gestion.dao.EditarProductoDAO;
+import com.dulce_gestion.dao.EmprendimientoDAO;
 import com.dulce_gestion.dao.ImagenProductoDAO;
 import com.dulce_gestion.dao.ProductoDAO;
 import com.dulce_gestion.utils.Uploads;
+import com.dulce_gestion.models.Emprendimiento;
 import com.dulce_gestion.models.Producto;
 import com.dulce_gestion.models.Usuario;
+import java.util.List;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -28,48 +31,6 @@ import java.util.List;
  * MÉTODOS: GET, POST
  * ============================================================
  *
- * ¿QUÉ HACE?
- * ----------
- * Maneja la edición de un producto existente, incluyendo:
- *   - Cambio de datos (nombre, precio, stock, categoría, etc.)
- *   - Reemplazo de la imagen actual por una nueva
- *   - Eliminación de la imagen existente (checkbox "Eliminar imagen")
- *
- *   GET  → carga el producto por ID y muestra el formulario prellenado
- *   POST → aplica los cambios en la BD y gestiona la imagen
- *
- * ¿QUIÉN PUEDE ACCEDER?
- * ----------------------
- * Solo SuperAdministrador y Administrador.
- * Los Empleados son redirigidos a /productos.
- *
- * ¿CÓMO FUNCIONA EL MANEJO DE IMÁGENES EN LA EDICIÓN?
- * -----------------------------------------------------
- * Hay tres escenarios al guardar la edición:
- *
- *   Escenario A — El usuario marca "Eliminar imagen":
- *     1. Borrar el archivo físico del disco (build/web/ y web/)
- *     2. Eliminar el registro en imagenes_producto
- *     → El producto queda sin imagen
- *
- *   Escenario B — El usuario sube una imagen nueva:
- *     1. Borrar el archivo anterior del disco (si existía)
- *     2. Guardar el nuevo archivo en disco
- *     3. Actualizar el registro en imagenes_producto (UPSERT)
- *     → El producto tiene la nueva imagen
- *
- *   Escenario C — El usuario no toca la imagen:
- *     La Part "imagen" llega con size=0 o nombre vacío.
- *     No se hace nada con la imagen.
- *     → El producto mantiene su imagen actual
- *
- * ¿POR QUÉ SE BORRA LA IMAGEN FÍSICA ANTES DEL UPDATE?
- * -------------------------------------------------------
- * Si el nuevo archivo tiene el mismo nombre (producto_5.jpg),
- * part.write() simplemente lo sobreescribe. Pero si la imagen anterior
- * tenía otra extensión (ej: .png y la nueva es .jpg), quedarían dos
- * archivos: producto_5.png (viejo) y producto_5.jpg (nuevo).
- * Borrar primero evita acumular archivos huérfanos en el servidor.
  */
 @MultipartConfig(maxFileSize = 5 * 1024 * 1024) // Máximo 5 MB por archivo
 public class EditarProductoServlet extends HttpServlet {
@@ -84,12 +45,6 @@ public class EditarProductoServlet extends HttpServlet {
     /**
      * Carga el producto por ID y muestra el formulario prellenado.
      *
-     * FLUJO PASO A PASO:
-     * 1. Verificar acceso (Admin o SuperAdmin).
-     * 2. Leer y validar el parámetro ?id= de la URL.
-     * 3. Buscar el producto en la BD. Si no existe → redirigir a la lista.
-     * 4. Cargar las opciones de los <select> (categorías, unidades).
-     * 5. Forward al JSP con el producto y los selectores.
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -136,17 +91,6 @@ public class EditarProductoServlet extends HttpServlet {
     /**
      * Aplica los cambios al producto en la BD y gestiona la imagen.
      *
-     * FLUJO PASO A PASO:
-     *
-     * Paso 1 — Verificar acceso.
-     * Paso 2 — Setear charset UTF-8 para caracteres especiales.
-     * Paso 3 — Leer todos los campos del formulario.
-     * Paso 4 — Validar campos obligatorios no vacíos.
-     * Paso 5 — Parsear tipos numéricos (id, stock, precio, etc.).
-     * Paso 6 — Validar que stock y precio no sean negativos.
-     * Paso 7 — Actualizar datos del producto en la BD (EditarProductoDAO).
-     * Paso 8 — Gestionar la imagen (escenario A, B o C descrito en el Javadoc de clase).
-     * Paso 9 — Redirigir a /productos?exito=editado.
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)

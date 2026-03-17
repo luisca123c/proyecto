@@ -15,66 +15,12 @@ import java.sql.SQLException;
  * Usado por:          EliminarEmpleadoServlet
  * ============================================================
  *
- * ¿QUÉ HACE?
- * ----------
- * Elimina un usuario y todos sus datos relacionados en una transacción,
- * respetando el orden que imponen las claves foráneas de la BD.
- *
- * ¿POR QUÉ NO SE PUEDE BORRAR DIRECTO CON DELETE FROM usuarios?
- * --------------------------------------------------------------
- * La BD tiene restricciones de integridad referencial (FK):
- *
- *   perfil_usuario.id_telefono → telefonos.id  (RESTRICT o CASCADE)
- *   usuarios.id_correo         → correos.id    (si correos se borra → CASCADE a usuarios)
- *
- * Si se borrara correos antes que perfil_usuario, la FK de perfil_usuario
- * hacia usuarios fallaría porque usuarios ya no existe.
- * Si se borrara directamente usuarios, podría quedar perfil_usuario huérfano.
- *
- * El orden correcto es:
- *   1. Obtener idCorreo e idTelefono (antes de borrar usuarios, que los referencia)
- *   2. Borrar perfil_usuario (libera la FK hacia telefonos)
- *   3. Borrar telefonos
- *   4. Borrar correos → CASCADE borra automáticamente usuarios y carrito
- *
- * ¿QUÉ PASA SI EL USUARIO TIENE COMPRAS REGISTRADAS?
- * ----------------------------------------------------
- * La tabla detalle_compra tiene:
- *   detalle_compra.id_usuario → usuarios.id  (ON DELETE RESTRICT)
- *
- * Si el usuario tiene compras, MySQL rechaza el DELETE en correos
- * (que haría CASCADE a usuarios) con una excepción de FK violada.
- * El ROLLBACK deshace los DELETEs previos y el Servlet muestra el error.
  */
 public class EliminarEmpleadoDAO {
 
     /**
      * Elimina el usuario y todos sus datos relacionados en una transacción.
      *
-     * FLUJO PASO A PASO:
-     *
-     * Pre-paso — Consultar idCorreo e idTelefono:
-     *   Se necesitan ANTES de borrar porque el JOIN que los resuelve
-     *   requiere que usuarios y perfil_usuario aún existan.
-     *
-     * Paso 1 — DELETE perfil_usuario:
-     *   Libera las FKs de perfil_usuario hacia telefonos y generos.
-     *   Sin este paso, el DELETE de telefonos fallaría.
-     *
-     * Paso 2 — DELETE telefonos:
-     *   Ahora seguro porque perfil_usuario ya no lo referencia.
-     *
-     * Paso 3 — DELETE correos:
-     *   La FK usuarios.id_correo tiene ON DELETE CASCADE →
-     *   MySQL borra automáticamente la fila en usuarios.
-     *   La FK carrito.id_usuario también puede tener CASCADE →
-     *   se borran el carrito y sus detalles automáticamente.
-     *
-     * Si el usuario tiene compras (detalle_compra) con ON DELETE RESTRICT,
-     * el paso 3 falla → ROLLBACK → los pasos 1 y 2 se deshacen.
-     *
-     * @param idUsuario  ID del usuario a eliminar
-     * @throws SQLException si la BD rechaza la eliminación (ej: tiene compras)
      */
     public void eliminar(int idUsuario) throws SQLException {
 

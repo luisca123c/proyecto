@@ -8,46 +8,6 @@ package com.dulce_gestion.models;
  * Usado por: casi todos los DAOs y Servlets
  * ============================================================
  *
- * ¿QUÉ ES UN MODELO (POJO)?
- * --------------------------
- * Un modelo (o POJO, Plain Old Java Object) es una clase Java simple
- * que representa una entidad del sistema. Solo tiene:
- *   - Campos privados (los datos)
- *   - Constructor vacío
- *   - Getters (leer datos) y Setters (escribir datos)
- *   - Sin lógica de negocio, sin SQL, sin HTTP
- *
- * ¿Para qué sirve esta separación?
- * Los DAOs consultan la BD y crean objetos Usuario.
- * Los Servlets reciben esos objetos y los ponen en el request.
- * Los JSPs los leen con ${usuario.nombreCompleto}.
- * Cada capa hace una sola cosa.
- *
- * ¿QUÉ CONTIENE ESTE MODELO?
- * ---------------------------
- * Usuario tiene DOS usos en el proyecto:
- *
- * 1. Usuario autenticado en sesión (cargado en LoginServlet):
- *    Solo se necesitan: id, correo, estado, idRol, nombreRol, nombreCompleto.
- *    Son los campos mínimos para verificar permisos y mostrar el nombre
- *    en el sidebar sin hacer consultas adicionales en cada petición.
- *
- * 2. Usuario listado/editado (cargado en EmpleadoDAO, EditarEmpleadoDAO, PerfilDAO):
- *    Se agregan: telefono, genero.
- *    Son los campos extra que se muestran en el formulario de edición
- *    y en la pantalla de perfil.
- *
- * Unificar ambos usos en una sola clase evita tener UsuarioSesion y
- * UsuarioDetalle por separado. Los campos extras simplemente quedan
- * null cuando no se necesitan.
- *
- * ¿POR QUÉ LOS GETTERS DE telefono Y genero RETORNAN "" EN VEZ DE null?
- * -----------------------------------------------------------------------
- * Cuando el objeto Usuario viene de LoginServlet (solo datos básicos),
- * telefono y genero no se cargan → quedan null.
- * Si el JSP hiciera ${usuario.telefono} y el valor fuera null,
- * algunos motores de templates podrían mostrar "null" como texto.
- * Retornar "" garantiza que el campo aparezca vacío, no como texto "null".
  */
 public class Usuario {
 

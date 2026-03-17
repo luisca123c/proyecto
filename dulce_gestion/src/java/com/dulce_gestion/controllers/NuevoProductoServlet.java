@@ -31,57 +31,6 @@ import java.util.List;
  * MÉTODOS: GET, POST
  * ============================================================
  *
- * ¿QUÉ HACE?
- * ----------
- * Maneja la creación de nuevos productos con imagen opcional.
- *   GET  → muestra el formulario vacío con los <select> de categoría y unidad cargados
- *   POST → valida los datos, inserta el producto en BD y guarda la imagen si se subió
- *
- * ¿QUIÉN PUEDE ACCEDER?
- * ----------------------
- * Solo SuperAdministrador y Administrador.
- * Los Empleados son redirigidos a /productos (solo lectura).
- *
- * ¿QUÉ ES @MultipartConfig?
- * -------------------------
- * Normalmente los formularios HTML envían datos codificados como:
- *   application/x-www-form-urlencoded
- * y se leen con request.getParameter("campo").
- *
- * Cuando un formulario incluye un <input type="file">, debe usar:
- *   enctype="multipart/form-data"
- * Este formato no puede leerse con getParameter().
- *
- * @MultipartConfig activa el soporte de multipart en este servlet,
- * permitiendo usar request.getPart("imagen") para acceder al archivo.
- * maxFileSize = 5MB limita el tamaño máximo aceptado.
- *
- * NOTA IMPORTANTE: Como web.xml tiene metadata-complete="true",
- * la anotación @MultipartConfig es ignorada por Tomcat.
- * Para que funcione, el equivalente <multipart-config> también debe
- * estar declarado en web.xml para este servlet.
- *
- * ¿POR QUÉ SE NECESITA EL ID DEL PRODUCTO ANTES DE GUARDAR LA IMAGEN?
- * ---------------------------------------------------------------------
- * El archivo de imagen se nombra "producto_{ID}.jpg".
- * Ese ID solo se conoce DESPUÉS de insertar el producto en la BD
- * (MySQL lo genera con AUTO_INCREMENT).
- *
- * Por eso el orden es:
- *   1. Insertar producto → CrearProductoDAO retorna el ID generado
- *   2. Usar ese ID para nombrar y guardar el archivo de imagen
- *   3. Registrar el path en la tabla imagenes_producto
- *
- * ¿POR QUÉ SE GUARDA LA IMAGEN EN DOS CARPETAS?
- * -----------------------------------------------
- * Tomcat sirve los archivos desde build/web/ (la carpeta compilada).
- * La carpeta fuente del proyecto es web/.
- * Si solo se guarda en build/web/, al hacer "Clean and Build" en
- * NetBeans esa carpeta se borra y la imagen desaparece.
- *
- * Solución: guardar en AMBAS carpetas.
- * build/web/ → visible ahora mismo en el navegador
- * web/        → sobrevive al próximo Clean and Build
  */
 @MultipartConfig(maxFileSize = 5 * 1024 * 1024) // Máximo 5 MB por archivo
 public class NuevoProductoServlet extends HttpServlet {
@@ -114,35 +63,6 @@ public class NuevoProductoServlet extends HttpServlet {
     /**
      * Valida los datos del formulario, crea el producto y guarda la imagen.
      *
-     * FLUJO PASO A PASO:
-     *
-     * Paso 1 — Verificar acceso (Admin o SuperAdmin).
-     *
-     * Paso 2 — Setear charset UTF-8:
-     *   Necesario para que los acentos y caracteres especiales en el
-     *   nombre y descripción del producto lleguen correctamente.
-     *
-     * Paso 3 — Leer los campos del formulario.
-     *   Los campos de texto se leen con getParameter().
-     *   La imagen se lee con getPart() — disponible gracias a @MultipartConfig.
-     *
-     * Paso 4 — Validar que los campos obligatorios no estén vacíos.
-     *
-     * Paso 5 — Parsear tipos numéricos (stock, precio, categoría, unidad).
-     *   Integer.parseInt() y new BigDecimal() pueden lanzar NumberFormatException.
-     *
-     * Paso 6 — Validar que stock y precio no sean negativos.
-     *
-     * Paso 7 — Insertar el producto en la BD.
-     *   CrearProductoDAO.crear() retorna el ID generado por AUTO_INCREMENT.
-     *
-     * Paso 8 — Guardar la imagen si el usuario subió un archivo.
-     *   part.getSize() > 0 verifica que el archivo no está vacío.
-     *
-     * Paso 9 — Redirigir a /productos?exito=creado.
-     *
-     * @param request  contiene los campos del form y el archivo subido
-     * @param response para redirigir en éxito o reenviar al form en error
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -272,20 +192,6 @@ public class NuevoProductoServlet extends HttpServlet {
     /**
      * Guarda el archivo de imagen en el disco y registra el path en la BD.
      *
-     * FLUJO INTERNO:
-     * 1. Extraer la extensión del nombre original del archivo subido.
-     *    Ej: "foto.JPG" → ".jpg"
-     * 2. Construir el nombre definitivo: "producto_{ID}.{ext}"
-     *    Ej: "producto_7.jpg"
-     *    El ID garantiza unicidad: no puede haber dos con el mismo nombre.
-     * 3. Guardar en build/web/assets/images/productos/ → activo ahora en Tomcat.
-     * 4. Copiar también a web/assets/images/productos/ → persiste tras Clean&Build.
-     * 5. Registrar en la tabla imagenes_producto: path y alt (nombre del producto).
-     *
-     * @param request         para acceder al ServletContext (ruta real del servidor)
-     * @param part            el archivo subido vía multipart/form-data
-     * @param idProducto      ID del producto (usado en el nombre del archivo)
-     * @param nombreProducto  nombre del producto (usado como texto alt de la imagen)
      */
     private void guardarImagen(HttpServletRequest request, Part part,
                                 int idProducto, String nombreProducto)

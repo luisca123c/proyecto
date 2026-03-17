@@ -76,14 +76,18 @@ public class ComprasServlet extends HttpServlet {
 
             if ("editar".equals(accion)) {
                 int idCompra = Integer.parseInt(request.getParameter("idCompra"));
+                // Cambio de emprendimiento: solo permitido si el registro fue creado por SuperAdmin.
                 int idNuevoUsuarioCompra = 0;
                 if ("SuperAdministrador".equals(usuario.getNombreRol())) {
-                    String empEditR = request.getParameter("idEmpresaRegistro");
-                    if (empEditR != null && !empEditR.isBlank()) {
-                        try {
-                            int empEditId = Integer.parseInt(empEditR);
-                            if (empEditId > 0) idNuevoUsuarioCompra = new UsuarioDAO().obtenerAdminDeEmprendimiento(empEditId);
-                        } catch (NumberFormatException ignored) {}
+                    com.dulce_gestion.dao.ComprasDAO.FilaCompra compraOriginal = dao.obtenerPorId(idCompra);
+                    if (compraOriginal != null && compraOriginal.registradoPorSuperAdmin) {
+                        String empEditR = request.getParameter("idEmpresaRegistro");
+                        if (empEditR != null && !empEditR.isBlank()) {
+                            try {
+                                int empEditId = Integer.parseInt(empEditR);
+                                if (empEditId > 0) idNuevoUsuarioCompra = new UsuarioDAO().obtenerAdminDeEmprendimiento(empEditId);
+                            } catch (NumberFormatException ignored) {}
+                        }
                     }
                 }
                 dao.editar(idCompra, descripcion.trim(), total, idMetodoPago, fechaHora, idNuevoUsuarioCompra);

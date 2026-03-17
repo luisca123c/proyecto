@@ -17,33 +17,6 @@ import java.util.List;
  * Usado por:          VentasServlet
  * ============================================================
  *
- * ¿QUÉ HACE?
- * ----------
- * Maneja todo el ciclo de vida del carrito de ventas:
- *   - Obtener o crear el carrito activo del usuario
- *   - Listar ítems, calcular el total
- *   - Agregar, actualizar cantidad y eliminar ítems
- *   - Vaciar el carrito
- *   - Confirmar la venta (la operación más importante: transacción de 4 pasos)
- *   - Listar el catálogo de productos disponibles y los métodos de pago
- *
- * ¿POR QUÉ UN SOLO DAO PARA TANTAS OPERACIONES?
- * -----------------------------------------------
- * Todas estas operaciones trabajan sobre el mismo conjunto de tablas
- * (carrito + detalle_carrito + productos + ventas) y comparten contexto:
- * siempre se opera sobre "el carrito activo del usuario actual".
- * Dividirlo en varios DAOs aumentaría la complejidad sin beneficio real.
- *
- * ¿QUÉ ES EL ESTADO DEL CARRITO?
- * --------------------------------
- * La tabla estado_carrito define los estados posibles:
- *   "Activo"    → el carrito está en uso, el usuario puede agregar/quitar ítems
- *   "Inactivo"  → el carrito fue usado en una venta confirmada
- *   "Cancelado" → el carrito fue cancelado sin completar venta
- *
- * Cada usuario tiene siempre un carrito Activo. Al confirmar la venta,
- * el carrito pasa a Inactivo (o se vacía) y la próxima acción del usuario
- * creará un carrito Activo nuevo.
  */
 public class CarritoDAO {
 
@@ -54,25 +27,6 @@ public class CarritoDAO {
     /**
      * Retorna el ID del carrito Activo del usuario, o crea uno nuevo si no existe.
      *
-     * ¿POR QUÉ "OBTENER O CREAR"?
-     * ----------------------------
-     * En la primera visita de un usuario a /ventas, no tiene carrito.
-     * Este método garantiza que siempre hay un carrito disponible.
-     *
-     * FLUJO:
-     * 1. SELECT: buscar carrito con estado 'Activo' para este usuario.
-     * 2. Si existe → retornar su ID.
-     * 3. Si no existe → INSERT nuevo carrito con estado 'Activo' → retornar ID generado.
-     *
-     * ¿POR QUÉ SE BUSCA EL ESTADO POR NOMBRE Y NO POR ID?
-     * -----------------------------------------------------
-     * (SELECT id FROM estado_carrito WHERE nombre = 'Activo')
-     * El ID del estado puede variar entre bases de datos (dev, prod).
-     * Buscarlo por nombre hace el código portable sin depender de IDs hardcodeados.
-     *
-     * @param idUsuario  ID del usuario dueño del carrito
-     * @return           ID del carrito activo (existente o recién creado)
-     * @throws SQLException si hay error al consultar o insertar en la BD
      */
     public int obtenerOCrearCarrito(int idUsuario) throws SQLException {
 
@@ -183,25 +137,6 @@ public class CarritoDAO {
     /**
      * Agrega un producto al carrito o incrementa su cantidad si ya está.
      *
-     * FLUJO:
-     * 1. Verificar que el producto existe y tiene stock suficiente.
-     * 2. Buscar si el producto ya está en el carrito.
-     *    → Si sí: verificar que (cantidad actual + cantidad nueva) ≤ stock
-     *             y hacer UPDATE de la cantidad.
-     *    → Si no: verificar que la cantidad nueva ≤ stock
-     *             y hacer INSERT nuevo ítem.
-     *
-     * ¿POR QUÉ SE VERIFICA EL STOCK ANTES DE AGREGAR?
-     * -------------------------------------------------
-     * Sin verificación, un usuario podría agregar 100 unidades de un
-     * producto con stock 5. La validación en el DAO es la última
-     * línea de defensa (el JSP también tiene validación en el cliente,
-     * pero esta puede eludirse con herramientas de desarrollador).
-     *
-     * @param idCarrito  ID del carrito activo
-     * @param idProducto ID del producto a agregar
-     * @param cantidad   cantidad a agregar (ya validada como >= 1 en el Servlet)
-     * @throws SQLException si no hay stock suficiente o el producto no existe
      */
     public void agregarProducto(int idCarrito, int idProducto, int cantidad) throws SQLException {
 
@@ -356,42 +291,6 @@ public class CarritoDAO {
      * Confirma la venta: registra en ventas, descuenta stock y vacía el carrito.
      * Todo dentro de una transacción para garantizar consistencia.
      *
-     * FLUJO EN TRANSACCIÓN:
-     *
-     * Pre-condición: el carrito no puede estar vacío.
-     *
-     * Paso 1 — Verificar stock de TODOS los ítems:
-     *   Se verifica todo antes de modificar nada. Si cualquier producto
-     *   no tiene stock suficiente, se lanza excepción y se hace ROLLBACK.
-     *   Sin este paso, podría descontarse stock de algunos productos y
-     *   fallar en otro, dejando la BD en estado inconsistente.
-     *
-     * Paso 2 — Descontar stock de cada producto:
-     *   stock_actual = stock_actual - cantidad_pedida
-     *   Se usa aritmética en SQL para evitar condiciones de carrera:
-     *   si dos vendedores venden el último ítem simultáneamente, la BD
-     *   aplica el descuento atómicamente.
-     *
-     * Paso 3 — Insertar registro en ventas:
-     *   fecha_venta = NOW() → timestamp exacto del servidor BD
-     *   id_carrito → referencia al carrito (para trazabilidad histórica)
-     *   total_venta → suma calculada en Java con BigDecimal (exactitud)
-     *
-     * Paso 4 — Vaciar el carrito:
-     *   DELETE en detalle_carrito. El carrito en sí se mantiene (id en carrito)
-     *   para la próxima venta del mismo usuario.
-     *
-     * ¿POR QUÉ EL CARRITO NO PASA A ESTADO "INACTIVO"?
-     * --------------------------------------------------
-     * Al vaciar el carrito y mantenerlo Activo, el usuario puede
-     * empezar a agregar ítems inmediatamente para la siguiente venta.
-     * No hay necesidad de crear un carrito nuevo.
-     *
-     * @param idCarrito    ID del carrito que se va a confirmar
-     * @param idUsuario    ID del usuario que realiza la venta (para trazabilidad)
-     * @param idMetodoPago FK a metodo_pago ("Efectivo" o "Nequi")
-     * @return             ID de la venta creada (para mostrar en el mensaje de éxito)
-     * @throws SQLException si el carrito está vacío, hay stock insuficiente o error de BD
      */
     public int confirmarVenta(int idCarrito, int idUsuario, int idMetodoPago) throws SQLException {
 
@@ -481,14 +380,6 @@ public class CarritoDAO {
      * Retorna los productos disponibles para agregar al carrito.
      * Solo incluye productos con stock_actual > 0.
      *
-     * ¿POR QUÉ FILTRAR POR stock > 0?
-     * ---------------------------------
-     * No tiene sentido mostrar en el catálogo de ventas productos
-     * que no se pueden vender. Filtrar en SQL evita traer filas
-     * innecesarias y que el JSP tenga que ocultar productos.
-     *
-     * @return  lista de productos disponibles ordenada por nombre
-     * @throws SQLException si hay error al consultar la BD
      */
     /**
      * Retorna los productos disponibles para el carrito del usuario,

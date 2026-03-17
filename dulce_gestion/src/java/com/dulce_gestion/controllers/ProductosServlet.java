@@ -24,49 +24,12 @@ import java.util.List;
  * MÉTODOS: GET
  * ============================================================
  *
- * ¿QUÉ HACE?
- * ----------
- * Carga la lista completa de productos desde la BD y la envía
- * al JSP lista.jsp para mostrarlos en la grilla de tarjetas.
- *
- * ¿QUIÉN PUEDE ACCEDER?
- * ----------------------
- * TODOS los roles autenticados (SuperAdmin, Admin y Empleado).
- * La diferencia está en lo que pueden HACER con los productos:
- *
- *   Admin / SuperAdmin → ven botones "Editar" y "Eliminar" por producto
- *   Empleado           → solo lectura, solo ve el catálogo sin botones de acción
- *
- * Esta diferencia visual la maneja el JSP, no este servlet.
- * El servlet solo pasa el rol como atributo para que el JSP decida.
- *
- * ¿POR QUÉ NO SE HACE EL CONTROL DE ACCESO POR ROL AQUÍ?
- * --------------------------------------------------------
- * El módulo de productos es de lectura pública dentro del sistema
- * (todos los empleados necesitan ver qué hay en inventario para vender).
- * Solo las acciones de modificar (crear, editar, eliminar) están restringidas
- * a Admin y SuperAdmin — y eso lo controlan NuevoProductoServlet,
- * EditarProductoServlet y EliminarProductoServlet respectivamente.
- *
- * ¿QUÉ HACE List.of() EN CASO DE ERROR?
- * ----------------------------------------
- * List.of() crea una lista vacía inmutable. Se usa como fallback cuando
- * la consulta falla, para que el JSP pueda iterar una lista vacía sin
- * lanzar NullPointerException (ya que el JSP no verifica null en el for).
  */
 public class ProductosServlet extends HttpServlet {
 
     /**
      * GET /productos → carga la lista de productos y hace forward al JSP.
      *
-     * FLUJO PASO A PASO:
-     * 1. Verificar que hay sesión activa.
-     * 2. Cargar todos los productos desde la BD (JOIN con imágenes).
-     * 3. Poner la lista y el rol en el request como atributos.
-     * 4. Forward al JSP lista.jsp.
-     *
-     * @param request  contiene la sesión activa y posibles params ?exito= / ?error=
-     * @param response para redirigir si no hay sesión, o para el forward al JSP
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)

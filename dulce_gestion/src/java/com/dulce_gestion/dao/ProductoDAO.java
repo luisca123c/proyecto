@@ -19,23 +19,6 @@ import java.util.List;
  *                     NuevoProductoServlet, CarritoDAO
  * ============================================================
  *
- * ¿QUÉ HACE?
- * ----------
- * Consulta productos de la BD. Es el DAO de solo lectura para productos:
- * listar todos, buscar uno por ID, y cargar las opciones de los <select>
- * de categorías y unidades de medida.
- *
- * Las operaciones de escritura (crear, editar, eliminar) están en sus
- * propios DAOs especializados (CrearProductoDAO, EditarProductoDAO, etc.)
- * para mantener cada clase con una única responsabilidad.
- *
- * ¿POR QUÉ LEFT JOIN CON imagenes_producto?
- * ------------------------------------------
- * Un producto puede existir sin imagen (la imagen es opcional).
- * Con JOIN normal (INNER JOIN), los productos sin imagen no aparecerían
- * en la lista. Con LEFT JOIN, aparecen todos los productos y las columnas
- * de imagen quedan null para los que no tienen.
- * El JSP verifica if (prod.getPathImagen() != null) antes de mostrar la imagen.
  */
 public class ProductoDAO {
 
@@ -175,16 +158,6 @@ public class ProductoDAO {
     /**
      * Convierte una fila del ResultSet en un objeto Producto.
      *
-     * ¿POR QUÉ ESTE MÉTODO PRIVADO?
-     * --------------------------------
-     * listarTodos() y buscarPorId() hacen el mismo SELECT y necesitan
-     * mapear las mismas columnas. Centralizar evita duplicar las ~14 líneas
-     * de setters en cada método. Si se agrega una columna nueva al modelo
-     * Producto, solo se cambia aquí.
-     *
-     * @param rs  ResultSet posicionado en la fila a mapear
-     * @return    objeto Producto con todos los campos del ResultSet
-     * @throws SQLException si algún nombre de columna no existe
      */
     private List<Producto> ejecutarLista(String sql) throws SQLException {
         List<Producto> lista = new ArrayList<>();

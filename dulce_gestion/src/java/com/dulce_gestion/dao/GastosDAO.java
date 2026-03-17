@@ -15,32 +15,6 @@ import java.util.List;
  * Usado por:          GastosServlet
  * ============================================================
  *
- * ¿QUÉ HACE?
- * ----------
- * Gestiona el CRUD completo de gastos. Lista, busca uno por ID,
- * registra nuevo y edita existente, todo usando la estructura de 3 tablas
- * que modela un gasto en esta BD.
- *
- * ¿POR QUÉ UN GASTO SE ALMACENA EN 3 TABLAS?
- * --------------------------------------------
- * La BD normaliza los gastos para soportar futuras extensiones
- * (ej: un gasto con múltiples ítems en detalle_compra):
- *
- *   compras         → encabezado: fecha y total de la compra
- *   detalle_compra  → detalle: descripción, quién lo registró (id_usuario)
- *   gastos          → registro financiero: método de pago, fecha, total
- *
- * Para operaciones simples (un gasto = un registro), las 3 tablas
- * siempre se crean o editan juntas en transacción.
- *
- * ¿POR QUÉ FilaGasto TIENE fechaRaw ADEMÁS DE fecha?
- * ----------------------------------------------------
- * El JSP de gastos muestra la fecha en formato legible ("15/03/2025 14:30")
- * y también la necesita en formato yyyy-MM-dd para el input type="date"
- * del modal de edición.
- * El formateo en SQL con DATE_FORMAT evita hacerlo en Java:
- *   fecha    → DATE_FORMAT(g.fecha_gasto, '%d/%m/%Y %H:%i') → mostrar
- *   fechaRaw → DATE_FORMAT(g.fecha_gasto, '%Y-%m-%d')       → input date
  */
 public class GastosDAO {
 
@@ -63,7 +37,8 @@ public class GastosDAO {
         public String     metodoPago;       // Nombre del método para mostrar en la tabla
         public String     registradoPor;    // Nombre completo del usuario que lo registró
         public BigDecimal total;            // Monto del gasto
-        public String     nombreEmprendimiento; // Para agrupar en SuperAdmin
+        public String     nombreEmprendimiento;   // nombre del emprendimiento
+        public boolean    registradoPorSuperAdmin; // true si id_usuario en detalle_compra es SuperAdmin
     }
 
     // =========================================================
@@ -89,13 +64,15 @@ public class GastosDAO {
             "DATE_FORMAT(g.fecha_gasto,'%Y-%m-%d') AS fecha_raw, " +
             "dc.descripcion, g.id_metodo_pago, mp.nombre AS metodo_pago, " +
             "pu.nombre_completo AS registrado_por, g.total_gasto, " +
-            "e.nombre AS nombre_emprendimiento " +
+            "e.nombre AS nombre_emprendimiento, " +
+            "r.nombre AS rol_registrador " +
             "FROM gastos g " +
             "JOIN detalle_compra dc ON dc.id=g.id_detalle_compra " +
             "JOIN metodo_pago mp ON mp.id=g.id_metodo_pago " +
             "JOIN usuarios u ON u.id=dc.id_usuario " +
             "JOIN perfil_usuario pu ON pu.id_usuario=u.id " +
             "JOIN emprendimientos e ON e.id=u.id_emprendimiento " +
+            "JOIN roles r ON r.id=u.id_rol " +
             (filtrar ? "WHERE u.id_emprendimiento=? " : "") +
             "ORDER BY g.fecha_gasto DESC";
 
@@ -131,12 +108,14 @@ public class GastosDAO {
             "DATE_FORMAT(g.fecha_gasto,'%d/%m/%Y %H:%i') AS fecha, " +
             "DATE_FORMAT(g.fecha_gasto,'%Y-%m-%d') AS fecha_raw, " +
             "dc.descripcion, g.id_metodo_pago, mp.nombre AS metodo_pago, " +
-            "pu.nombre_completo AS registrado_por, g.total_gasto " +
+            "pu.nombre_completo AS registrado_por, g.total_gasto, " +
+            "r.nombre AS rol_registrador " +
             "FROM gastos g " +
             "JOIN detalle_compra dc ON dc.id=g.id_detalle_compra " +
             "JOIN metodo_pago mp ON mp.id=g.id_metodo_pago " +
             "JOIN usuarios u ON u.id=dc.id_usuario " +
             "JOIN perfil_usuario pu ON pu.id_usuario=u.id " +
+            "JOIN roles r ON r.id=u.id_rol " +
             "WHERE g.id=?";
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -267,20 +246,6 @@ public class GastosDAO {
      * Paso 3 — UPDATE gastos:
      *   Actualiza el método de pago, la fecha y el total del registro financiero.
      *
-     * ¿POR QUÉ SE PASAN idDetalleCompra e idCompra COMO PARÁMETROS?
-     * ---------------------------------------------------------------
-     * GastosServlet los recibe del formulario (campos ocultos que el JSP
-     * incluye al cargar el modal de edición). Se pasan explícitamente para
-     * que este método no tenga que hacer una consulta extra para obtenerlos.
-     *
-     * @param idGasto         gastos.id  → identifica el registro financiero a editar
-     * @param idDetalleCompra detalle_compra.id  → para actualizar la descripción
-     * @param idCompra        compras.id  → para actualizar fecha y total de compras
-     * @param descripcion     nueva descripción
-     * @param total           nuevo monto
-     * @param idMetodoPago    nuevo método de pago (FK)
-     * @param fechaGasto      nueva fecha en formato "yyyy-MM-dd HH:mm:ss"
-     * @throws SQLException   si hay error de BD
      */
     public void editar(int idGasto, int idDetalleCompra, int idCompra,
                        String descripcion, BigDecimal total,
@@ -357,6 +322,7 @@ public class GastosDAO {
         f.registradoPor        = rs.getString("registrado_por");
         f.total                = rs.getBigDecimal("total_gasto");
         try { f.nombreEmprendimiento = rs.getString("nombre_emprendimiento"); } catch (Exception ignored) {}
+        try { f.registradoPorSuperAdmin = "SuperAdministrador".equals(rs.getString("rol_registrador")); } catch (Exception ignored) {}
         return f;
     }
 }

@@ -24,45 +24,6 @@ import java.sql.SQLException;
  * MÉTODOS: GET, POST
  * ============================================================
  *
- * ¿QUÉ HACE?
- * ----------
- * Maneja la creación de nuevos usuarios en el sistema.
- *   GET  → muestra el formulario vacío para crear un empleado/administrador
- *   POST → valida los datos del formulario y crea el usuario en la BD
- *
- * ¿QUIÉN PUEDE ACCEDER?
- * ----------------------
- * Pueden acceder a la ruta:  SuperAdministrador Y Administrador.
- *
- * Sin embargo, hay una restricción adicional en el POST:
- *   - Solo SuperAdmin puede crear Administradores.
- *   - Admin solo puede crear Empleados.
- *
- * Esta doble verificación es intencional: no se bloquea el acceso
- * de los Admins al formulario, pero si intentan crear un Admin,
- * el POST lo rechaza con un mensaje de error claro.
- *
- * ¿POR QUÉ SE PASA "esSuperAdmin" AL JSP?
- * -----------------------------------------
- * El formulario de nuevo empleado tiene un campo <select> para el Rol.
- * Si el solicitante es Administrador, ese campo debe mostrar solo "Empleado".
- * Si es SuperAdministrador, puede elegir entre "Administrador" y "Empleado".
- *
- * El JSP usa el atributo esSuperAdmin para renderizar las opciones correctas:
- *   <% if ((Boolean) request.getAttribute("esSuperAdmin")) { %>
- *     <option value="Administrador">Administrador</option>
- *   <% } %>
- *   <option value="Empleado">Empleado</option>
- *
- * ¿POR QUÉ SE VERIFICA CORREO Y TELÉFONO ANTES DE CREAR?
- * --------------------------------------------------------
- * La BD tiene restricciones UNIQUE en correos y telefonos.
- * Si intentáramos insertar un duplicado sin verificar antes,
- * la BD lanzaría una excepción de clave duplicada (SQLException).
- *
- * Verificar con correoExiste() y telefonoExiste() ANTES del INSERT
- * permite dar mensajes de error específicos y claros al usuario,
- * en lugar de un genérico "Error al guardar".
  */
 @WebServlet("/empleados/nuevo")
 public class NuevoEmpleadoServlet extends HttpServlet {
@@ -101,31 +62,6 @@ public class NuevoEmpleadoServlet extends HttpServlet {
     /**
      * Valida los datos del formulario y crea el nuevo usuario en la BD.
      *
-     * FLUJO PASO A PASO:
-     *
-     * Paso 1 — Verificar acceso (Admin o SuperAdmin).
-     *
-     * Paso 2 — Leer todos los campos del formulario:
-     *   nombreCompleto, telefono, genero, correo, contrasena, estado, rol.
-     *
-     * Paso 3 — Validar que ningún campo esté vacío.
-     *   Si falta alguno → reenviar al formulario con error.
-     *
-     * Paso 4 — Validar longitud mínima de la contraseña (6 caracteres).
-     *
-     * Paso 5 — Verificar permisos de rol:
-     *   Si el solicitante es Admin y quiere crear un Admin → rechazar.
-     *
-     * Paso 6 — Verificar unicidad de correo y teléfono en la BD.
-     *   Si ya existen → reenviar con error específico.
-     *
-     * Paso 7 — Convertir texto a IDs:
-     *   dao.obtenerIdRol("Empleado")  → 3 (o el ID que corresponda)
-     *   dao.obtenerIdGenero("Masculino") → 1 (o el ID que corresponda)
-     *
-     * Paso 8 — Llamar a dao.crear() que inserta en 4 tablas en una transacción.
-     *
-     * Paso 9 — Redirigir a /empleados?exito=creado.
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)

@@ -15,33 +15,6 @@ import java.sql.SQLException;
  * Usado por:          NuevoEmpleadoServlet
  * ============================================================
  *
- * ¿QUÉ HACE?
- * ----------
- * Crea un usuario nuevo en el sistema insertando en 4 tablas
- * dentro de una sola transacción. También verifica unicidad de
- * correo y teléfono antes de insertar.
- *
- * ¿POR QUÉ 4 TABLAS EN UNA TRANSACCIÓN?
- * ---------------------------------------
- * Un "usuario" en esta BD no es solo una fila en `usuarios`:
- *
- *   correos         → almacena el correo (normalizado a minúsculas)
- *   telefonos       → almacena el teléfono
- *   usuarios        → id_correo (FK), estado, contrasena (hash), id_rol (FK)
- *   perfil_usuario  → nombre_completo, id_usuario (FK), id_telefono (FK), id_genero (FK)
- *
- * Si se insertara en correos pero fallara en usuarios, quedaría
- * un correo huérfano en la BD. La transacción garantiza "todo o nada":
- * si cualquier INSERT falla, se hace ROLLBACK de todos los anteriores.
- *
- * ¿POR QUÉ SE VERIFICA UNICIDAD AQUÍ Y NO SOLO EN LA BD?
- * --------------------------------------------------------
- * La BD tiene restricciones UNIQUE en correos y telefonos.
- * Si se intenta insertar un duplicado sin verificar antes,
- * la BD lanza una excepción genérica de clave duplicada.
- * Verificando aquí con correoExiste() y telefonoExiste() se pueden
- * dar mensajes de error específicos ("El correo ya está registrado")
- * en lugar de un genérico "Error al guardar".
  */
 public class CrearEmpleadoDAO {
 
@@ -95,29 +68,6 @@ public class CrearEmpleadoDAO {
      * 4. perfil_usuario  → usa idUsuario + idTelefono
      * 5. rol_permiso     → asigna permisos por defecto al rol
      *
-     * ¿POR QUÉ STATEMENT.RETURN_GENERATED_KEYS?
-     * ------------------------------------------
-     * Las tablas usan AUTO_INCREMENT para el campo id. Después de cada
-     * INSERT, se necesita ese ID generado para usarlo como FK en la
-     * siguiente inserción. RETURN_GENERATED_KEYS le indica al driver
-     * JDBC que guarde ese valor para recuperarlo con getGeneratedKeys().
-     *
-     * ¿QUÉ HACE EL PASO 5 (rol_permiso)?
-     * -------------------------------------
-     * Asigna automáticamente al nuevo usuario los permisos definidos
-     * para su rol. La subconsulta SELECT ... WHERE NOT IN evita insertar
-     * duplicados si algunos permisos ya estaban asignados al rol.
-     * Esto garantiza que todos los usuarios del mismo rol siempre
-     * tienen los mismos permisos desde el momento de su creación.
-     *
-     * @param nombreCompleto  nombre completo del nuevo usuario
-     * @param telefono        número de teléfono
-     * @param idGenero        ID del género (FK a tabla generos)
-     * @param correo          correo electrónico
-     * @param contrasena      contraseña en texto plano (se hashea internamente)
-     * @param estado          "Activo" o "Inactivo"
-     * @param idRol           ID del rol (FK a tabla roles)
-     * @throws SQLException   si hay error de BD o violación de constraint
      */
     public void crear(String nombreCompleto, String telefono, int idGenero,
                       String correo, String contrasena, String estado,

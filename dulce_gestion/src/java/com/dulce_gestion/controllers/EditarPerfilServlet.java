@@ -16,64 +16,6 @@ import jakarta.servlet.http.*;
  * MÉTODOS: POST (solo POST — el formulario viene desde /perfil)
  * ============================================================
  *
- * ¿QUÉ HACE?
- * ----------
- * Procesa los cambios del perfil propio del usuario autenticado.
- * Hay DOS tipos de edición, distinguidos por el campo "tipo":
- *
- *   tipo = "datos"      → actualizar nombre, teléfono, género, correo
- *   tipo = "contrasena" → cambiar la contraseña (requiere la actual)
- *
- * ¿POR QUÉ DOS TIPOS EN UN SOLO SERVLET?
- * ----------------------------------------
- * La pantalla de perfil (/perfil) tiene DOS formularios separados:
- *   Formulario 1 → datos personales
- *   Formulario 2 → cambiar contraseña
- *
- * Ambos hacen POST a /perfil/editar pero con un campo oculto diferente:
- *   <input type="hidden" name="tipo" value="datos">
- *   <input type="hidden" name="tipo" value="contrasena">
- *
- * doPost() lee el "tipo" y delega a editarDatos() o cambiarContrasena().
- *
- * ¿QUÉ PUEDEN EDITAR LOS EMPLEADOS?
- * -----------------------------------
- * Los Empleados tienen restricción en qué datos pueden cambiar:
- *   Pueden cambiar:     teléfono, correo
- *   NO pueden cambiar:  nombre completo, género
- *
- * Esta lógica la aplica editarDatos():
- *   if "Empleado" → rechazar el cambio de datos con mensaje de error
- *
- * Admin y SuperAdmin pueden cambiar todos sus datos personales.
- *
- * ¿POR QUÉ SE ACTUALIZA LA SESIÓN DESPUÉS DE EDITAR DATOS?
- * ----------------------------------------------------------
- * Al cambiar el nombre o el correo, el objeto "usuario" en sesión
- * quedaría desactualizado. El sidebar y otras partes de la UI
- * muestran el nombre del usuario desde la sesión.
- *
- * Solución: después de actualizar la BD exitosamente, se recarga
- * el perfil completo y se sobreescribe el objeto de sesión:
- *   session.setAttribute("usuario", perfilActualizado)
- *
- * Así, el sidebar muestra el nombre nuevo inmediatamente.
- *
- * ¿CÓMO FUNCIONA cambiarContrasena()?
- * -------------------------------------
- * No se puede cambiar la contraseña sin saber la actual.
- * El flujo es:
- *   1. Verificar que la contraseña actual ingresada sea la correcta (BD).
- *   2. Verificar que las dos contraseñas nuevas coincidan.
- *   3. Verificar longitud mínima (8 caracteres).
- *   4. Si todo OK → hashear la nueva y hacer UPDATE.
- *
- * ¿POR QUÉ TANTO CÓDIGO REPETIDO?
- * ---------------------------------
- * Cada bloque catch necesita recargar el perfil y los géneros para
- * reenviar el JSP con el error. Esto genera código similar en varios lugares.
- * En un proyecto más grande se refactorizaría en un helper, pero aquí
- * se deja explícito para que sea más fácil de seguir en la exposición.
  */
 @WebServlet("/perfil/editar")
 public class EditarPerfilServlet extends HttpServlet {
@@ -124,16 +66,6 @@ public class EditarPerfilServlet extends HttpServlet {
      * RESTRICCIÓN: los Empleados SOLO pueden cambiar teléfono y correo.
      * Si un Empleado intenta cambiar nombre o género, se rechaza.
      *
-     * FLUJO:
-     * 1. Leer campos del formulario.
-     * 2. Validar que no estén vacíos.
-     * 3. Verificar restricción de rol para Empleados.
-     * 4. Llamar a PerfilDAO.actualizarPerfil().
-     * 5. Si éxito → actualizar el objeto de sesión + redirect con mensaje.
-     *
-     * @param request       request con los campos del formulario de datos
-     * @param response      para redirigir o reenviar al JSP
-     * @param usuarioSesion el usuario en sesión (quien edita su propio perfil)
      */
     private void editarDatos(HttpServletRequest request, HttpServletResponse response,
                               Usuario usuarioSesion) throws ServletException, IOException {
@@ -204,18 +136,6 @@ public class EditarPerfilServlet extends HttpServlet {
      *
      * Disponible para TODOS los roles (Admin, SuperAdmin y Empleado).
      *
-     * FLUJO:
-     * 1. Leer los tres campos: contraseña actual, nueva, confirmación.
-     * 2. Validar que ninguno esté vacío.
-     * 3. Validar que la nueva y la confirmación coincidan.
-     * 4. Validar longitud mínima de 8 caracteres.
-     * 5. Llamar a PerfilDAO.cambiarContrasena() que verifica la actual en BD.
-     *    Retorna false si la contraseña actual era incorrecta.
-     * 6. Redirigir con mensaje de éxito.
-     *
-     * @param request       request con los campos del formulario de contraseña
-     * @param response      para redirigir o reenviar al JSP
-     * @param usuarioSesion el usuario en sesión (quien cambia su propia contraseña)
      */
     private void cambiarContrasena(HttpServletRequest request, HttpServletResponse response,
                                     Usuario usuarioSesion) throws ServletException, IOException {

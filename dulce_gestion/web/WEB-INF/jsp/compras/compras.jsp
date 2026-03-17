@@ -292,7 +292,8 @@
         <input type="hidden" name="accion" value="editar">
         <input type='hidden' name='idCompra' id='e_idCompra' value='<%= ce != null ? ce.id : "" %>'>
         <input type="hidden" name="idEmpresaRegistro" id="eC_idEmpresa" value="">
-        <% if (esSuperAdmin && emprendimientos != null && !emprendimientos.isEmpty()) { %>
+        <% if (esSuperAdmin && emprendimientos != null && !emprendimientos.isEmpty()
+               && ce != null && ce.registradoPorSuperAdmin) { %>
         <div class="campo">
           <label>Emprendimiento *</label>
           <select id="eC_emprendimiento"

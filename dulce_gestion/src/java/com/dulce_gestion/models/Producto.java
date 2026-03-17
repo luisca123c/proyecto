@@ -10,37 +10,6 @@ import java.math.BigDecimal;
  * Usado por: ProductoDAO, CarritoDAO, y los Servlets de productos y ventas
  * ============================================================
  *
- * ¿QUÉ REPRESENTA?
- * -----------------
- * Un producto del catálogo del negocio. Incluye tanto los campos propios
- * de la tabla productos como los campos denormalizados que vienen del JOIN:
- * el nombre de la categoría (en vez de solo su ID) y el nombre de la unidad.
- *
- * ¿POR QUÉ SE INCLUYEN nombreCategoria Y nombreUnidad SIENDO DE OTRAS TABLAS?
- * ----------------------------------------------------------------------------
- * ProductoDAO hace un JOIN con categorias y unidad_medida para traer el
- * nombre legible junto al ID. Si el modelo solo guardara idCategoria,
- * el JSP no podría mostrar "Lácteos" — solo vería "2".
- * Al incluir ambos en el modelo, el JSP puede mostrar el nombre
- * sin consultas adicionales:
- *   ${producto.nombreCategoria}  → "Lácteos"
- *   ${producto.idCategoria}      → 2  (para comparar en el <select> del form)
- *
- * ¿POR QUÉ pathImagen PUEDE SER null?
- * -------------------------------------
- * La imagen es opcional. ProductoDAO usa LEFT JOIN con imagenes_producto,
- * lo que significa que los productos sin imagen devuelven null en path_imagen.
- * El JSP verifica antes de mostrar el <img>:
- *   <c:if test="${not empty producto.pathImagen}">
- *     <img src="${ctx}/${producto.pathImagen}">
- *   </c:if>
- *
- * ¿POR QUÉ BigDecimal PARA precioUnitario?
- * -----------------------------------------
- * float y double no representan decimales exactamente. 2.10 en float
- * puede almacenarse como 2.09999999... lo que introduce errores en
- * cálculos financieros. BigDecimal representa el valor exacto tal como
- * lo devuelve MySQL (DECIMAL en la BD), sin pérdida de precisión.
  */
 public class Producto {
 

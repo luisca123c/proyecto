@@ -24,50 +24,6 @@ import java.sql.SQLException;
  * MÉTODOS: GET
  * ============================================================
  *
- * ¿QUÉ HACE?
- * ----------
- * Calcula y muestra el resumen financiero del negocio para un período
- * de tiempo. Todos los roles autenticados pueden acceder, pero ven
- * información diferente según su rol.
- *
- * ¿QUÉ PERÍODOS SOPORTA?
- * -----------------------
- * El parámetro ?periodo= controla el rango de fechas:
- *
- *   GET /ganancias               → semana actual (valor por defecto)
- *   GET /ganancias?periodo=semana → lunes a domingo de la semana actual
- *   GET /ganancias?periodo=mes    → mes actual completo
- *   GET /ganancias?periodo=2025-01 → enero 2025 (formato YYYY-MM)
- *
- * ¿QUIÉN VE QUÉ?
- * ---------------
- * El flag esAdminOSuper controla la visibilidad de la información:
- *
- *   Admin / SuperAdmin:
- *     - Ve TODAS las ventas del período (de todos los empleados)
- *     - Ve todos los gastos del período
- *     - Ganancia = total ventas − total gastos
- *
- *   Empleado:
- *     - Ve SOLO sus propias ventas del período
- *     - NO ve los gastos (información financiera restringida)
- *     - La ganancia mostrada es solo de sus ventas (sin restar gastos)
- *
- * ¿QUÉ ES GananciasDAO.ResumenPeriodo?
- * -------------------------------------
- * Es una clase interna de GananciasDAO que agrupa todos los datos
- * calculados: totalVentas, totalGastos, ganancia, las listas de filas,
- * y las fechas de inicio/fin del período.
- *
- * El JSP recibe este objeto y accede directamente a sus campos:
- *   resumen.totalVentas, resumen.ventas, resumen.ganancia, etc.
- *
- * ¿POR QUÉ SE PASAN TAMBIÉN "meses" Y "periodo" AL JSP?
- * --------------------------------------------------------
- * "meses" → la lista de los últimos 12 meses para el <select> del filtro.
- *            El usuario puede seleccionar un mes histórico específico.
- * "periodo" → el período actual seleccionado, para que el <select>
- *              muestre la opción correcta como seleccionada.
  */
 @WebServlet("/ganancias")
 public class GananciasServlet extends HttpServlet {
@@ -78,25 +34,6 @@ public class GananciasServlet extends HttpServlet {
     /**
      * GET /ganancias → calcula el resumen financiero y hace forward al JSP.
      *
-     * FLUJO PASO A PASO:
-     *
-     * Paso 1 — Verificar sesión activa.
-     *
-     * Paso 2 — Determinar el rol para saber qué datos mostrar.
-     *   esAdminOSuper = true  → ve todo (ventas + gastos)
-     *   esAdminOSuper = false → solo sus propias ventas
-     *
-     * Paso 3 — Leer el parámetro ?periodo= de la URL.
-     *   Si falta o está vacío → usar "semana" como valor por defecto.
-     *
-     * Paso 4 — Llamar a GananciasDAO.obtenerResumen() y listarMesesDisponibles().
-     *   El DAO calcula las fechas de inicio/fin, consulta ventas y gastos,
-     *   y retorna el ResumenPeriodo con todos los datos calculados.
-     *
-     * Paso 5 — Poner los datos en el request y hacer forward al JSP.
-     *
-     * @param request  contiene la sesión y el parámetro ?periodo=
-     * @param response para redirigir si no hay sesión, o forward al JSP
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)

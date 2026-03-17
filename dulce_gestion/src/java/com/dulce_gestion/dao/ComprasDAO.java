@@ -25,6 +25,7 @@ public class ComprasDAO {
         public String     registradoPor;
         public BigDecimal total;
         public String     nombreEmprendimiento;
+        public boolean    registradoPorSuperAdmin; // true si registrado por SuperAdministrador
     }
 
     // ── Listar todas las compras ───────────────────────────────────────────
@@ -35,12 +36,13 @@ public class ComprasDAO {
             "DATE_FORMAT(ci.fecha_compra,'%Y-%m-%d') AS fecha_raw, " +
             "ci.descripcion, mp.nombre AS metodo_pago, ci.id_metodo_pago, " +
             "p.nombre_completo AS registrado_por, ci.total, " +
-            "e.nombre AS nombre_emprendimiento " +
+            "e.nombre AS nombre_emprendimiento, r.nombre AS rol_registrador " +
             "FROM compras_insumos ci " +
             "JOIN metodo_pago mp ON mp.id = ci.id_metodo_pago " +
             "JOIN usuarios u ON u.id = ci.id_usuario " +
             "JOIN perfil_usuario p ON p.id_usuario = ci.id_usuario " +
             "JOIN emprendimientos e ON e.id = u.id_emprendimiento " +
+            "JOIN roles r ON r.id = u.id_rol " +
             (filtrar ? "WHERE ci.id_usuario IN (SELECT id FROM usuarios WHERE id_emprendimiento=?) " : "") +
             "ORDER BY ci.fecha_compra DESC";
 
@@ -60,6 +62,7 @@ public class ComprasDAO {
                     fc.registradoPor = rs.getString("registrado_por");
                     fc.total         = rs.getBigDecimal("total");
                     try { fc.nombreEmprendimiento = rs.getString("nombre_emprendimiento"); } catch (Exception ignored) {}
+                    try { fc.registradoPorSuperAdmin = "SuperAdministrador".equals(rs.getString("rol_registrador")); } catch (Exception ignored) {}
                     lista.add(fc);
                 }
             }
@@ -75,10 +78,12 @@ public class ComprasDAO {
             "SELECT ci.id, DATE_FORMAT(ci.fecha_compra,'%d/%m/%Y %H:%i') AS fecha, " +
             "DATE_FORMAT(ci.fecha_compra,'%Y-%m-%d') AS fecha_raw, " +
             "ci.descripcion, mp.nombre AS metodo_pago, ci.id_metodo_pago, " +
-            "p.nombre_completo AS registrado_por, ci.total " +
+            "p.nombre_completo AS registrado_por, ci.total, r.nombre AS rol_registrador " +
             "FROM compras_insumos ci " +
             "JOIN metodo_pago mp ON mp.id = ci.id_metodo_pago " +
+            "JOIN usuarios u2 ON u2.id = ci.id_usuario " +
             "JOIN perfil_usuario p ON p.id_usuario = ci.id_usuario " +
+            "JOIN roles r ON r.id = u2.id_rol " +
             "WHERE ci.id = ?";
 
         try (Connection con = DB.obtenerConexion();
@@ -95,6 +100,7 @@ public class ComprasDAO {
                     fc.idMetodoPago  = rs.getInt("id_metodo_pago");
                     fc.registradoPor = rs.getString("registrado_por");
                     fc.total         = rs.getBigDecimal("total");
+                    try { fc.registradoPorSuperAdmin = "SuperAdministrador".equals(rs.getString("rol_registrador")); } catch (Exception ignored) {}
                     return fc;
                 }
             }

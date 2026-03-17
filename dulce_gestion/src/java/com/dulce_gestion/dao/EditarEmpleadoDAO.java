@@ -16,28 +16,6 @@ import java.sql.SQLException;
  * Usado por:          EditarEmpleadoServlet, EliminarEmpleadoServlet
  * ============================================================
  *
- * ¿QUÉ HACE?
- * ----------
- * Busca un usuario por ID para prellenar el formulario de edición,
- * verifica unicidad de correo y teléfono excluyendo al propio usuario,
- * y aplica los cambios en 4 tablas dentro de una transacción.
- *
- * ¿POR QUÉ LA VERIFICACIÓN DE UNICIDAD EXCLUYE AL USUARIO ACTUAL?
- * -----------------------------------------------------------------
- * Si el admin edita a un empleado sin cambiar su correo, la verificación
- * "¿existe este correo?" devolvería true (el propio correo del empleado
- * ya está en la BD). Eso daría un falso error "correo ya en uso".
- *
- * correoExisteEnOtro() y telefonoExisteEnOtro() buscan duplicados
- * solo en usuarios con ID distinto al que se está editando, evitando
- * ese falso positivo.
- *
- * ¿POR QUÉ LA CONTRASEÑA ES OPCIONAL EN LA EDICIÓN?
- * ---------------------------------------------------
- * Un admin puede querer cambiar solo el nombre o el teléfono de un
- * empleado sin tocar su contraseña. Si el campo llega vacío, el UPDATE
- * omite la columna contrasena con una query sin ese campo.
- * Si llega con contenido, se hashea y se incluye en el UPDATE.
  */
 public class EditarEmpleadoDAO {
 
@@ -157,30 +135,6 @@ public class EditarEmpleadoDAO {
      * 3. perfil_usuario  → UPDATE nombre_completo y id_genero
      * 4. usuarios        → UPDATE estado, y opcionalmente contrasena y id_rol
      *
-     * ¿POR QUÉ UPDATE ... JOIN EN LOS PASOS 1 Y 2?
-     * ----------------------------------------------
-     * No se tiene el id de la fila en correos o telefonos, solo el idUsuario.
-     * El JOIN dentro del UPDATE permite localizar la fila correcta en una
-     * sola operación, sin necesitar una SELECT previa para obtener el id.
-     *
-     * ¿POR QUÉ 4 QUERIES DISTINTAS PARA EL PASO 4?
-     * -----------------------------------------------
-     * Hay 4 combinaciones posibles:
-     *   - Con/sin nueva contraseña
-     *   - Solicitante es/no es SuperAdmin (puede/no puede cambiar el rol)
-     * Cada combinación necesita un SQL diferente. Se construye la query
-     * correcta con condicionales en Java para no ejecutar UPDATEs innecesarios.
-     *
-     * @param idUsuario        ID del usuario a actualizar
-     * @param nombreCompleto   nuevo nombre completo
-     * @param telefono         nuevo teléfono
-     * @param genero           nombre del género (se convierte a ID via JOIN)
-     * @param correo           nuevo correo (se normaliza a minúsculas)
-     * @param nuevaContrasena  nueva contraseña en texto plano, o vacío para no cambiar
-     * @param estado           "Activo" o "Inactivo"
-     * @param rol              nombre del rol (solo se aplica si esSuperAdmin = true)
-     * @param esSuperAdmin     true si el solicitante puede cambiar el rol
-     * @throws SQLException    si hay error de BD o violación de constraint
      */
     public void actualizar(int idUsuario, String nombreCompleto, String telefono,
                            String genero, String correo, String nuevaContrasena,
@@ -226,7 +180,6 @@ public class EditarEmpleadoDAO {
 
                 // ── Paso 4: actualizar usuarios (estado + rol + contraseña opcional) ─
                 // Se construyen 4 queries según 2 variables binarias:
-                //   ¿Hay nueva contraseña? × ¿Es SuperAdmin?
                 if (nuevaContrasena != null && !nuevaContrasena.isBlank()) {
                     // Hay nueva contraseña → hashear antes de guardar
                     String hash = UsuarioDAO.hashSHA256(nuevaContrasena);

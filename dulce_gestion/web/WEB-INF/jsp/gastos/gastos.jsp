@@ -311,7 +311,8 @@
         <input type="hidden" name="idDetalleCompra" id="e_idDetalleCompra" value="<%= ge != null ? ge.idDetalleCompra : "" %>">
         <input type="hidden" name="idCompra"        id="e_idCompra"        value="<%= ge != null ? ge.idCompra : "" %>">
         <input type="hidden" name="idEmpresaRegistro" id="e_idEmpresa" value="">
-        <% if (esSuperAdmin && emprendimientos != null && !emprendimientos.isEmpty()) { %>
+        <% if (esSuperAdmin && emprendimientos != null && !emprendimientos.isEmpty()
+               && ge != null && ge.registradoPorSuperAdmin) { %>
         <div class="campo">
           <label>Emprendimiento *</label>
           <select id="e_emprendimiento"

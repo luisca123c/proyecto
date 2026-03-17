@@ -29,47 +29,6 @@ import java.util.Date;
  * MÉTODOS: GET, POST
  * ============================================================
  *
- * ¿QUÉ HACE?
- * ----------
- * Maneja el módulo completo de gastos del negocio:
- *
- *   GET  /gastos            → muestra la lista de gastos + modal para agregar
- *   GET  /gastos?editar=ID  → muestra la lista + modal de edición prellenado
- *   POST /gastos?accion=crear  → registra un nuevo gasto
- *   POST /gastos?accion=editar → guarda los cambios en un gasto existente
- *
- * ¿QUIÉN PUEDE ACCEDER?
- * ----------------------
- * Solo SuperAdministrador y Administrador.
- * Los Empleados no tienen acceso a información financiera de gastos.
- *
- * ¿CÓMO FUNCIONA EL MODAL DE EDICIÓN?
- * -------------------------------------
- * La pantalla de gastos usa un solo JSP con dos modales (ventanas emergentes):
- *   Modal 1 → "Agregar gasto" (siempre visible en botón)
- *   Modal 2 → "Editar gasto" (se prellenar con datos del gasto a editar)
- *
- * Cuando el admin hace clic en "Editar" en una fila:
- *   → El JSP genera un enlace: /gastos?editar=5
- *   → El servidor recibe el GET, carga el gasto con ID 5
- *   → Pone el objeto FilaGasto en el request con nombre "gastoEditar"
- *   → El JSP detecta que existe "gastoEditar" y abre el modal de edición
- *      con los datos prellenados
- *
- * ¿POR QUÉ SE USA SimpleDateFormat PARA LA FECHA?
- * -------------------------------------------------
- * El formulario tiene un input type="date" que envía la fecha en formato
- * "yyyy-MM-dd" (ej: "2025-03-15"). Pero la BD espera un datetime completo
- * para la columna fecha_gasto (ej: "2025-03-15 14:30:00").
- *
- * SimpleDateFormat.format(new Date()) obtiene la hora actual del servidor
- * y se concatena con la fecha del formulario para generar el datetime completo.
- *
- * ¿QUÉ HACE EL MÉTODO validar()?
- * --------------------------------
- * Es un helper que verifica que un parámetro no esté vacío.
- * Si está vacío, lanza IllegalArgumentException con el mensaje dado.
- * Esto permite centralizar la validación de campos obligatorios.
  */
 @WebServlet("/gastos")
 public class GastosServlet extends HttpServlet {
@@ -85,14 +44,6 @@ public class GastosServlet extends HttpServlet {
      * Muestra la lista de gastos. Si viene ?editar=ID, carga ese gasto
      * para prellenar el modal de edición.
      *
-     * FLUJO PASO A PASO:
-     * 1. Verificar acceso (solo Admin y SuperAdmin).
-     * 2. Si hay ?editar=ID → cargar el gasto específico para el modal de edición.
-     * 3. Cargar la lista completa de gastos y los métodos de pago.
-     * 4. Forward al JSP.
-     *
-     * @param request  contiene la sesión y posible parámetro ?editar=
-     * @param response para redirigir si no tiene acceso, o forward al JSP
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -133,19 +84,6 @@ public class GastosServlet extends HttpServlet {
      *   "crear" → registrar nuevo gasto
      *   "editar" → actualizar gasto existente
      *
-     * FLUJO PASO A PASO:
-     * 1. Verificar acceso.
-     * 2. Leer el parámetro "accion".
-     * 3. Leer y validar los campos comunes (descripcion, total, idMetodoPago, fecha).
-     * 4. Construir el datetime completo combinando la fecha del form con la hora actual.
-     * 5. Ejecutar crear o editar según la acción.
-     * 6. Redirigir con mensaje de éxito.
-     *
-     * Si cualquier validación falla (campo vacío, monto inválido, error de BD),
-     * se muestra el formulario de nuevo con el modal correcto abierto.
-     *
-     * @param request  contiene el formulario del modal y el parámetro "accion"
-     * @param response para redirigir en éxito o reenviar al JSP en error
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -192,15 +130,20 @@ public class GastosServlet extends HttpServlet {
                 int idCompra        = Integer.parseInt(request.getParameter("idCompra"));
 
                 // Actualizar las 3 tablas relacionadas (transacción en el DAO)
-                // Si SuperAdmin cambió el emprendimiento, actualizar id_usuario en detalle_compra
+                // Cambio de emprendimiento: solo permitido si el gasto fue registrado
+                // manualmente por un SuperAdministrador (no por un empleado del emprendimiento).
                 int idNuevoUsuarioGasto = 0;
                 if ("SuperAdministrador".equals(usuario.getNombreRol())) {
-                    String empEditR = request.getParameter("idEmpresaRegistro");
-                    if (empEditR != null && !empEditR.isBlank()) {
-                        try {
-                            int empEditId = Integer.parseInt(empEditR);
-                            if (empEditId > 0) idNuevoUsuarioGasto = new UsuarioDAO().obtenerAdminDeEmprendimiento(empEditId);
-                        } catch (NumberFormatException ignored) {}
+                    // Verificar si el registro original fue creado por SuperAdmin
+                    com.dulce_gestion.dao.GastosDAO.FilaGasto gastoOriginal = dao.obtenerPorId(idGasto);
+                    if (gastoOriginal.registradoPorSuperAdmin) {
+                        String empEditR = request.getParameter("idEmpresaRegistro");
+                        if (empEditR != null && !empEditR.isBlank()) {
+                            try {
+                                int empEditId = Integer.parseInt(empEditR);
+                                if (empEditId > 0) idNuevoUsuarioGasto = new UsuarioDAO().obtenerAdminDeEmprendimiento(empEditId);
+                            } catch (NumberFormatException ignored) {}
+                        }
                     }
                 }
                 dao.editar(idGasto, idDetalleCompra, idCompra, descripcion.trim(),

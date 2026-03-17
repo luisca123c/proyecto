@@ -16,35 +16,6 @@ import jakarta.servlet.http.*;
  * MÉTODOS: GET
  * ============================================================
  *
- * ¿QUÉ HACE?
- * ----------
- * Muestra el perfil completo de OTRO usuario (no el propio).
- * Se accede desde la lista de empleados cuando el administrador
- * hace clic en el nombre o icono de perfil de un empleado.
- *
- * ¿EN QUÉ SE DIFERENCIA DE PerfilServlet (/perfil)?
- * ---------------------------------------------------
- *   /perfil       → tu propio perfil (editable, con formularios)
- *   /perfil/ver   → perfil de otra persona (solo lectura, sin formularios)
- *
- * ¿POR QUÉ SE PASA "esOtroPerfil = true"?
- * -----------------------------------------
- * El JSP ver_perfil.jsp y mi_perfil.jsp pueden compartir partes del
- * diseño, pero el primero NO muestra los formularios de edición.
- * El atributo esOtroPerfil permite que el JSP sepa que está en modo
- * "solo lectura" y no muestre los botones de edición.
- *
- * ¿HAY RESTRICCIÓN DE ROL?
- * -------------------------
- * No. Cualquier usuario autenticado puede ver el perfil de otro.
- * Esto es útil por ejemplo para que un empleado vea los datos de
- * contacto de su jefe sin necesitar ir a la sección de empleados.
- *
- * ¿QUÉ PASA SI EL ID ES DEL PROPIO USUARIO?
- * -------------------------------------------
- * Si el usuario solicita ver su propio perfil con /perfil/ver?id=X,
- * este servlet lo procesa igual (no hay validación para eso).
- * Sin embargo, lo normal es que el sidebar siempre apunte a /perfil.
  */
 @WebServlet("/perfil/ver")
 public class VerPerfilServlet extends HttpServlet {
@@ -52,17 +23,6 @@ public class VerPerfilServlet extends HttpServlet {
     /**
      * GET /perfil/ver?id=X → muestra el perfil del usuario con ese ID.
      *
-     * FLUJO PASO A PASO:
-     * 1. Verificar sesión activa.
-     * 2. Leer y validar el parámetro ?id= de la URL.
-     *    Si falta → redirigir a /perfil (el propio perfil).
-     * 3. Cargar el perfil solicitado desde la BD.
-     *    Si no existe → mostrar error.
-     * 4. Poner el perfil y el flag esOtroPerfil en el request.
-     * 5. Forward al JSP ver_perfil.jsp.
-     *
-     * @param request  contiene la sesión activa y el parámetro ?id=
-     * @param response para redirigir si hay error, o forward al JSP
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)

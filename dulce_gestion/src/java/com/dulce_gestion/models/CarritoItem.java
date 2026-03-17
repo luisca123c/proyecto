@@ -9,41 +9,6 @@ import java.math.BigDecimal;
  * Usado por: CarritoDAO, VentasServlet
  * ============================================================
  *
- * ¿QUÉ REPRESENTA?
- * -----------------
- * Una fila del carrito enriquecida con datos del producto.
- * En la BD, detalle_carrito solo guarda (id_carrito, id_producto, cantidad).
- * Para mostrar el carrito en el JSP se necesitan más datos del producto:
- * su nombre, precio, stock y imagen.
- *
- * CarritoDAO.listarItems() hace el JOIN y construye estos objetos,
- * evitando que el JSP tenga que hacer consultas adicionales.
- *
- * ¿POR QUÉ EXISTE ESTE MODELO SEPARADO DE Producto?
- * ---------------------------------------------------
- * Producto representa un artículo del catálogo con todos sus datos
- * (descripción, categoría, unidad, fecha de vencimiento, etc.).
- *
- * CarritoItem representa una línea del carrito: solo necesita los
- * datos mínimos para mostrar la tabla del carrito y calcular el total.
- * Usar Producto completo sería un desperdicio de memoria y de columnas
- * en el SELECT cuando solo se necesitan 5 de sus 13 campos.
- *
- * ¿QUÉ ES getSubtotal() Y POR QUÉ ESTÁ EN EL MODELO?
- * -----------------------------------------------------
- * getSubtotal() calcula precio × cantidad para esa línea del carrito.
- * Es una derivación directa de los datos del objeto (no consulta la BD).
- * Al estar en el modelo, tanto el JSP como el DAO pueden usarlo:
- *   JSP:  ${item.subtotal}               → muestra el subtotal en la tabla
- *   DAO:  calcularTotal(items)           → suma todos los subtotales
- *
- * ¿POR QUÉ getPathImagen() RETORNA "" EN VEZ DE null?
- * -----------------------------------------------------
- * Un producto puede no tener imagen (LEFT JOIN en CarritoDAO devuelve null).
- * Si el JSP evaluara ${item.pathImagen} y fuera null, podría mostrar
- * "null" como texto o romper la construcción de la URL del <img>.
- * Retornar "" garantiza que la condición <c:if test="${not empty item.pathImagen}">
- * funcione correctamente sin verificación adicional en el JSP.
  */
 public class CarritoItem {
 
@@ -100,14 +65,6 @@ public class CarritoItem {
     /**
      * Calcula el subtotal de esta línea: precioUnitario × cantidad.
      *
-     * ¿POR QUÉ BigDecimal.valueOf(cantidad) Y NO new BigDecimal(cantidad)?
-     * ----------------------------------------------------------------------
-     * BigDecimal.valueOf(int) crea el BigDecimal directamente desde el
-     * valor entero sin riesgo de imprecisión. new BigDecimal(int) también
-     * es exacto para enteros, pero valueOf es la forma idiomática preferida.
-     * La multiplicación BigDecimal × BigDecimal mantiene la precisión exacta.
-     *
-     * Ejemplo: precio=2.50, cantidad=3 → subtotal=7.50 (exacto, sin 7.4999...)
      */
     public BigDecimal getSubtotal()        { return precioUnitario.multiply(BigDecimal.valueOf(cantidad)); }
 

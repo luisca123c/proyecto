@@ -16,50 +16,6 @@ import jakarta.servlet.http.*;
  * MÉTODOS: GET, POST
  * ============================================================
  *
- * ¿QUÉ HACE?
- * ----------
- * Es la puerta de entrada al sistema. Gestiona dos cosas:
- *   GET  → muestra el formulario de inicio de sesión
- *   POST → recibe las credenciales, las valida y crea la sesión
- *
- * ¿QUÉ ES LA SESIÓN HTTP?
- * ------------------------
- * HTTP es un protocolo sin estado: cada petición es completamente
- * independiente y el servidor no recuerda al usuario entre peticiones.
- *
- * La sesión HTTP agrega "memoria" al servidor:
- *   - El servidor crea un objeto HttpSession con un ID único (JSESSIONID).
- *   - Envía ese ID al navegador como cookie.
- *   - En cada petición siguiente, el navegador manda la cookie.
- *   - El servidor reconoce el ID y carga los datos del usuario.
- *
- * En este sistema, se guarda el objeto Usuario en la sesión:
- *   session.setAttribute("usuario", usuario)
- *
- * FiltroAutenticacion verifica en CADA petición que exista ese atributo.
- *
- * ¿POR QUÉ getSession(true) EN EL POST?
- * ----------------------------------------
- * true = crear una sesión nueva si no existe.
- * Se usa solo DESPUÉS de verificar credenciales correctas.
- * Antes de eso, usamos getSession(false) para no crear sesiones vacías.
- *
- * ¿POR QUÉ setMaxInactiveInterval(30 * 60)?
- * -------------------------------------------
- * Después de 30 minutos de inactividad (sin peticiones del usuario),
- * Tomcat destruye la sesión automáticamente. Así, si el usuario deja
- * el navegador abierto y se aleja, la sesión expira sola.
- *
- * ¿FORWARD VS REDIRECT EN EL POST?
- * ----------------------------------
- * En caso de ERROR → usamos forward al JSP del login.
- *   El forward preserva los atributos del request (el mensaje de error).
- *   Si usáramos redirect, los atributos se perderían.
- *
- * En caso de ÉXITO → usamos redirect a /dashboard.
- *   El redirect hace que el navegador haga una petición GET nueva.
- *   Esto evita el problema de "¿volver a enviar el formulario?"
- *   que aparece si el usuario recarga la página después de un POST exitoso.
  */
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
@@ -103,34 +59,6 @@ public class LoginServlet extends HttpServlet {
     /**
      * Procesa las credenciales del formulario de inicio de sesión.
      *
-     * FLUJO PASO A PASO:
-     *
-     * Paso 1 — Leer parámetros del formulario:
-     *   request.getParameter() lee los campos del form HTML.
-     *   El campo se llama "correo" y "contrasena" según el name= del input.
-     *
-     * Paso 2 — Validar que no estén vacíos:
-     *   Si algún campo llegó vacío o null, no tiene sentido consultar la BD.
-     *   Se pone el error como atributo y se reenvía al formulario.
-     *
-     * Paso 3 — Consultar la BD:
-     *   UsuarioDAO.autenticar() hashea la contraseña y la compara con la BD.
-     *   Retorna null si las credenciales son incorrectas.
-     *
-     * Paso 4 — Verificar que la cuenta esté activa:
-     *   Un usuario puede existir pero estar en estado "Inactivo".
-     *   En ese caso, no se permite el acceso aunque la contraseña sea correcta.
-     *
-     * Paso 5 — Crear la sesión:
-     *   getSession(true) crea una sesión nueva (o retorna la existente).
-     *   setAttribute("usuario", usuario) guarda el objeto en la sesión.
-     *   setMaxInactiveInterval expira la sesión tras 30 min de inactividad.
-     *
-     * Paso 6 — Redirigir al dashboard:
-     *   DashboardServlet se encarga de enviar al JSP correcto según el rol.
-     *
-     * @param request  contiene los parámetros del formulario (correo, contrasena)
-     * @param response para redirigir en éxito o reenviar al form en error
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
