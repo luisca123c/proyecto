@@ -170,6 +170,63 @@ public class UsuarioDAO {
      * @return       hash SHA-256 en hexadecimal (64 caracteres)
      * @throws RuntimeException si SHA-256 no está disponible en la JVM
      */
+    /**
+     * Retorna el ID del primer administrador activo de un emprendimiento.
+     * Se usa cuando el SuperAdmin registra un gasto/compra en nombre de
+     * un emprendimiento — el registro queda a nombre del admin del negocio.
+     * Si no hay admin activo, retorna el id del primer usuario activo.
+     * Si no hay ninguno, retorna 0.
+     */
+    public int obtenerAdminDeEmprendimiento(int idEmprendimiento) throws java.sql.SQLException {
+        // Primero intentar obtener un Administrador activo
+        String sql = "SELECT u.id FROM usuarios u " +
+                     "JOIN roles r ON r.id = u.id_rol " +
+                     "WHERE u.id_emprendimiento = ? AND u.estado = 'Activo' " +
+                     "AND r.nombre = 'Administrador' LIMIT 1";
+        try (java.sql.Connection con = com.dulce_gestion.utils.DB.obtenerConexion();
+             java.sql.PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idEmprendimiento);
+            try (java.sql.ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        }
+        // Si no hay admin, usar cualquier usuario activo del emprendimiento
+        String sql2 = "SELECT id FROM usuarios WHERE id_emprendimiento = ? AND estado = 'Activo' LIMIT 1";
+        try (java.sql.Connection con = com.dulce_gestion.utils.DB.obtenerConexion();
+             java.sql.PreparedStatement ps = con.prepareStatement(sql2)) {
+            ps.setInt(1, idEmprendimiento);
+            try (java.sql.ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Devuelve el idEmprendimiento real del usuario consultando la BD.
+     * Se usa como fallback cuando la sesión tiene idEmprendimiento=0
+     * por haber iniciado sesión antes del fix que lo cargaba en login.
+     *
+     * Si el usuario es SuperAdministrador devuelve 0 (sin emprendimiento).
+     *
+     * @param idUsuario ID del usuario en sesión
+     * @return id_emprendimiento del usuario, o 0 si es SuperAdmin / no tiene
+     */
+    public int resolverIdEmprendimiento(int idUsuario) throws java.sql.SQLException {
+        String sql = "SELECT id_emprendimiento FROM usuarios WHERE id = ?";
+        try (java.sql.Connection con = com.dulce_gestion.utils.DB.obtenerConexion();
+             java.sql.PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idUsuario);
+            try (java.sql.ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int val = rs.getInt("id_emprendimiento");
+                    return rs.wasNull() ? 0 : val;
+                }
+            }
+        }
+        return 0;
+    }
+
     public static String hashSHA256(String texto) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");

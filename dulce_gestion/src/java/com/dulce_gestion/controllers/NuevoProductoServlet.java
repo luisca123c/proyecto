@@ -2,6 +2,7 @@ package com.dulce_gestion.controllers;
 
 import com.dulce_gestion.dao.CrearProductoDAO;
 import com.dulce_gestion.dao.EmprendimientoDAO;
+import com.dulce_gestion.utils.EmpresaUtil;
 import com.dulce_gestion.dao.ImagenProductoDAO;
 import com.dulce_gestion.dao.ProductoDAO;
 import com.dulce_gestion.utils.Uploads;
@@ -179,7 +180,7 @@ public class NuevoProductoServlet extends HttpServlet {
             try { idEmprendimiento = Integer.parseInt(empParam); }
             catch (NumberFormatException e) { idEmprendimiento = 0; }
         } else {
-            idEmprendimiento = solicitante != null ? solicitante.getIdEmprendimiento() : 0;
+            idEmprendimiento = solicitante != null ? EmpresaUtil.resolverEmprendimiento(solicitante, request) : 0;
         }
 
         // ── Paso 4: validar campos obligatorios ──────────────────────────

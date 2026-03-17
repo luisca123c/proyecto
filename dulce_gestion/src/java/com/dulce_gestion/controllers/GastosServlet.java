@@ -1,8 +1,13 @@
 package com.dulce_gestion.controllers;
 
+import com.dulce_gestion.dao.EmprendimientoDAO;
+import com.dulce_gestion.dao.UsuarioDAO;
+import com.dulce_gestion.utils.EmpresaUtil;
 import com.dulce_gestion.dao.GastosDAO;
 import com.dulce_gestion.dao.GastosDAO.FilaGasto;
+import com.dulce_gestion.models.Emprendimiento;
 import com.dulce_gestion.models.Usuario;
+import java.util.List;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -112,7 +117,7 @@ public class GastosServlet extends HttpServlet {
         }
 
         // Cargar la lista completa de gastos y los métodos de pago
-        cargarDatos(request);
+        cargarDatos(request, usuario);
 
         request.getRequestDispatcher(VISTA).forward(request, response);
     }
@@ -187,8 +192,19 @@ public class GastosServlet extends HttpServlet {
                 int idCompra        = Integer.parseInt(request.getParameter("idCompra"));
 
                 // Actualizar las 3 tablas relacionadas (transacción en el DAO)
+                // Si SuperAdmin cambió el emprendimiento, actualizar id_usuario en detalle_compra
+                int idNuevoUsuarioGasto = 0;
+                if ("SuperAdministrador".equals(usuario.getNombreRol())) {
+                    String empEditR = request.getParameter("idEmpresaRegistro");
+                    if (empEditR != null && !empEditR.isBlank()) {
+                        try {
+                            int empEditId = Integer.parseInt(empEditR);
+                            if (empEditId > 0) idNuevoUsuarioGasto = new UsuarioDAO().obtenerAdminDeEmprendimiento(empEditId);
+                        } catch (NumberFormatException ignored) {}
+                    }
+                }
                 dao.editar(idGasto, idDetalleCompra, idCompra, descripcion.trim(),
-                           total, idMetodoPago, fechaDatetime);
+                           total, idMetodoPago, fechaDatetime, idNuevoUsuarioGasto);
 
                 // ── Paso 6a: redirigir con éxito ─────────────────────────
                 response.sendRedirect(request.getContextPath() + "/gastos?exito=editado");
@@ -196,7 +212,20 @@ public class GastosServlet extends HttpServlet {
             } else {
                 // Creación: solo necesita los datos del gasto y el usuario que lo registra
                 // usuario.getId() asocia el gasto al usuario que lo registró
-                dao.registrar(usuario.getId(), descripcion.trim(), total, idMetodoPago, fechaDatetime);
+                // SuperAdmin registra a nombre del admin del emprendimiento filtrado
+                int idUsuarioRegistra = usuario.getId();
+                if ("SuperAdministrador".equals(usuario.getNombreRol())) {
+                    String empR = request.getParameter("idEmpresaRegistro");
+                    int empIdR = 0;
+                    if (empR != null && !empR.isBlank()) {
+                        try { empIdR = Integer.parseInt(empR); } catch (NumberFormatException ignored) {}
+                    }
+                    if (empIdR > 0) {
+                        int adminId = new UsuarioDAO().obtenerAdminDeEmprendimiento(empIdR);
+                        if (adminId > 0) idUsuarioRegistra = adminId;
+                    }
+                }
+                dao.registrar(idUsuarioRegistra, descripcion.trim(), total, idMetodoPago, fechaDatetime);
 
                 // ── Paso 6b: redirigir con éxito ─────────────────────────
                 response.sendRedirect(request.getContextPath() + "/gastos?exito=creado");
@@ -225,7 +254,7 @@ public class GastosServlet extends HttpServlet {
         }
 
         // Recargar la lista completa para mostrar la página con el error
-        cargarDatos(request);
+        cargarDatos(request, usuario);
         request.getRequestDispatcher(VISTA).forward(request, response);
     }
 
@@ -255,11 +284,25 @@ public class GastosServlet extends HttpServlet {
      * Carga la lista de gastos y los métodos de pago para el JSP.
      * Se llama en el GET y al reenviar el formulario con error.
      */
-    private void cargarDatos(HttpServletRequest request) {
+    private void cargarDatos(HttpServletRequest request, Usuario usuario) {
         try {
             GastosDAO dao = new GastosDAO();
-            request.setAttribute("gastos",  dao.listar());          // Lista de todos los gastos
-            request.setAttribute("metodos", dao.listarMetodosPago()); // Para el select de método de pago
+            boolean esSuperAdmin = "SuperAdministrador".equals(usuario.getNombreRol());
+            int empFiltro = 0;
+            if (esSuperAdmin) {
+                String empParam = request.getParameter("emp");
+                if (empParam != null && !empParam.isBlank()) {
+                    try { empFiltro = Integer.parseInt(empParam); } catch (NumberFormatException ignored) {}
+                }
+                List<Emprendimiento> emps = new EmprendimientoDAO().listarActivos();
+                request.setAttribute("emprendimientos", emps);
+                request.setAttribute("empFiltro", empFiltro);
+            } else {
+                // EmpresaUtil corrige sesiones antiguas con idEmprendimiento=0
+                empFiltro = EmpresaUtil.resolverEmprendimiento(usuario, request);
+            }
+            request.setAttribute("gastos",  dao.listar(empFiltro));
+            request.setAttribute("metodos", dao.listarMetodosPago());
         } catch (SQLException e) {
             e.printStackTrace();
             request.setAttribute("error", "Error al cargar los gastos.");

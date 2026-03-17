@@ -1,6 +1,7 @@
 package com.dulce_gestion.controllers;
 
 import com.dulce_gestion.dao.EmprendimientoDAO;
+import com.dulce_gestion.utils.EmpresaUtil;
 import com.dulce_gestion.dao.ProductoDAO;
 import com.dulce_gestion.models.Emprendimiento;
 import com.dulce_gestion.models.Producto;
@@ -99,7 +100,7 @@ public class ProductosServlet extends HttpServlet {
                 productos = dao.listarFiltrado(rol, empFiltro);
             } else {
                 // Admin y Empleado: solo ven productos de su emprendimiento
-                empFiltro = usuario.getIdEmprendimiento();
+                empFiltro = EmpresaUtil.resolverEmprendimiento(usuario, request);
                 productos = dao.listarFiltrado(rol, empFiltro);
             }
         } catch (SQLException e) {

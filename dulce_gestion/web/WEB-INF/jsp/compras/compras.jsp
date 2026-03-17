@@ -1,5 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="com.dulce_gestion.models.Usuario,
+<%@ page import="com.dulce_gestion.models.Emprendimiento, com.dulce_gestion.models.Usuario,
                  com.dulce_gestion.dao.ComprasDAO.FilaCompra,
                  java.util.List,
                  java.math.BigDecimal" %>
@@ -24,6 +24,10 @@
 
     boolean abrirEditar = (ce != null);
     boolean abrirCrear  = (error != null && !abrirEditar);
+
+    List<Emprendimiento> emprendimientos = (List<Emprendimiento>) request.getAttribute("emprendimientos");
+    Integer empFiltroAttr = (Integer) request.getAttribute("empFiltro");
+    int filtroActivo = (empFiltroAttr != null) ? empFiltroAttr : 0;
 %>
 <!doctype html>
 <html lang="es">
@@ -151,6 +155,20 @@
       <% } else if (exitoEditado) { %>
       <div class="msg-exito"><i class="fi fi-sr-check-circle"></i> Compra actualizada correctamente.</div>
       <% } %>
+      <!-- Filtro por emprendimiento (solo SuperAdmin) -->
+      <% if (esSuperAdmin && emprendimientos != null) { %>
+      <div class="emp-filtro-select-wrap">
+        <label class="emp-filtro-label" for="filtroEmp"><i class="fi fi-sr-store-alt"></i> Emprendimiento</label>
+        <select id="filtroEmp" class="emp-filtro-select"
+                onchange="window.location.href='<%= ctx %>/compras' + (this.value ? '?emp=' + this.value : '')">
+          <option value="" <%= filtroActivo == 0 ? "selected" : "" %>>— Todos los emprendimientos —</option>
+          <% for (Emprendimiento emp : emprendimientos) { %>
+          <option value="<%= emp.getId() %>" <%= filtroActivo == emp.getId() ? "selected" : "" %>><%= emp.getNombre() %></option>
+          <% } %>
+        </select>
+      </div>
+      <% } %>
+
       <% if (error != null && !error.isBlank()) { %>
       <div class="msg-error"><i class="fi fi-sr-triangle-warning"></i> <%= error %></div>
       <% } %>
@@ -226,6 +244,18 @@
       <div class="modal-titulo"><i class="fi fi-sr-add"></i> Registrar compra de insumos</div>
       <form method="POST" action="<%= ctx %>/compras" id="formCrear" novalidate>
         <input type="hidden" name="accion" value="crear">
+        <input type="hidden" name="idEmpresaRegistro" id="crearC_idEmpresa" value="<%= filtroActivo %>">
+        <% if (esSuperAdmin && emprendimientos != null && !emprendimientos.isEmpty()) { %>
+        <div class="campo">
+          <label>Emprendimiento *</label>
+          <select onchange="document.getElementById('crearC_idEmpresa').value=this.value" required>
+            <option value="" disabled <%= filtroActivo == 0 ? "selected" : "" %>>Selecciona emprendimiento</option>
+            <% for (Emprendimiento empM : emprendimientos) { %>
+            <option value="<%= empM.getId() %>" <%= filtroActivo == empM.getId() ? "selected" : "" %>><%= empM.getNombre() %></option>
+            <% } %>
+          </select>
+        </div>
+        <% } %>
         <div class="campo">
           <label>Descripcion *</label>
           <textarea name="descripcion" placeholder="Ej: Compra de leche y azucar..." required maxlength="150"></textarea>
@@ -261,6 +291,23 @@
       <form method="POST" action="<%= ctx %>/compras" id="formEditar" novalidate>
         <input type="hidden" name="accion" value="editar">
         <input type='hidden' name='idCompra' id='e_idCompra' value='<%= ce != null ? ce.id : "" %>'>
+        <input type="hidden" name="idEmpresaRegistro" id="eC_idEmpresa" value="">
+        <% if (esSuperAdmin && emprendimientos != null && !emprendimientos.isEmpty()) { %>
+        <div class="campo">
+          <label>Emprendimiento *</label>
+          <select id="eC_emprendimiento"
+                  onchange="document.getElementById('eC_idEmpresa').value=this.value" required>
+            <option value="" disabled>Selecciona emprendimiento</option>
+            <% for (Emprendimiento empM : emprendimientos) { %>
+            <option value="<%= empM.getId() %>"
+              data-nombre="<%= empM.getNombre() %>"
+              <%= (ce != null && empM.getNombre().equals(ce.nombreEmprendimiento)) ? "selected" : "" %>>
+              <%= empM.getNombre() %>
+            </option>
+            <% } %>
+          </select>
+        </div>
+        <% } %>
         <div class="campo">
           <label>Descripcion *</label>
           <textarea name="descripcion" id="e_descripcion" required maxlength="150"><%= ce != null && ce.descripcion != null ? ce.descripcion : "" %></textarea>

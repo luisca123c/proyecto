@@ -1,6 +1,7 @@
 package com.dulce_gestion.dao;
 
 import com.dulce_gestion.models.CarritoItem;
+import com.dulce_gestion.models.Emprendimiento;
 import com.dulce_gestion.utils.DB;
 
 import java.math.BigDecimal;
@@ -203,6 +204,22 @@ public class CarritoDAO {
      * @throws SQLException si no hay stock suficiente o el producto no existe
      */
     public void agregarProducto(int idCarrito, int idProducto, int cantidad) throws SQLException {
+
+        // Verificar que no se mezclen emprendimientos en el carrito
+        String sqlEmpProducto = "SELECT id_emprendimiento FROM productos WHERE id = ?";
+        int empProductoNuevo;
+        try (Connection con = DB.obtenerConexion();
+             PreparedStatement ps = con.prepareStatement(sqlEmpProducto)) {
+            ps.setInt(1, idProducto);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) throw new SQLException("Producto no encontrado.");
+                empProductoNuevo = rs.getInt("id_emprendimiento");
+            }
+        }
+        int empCarrito = obtenerEmprendimientoDelCarrito(idCarrito);
+        if (empCarrito > 0 && empCarrito != empProductoNuevo) {
+            throw new SQLException("No puedes mezclar productos de diferentes emprendimientos en el mismo carrito. Vacía el carrito primero.");
+        }
 
         // Verificar stock disponible del producto
         String sqlStock = "SELECT stock_actual FROM productos WHERE id = ?";
@@ -473,30 +490,84 @@ public class CarritoDAO {
      * @return  lista de productos disponibles ordenada por nombre
      * @throws SQLException si hay error al consultar la BD
      */
-    public List<com.dulce_gestion.models.Producto> listarProductosActivos() throws SQLException {
-        String sql = """
-                SELECT p.id, p.nombre, p.precio_unitario, p.stock_actual, i.path_imagen
-                FROM productos p
-                LEFT JOIN imagenes_producto i ON i.id_producto = p.id
-                WHERE p.stock_actual > 0
-                AND p.estado != 'Inactivo'
-                ORDER BY p.nombre
-                """;
+    /**
+     * Retorna los productos disponibles para el carrito del usuario,
+     * filtrando siempre por el emprendimiento del usuario.
+     *
+     * @param idEmprendimiento  ID del emprendimiento del usuario en sesión
+     */
+    /**
+     * Lista productos activos con stock disponible para el carrito.
+     * Si idEmprendimiento=0 (SuperAdmin sin filtro) → todos los emprendimientos.
+     * Si idEmprendimiento>0 → solo ese emprendimiento.
+     * Incluye id_emprendimiento para validar mezcla de emprendimientos en el carrito.
+     */
+    public List<com.dulce_gestion.models.Producto> listarProductosActivos(int idEmprendimiento)
+            throws SQLException {
+        String sql;
+        boolean filtrar = idEmprendimiento > 0;
+        if (filtrar) {
+            sql = """
+                    SELECT p.id, p.nombre, p.precio_unitario, p.stock_actual,
+                           p.id_emprendimiento, e.nombre AS nombre_emprendimiento,
+                           i.path_imagen
+                    FROM productos p
+                    JOIN emprendimientos e ON e.id = p.id_emprendimiento
+                    LEFT JOIN imagenes_producto i ON i.id_producto = p.id
+                    WHERE p.stock_actual > 0
+                      AND p.estado != 'Inactivo'
+                      AND p.id_emprendimiento = ?
+                    ORDER BY p.nombre
+                    """;
+        } else {
+            sql = """
+                    SELECT p.id, p.nombre, p.precio_unitario, p.stock_actual,
+                           p.id_emprendimiento, e.nombre AS nombre_emprendimiento,
+                           i.path_imagen
+                    FROM productos p
+                    JOIN emprendimientos e ON e.id = p.id_emprendimiento
+                    LEFT JOIN imagenes_producto i ON i.id_producto = p.id
+                    WHERE p.stock_actual > 0
+                      AND p.estado != 'Inactivo'
+                    ORDER BY e.nombre, p.nombre
+                    """;
+        }
         List<com.dulce_gestion.models.Producto> lista = new ArrayList<>();
         try (Connection con = DB.obtenerConexion();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                com.dulce_gestion.models.Producto p = new com.dulce_gestion.models.Producto();
-                p.setId(rs.getInt("id"));
-                p.setNombre(rs.getString("nombre"));
-                p.setPrecioUnitario(rs.getBigDecimal("precio_unitario"));
-                p.setStockActual(rs.getInt("stock_actual"));
-                p.setPathImagen(rs.getString("path_imagen")); // Puede ser null
-                lista.add(p);
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            if (filtrar) ps.setInt(1, idEmprendimiento);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    com.dulce_gestion.models.Producto p = new com.dulce_gestion.models.Producto();
+                    p.setId(rs.getInt("id"));
+                    p.setNombre(rs.getString("nombre"));
+                    p.setPrecioUnitario(rs.getBigDecimal("precio_unitario"));
+                    p.setStockActual(rs.getInt("stock_actual"));
+                    p.setPathImagen(rs.getString("path_imagen"));
+                    p.setIdEmprendimiento(rs.getInt("id_emprendimiento"));
+                    p.setNombreEmprendimiento(rs.getString("nombre_emprendimiento"));
+                    lista.add(p);
+                }
             }
         }
         return lista;
+    }
+
+    /**
+     * Obtiene el id_emprendimiento de los productos ya en el carrito.
+     * Retorna 0 si el carrito está vacío.
+     */
+    public int obtenerEmprendimientoDelCarrito(int idCarrito) throws SQLException {
+        String sql = "SELECT p.id_emprendimiento FROM detalle_carrito dc " +
+                      "JOIN productos p ON p.id = dc.id_producto " +
+                      "WHERE dc.id_carrito = ? LIMIT 1";
+        try (Connection con = DB.obtenerConexion();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idCarrito);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt("id_emprendimiento") : 0;
+            }
+        }
     }
 
     /**

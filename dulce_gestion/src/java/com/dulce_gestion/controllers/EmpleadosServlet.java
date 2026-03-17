@@ -2,6 +2,7 @@ package com.dulce_gestion.controllers;
 
 import com.dulce_gestion.dao.EmpleadoDAO;
 import com.dulce_gestion.dao.EmprendimientoDAO;
+import com.dulce_gestion.utils.EmpresaUtil;
 import com.dulce_gestion.models.Emprendimiento;
 import com.dulce_gestion.models.Usuario;
 
@@ -85,7 +86,7 @@ public class EmpleadosServlet extends HttpServlet {
 
             } else {
                 // Admin: siempre filtra por su propio emprendimiento
-                empFiltro = solicitante.getIdEmprendimiento();
+                empFiltro = EmpresaUtil.resolverEmprendimiento(solicitante, request);
                 lista = dao.listarFiltrado(rol, empFiltro);
             }
 

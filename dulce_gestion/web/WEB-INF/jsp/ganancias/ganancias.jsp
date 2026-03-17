@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="com.dulce_gestion.models.Usuario,
+<%@ page import="com.dulce_gestion.models.Emprendimiento,
+                 com.dulce_gestion.models.Usuario,
                  com.dulce_gestion.dao.GananciasDAO.FilaCompra,
                  com.dulce_gestion.dao.GananciasDAO.ResumenPeriodo,
                  com.dulce_gestion.dao.GananciasDAO.FilaVenta,
@@ -22,6 +23,9 @@
 
     boolean esMesEspecifico = periodo.matches("\\d{4}-\\d{2}");
     String  mesSel          = esMesEspecifico ? periodo : "";
+    List<Emprendimiento> emprendimientos = (List<Emprendimiento>) request.getAttribute("emprendimientos");
+    Integer empFiltroAttr  = (Integer) request.getAttribute("empFiltro");
+    int filtroActivo       = (empFiltroAttr != null) ? empFiltroAttr : 0;
 %>
 <!doctype html>
 <html lang="es">
@@ -215,15 +219,33 @@
       <div class="msg-error"><i class="fi fi-sr-triangle-warning"></i> <%= error %></div>
       <% } %>
 
+      <!-- Filtro por emprendimiento (solo SuperAdmin) -->
+      <% if (esSuperAdmin && emprendimientos != null) { %>
+      <div class="emp-filtro-select-wrap">
+        <label class="emp-filtro-label" for="filtroEmpGan"><i class="fi fi-sr-store-alt"></i> Emprendimiento</label>
+        <select id="filtroEmpGan" class="emp-filtro-select"
+                onchange="var v=this.value; window.location='<%= ctx %>/ganancias?periodo=<%= periodo %>' + (v ? '&emp='+v : '')">
+          <option value="" <%= filtroActivo == 0 ? "selected" : "" %>>— Todos los emprendimientos —</option>
+          <% for (Emprendimiento emp : emprendimientos) { %>
+          <option value="<%= emp.getId() %>" <%= filtroActivo == emp.getId() ? "selected" : "" %>><%= emp.getNombre() %></option>
+          <% } %>
+        </select>
+      </div>
+      <% } %>
+
       <!-- Selector de período -->
+      <%
+        // Mantener el parámetro ?emp= al cambiar de período
+        String _empSufijo = filtroActivo > 0 ? "&emp=" + filtroActivo : "";
+      %>
       <div class="gan-filtro">
         <span class="gan-filtro__label">Ver:</span>
         <div class="gan-tabs">
-          <a href="<%= ctx %>/ganancias?periodo=semana"
+          <a href="<%= ctx %>/ganancias?periodo=semana<%= _empSufijo %>"
              class="gan-tab <%= "semana".equals(periodo) ? "gan-tab--activo" : "" %>">
             Esta semana
           </a>
-          <a href="<%= ctx %>/ganancias?periodo=mes"
+          <a href="<%= ctx %>/ganancias?periodo=mes<%= _empSufijo %>"
              class="gan-tab <%= "mes".equals(periodo) ? "gan-tab--activo" : "" %>">
             Este mes
           </a>
@@ -232,7 +254,7 @@
         <!-- Selector mes específico -->
         <div class="gan-mes-select">
           <i class="fi fi-sr-calendar" style="color:#aaa;font-size:0.9rem"></i>
-          <select onchange="if(this.value) window.location='<%= ctx %>/ganancias?periodo='+this.value"
+          <select onchange="if(this.value) window.location='<%= ctx %>/ganancias?periodo='+this.value+'<%= _empSufijo %>'"
                   class="<%= esMesEspecifico ? "activo" : "" %>">
             <option value="">Elegir mes...</option>
             <% if (meses != null) { for (String[] m : meses) { %>

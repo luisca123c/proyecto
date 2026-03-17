@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="com.dulce_gestion.models.Usuario,
+                 com.dulce_gestion.models.Emprendimiento,
                  com.dulce_gestion.dao.HistorialDAO.FilaVenta,
                  java.util.List, java.math.BigDecimal" %>
 <%
@@ -11,6 +12,10 @@
 
     List<FilaVenta> ventas = (List<FilaVenta>) request.getAttribute("ventas");
     String error = (String) request.getAttribute("error");
+
+    List<Emprendimiento> emprendimientos = (List<Emprendimiento>) request.getAttribute("emprendimientos");
+    Integer empFiltroAttr = (Integer) request.getAttribute("empFiltro");
+    int filtroActivo = (empFiltroAttr != null) ? empFiltroAttr : 0;
 
     BigDecimal totalGeneral = BigDecimal.ZERO;
     if (ventas != null) {
@@ -151,6 +156,22 @@
         </h1>
       </div>
 
+      <!-- Filtro por emprendimiento (solo SuperAdmin) -->
+      <% if (esSuperAdmin && emprendimientos != null) { %>
+      <div class="emp-filtro-select-wrap">
+        <label class="emp-filtro-label" for="filtroEmpHist">
+          <i class="fi fi-sr-store-alt"></i> Emprendimiento
+        </label>
+        <select id="filtroEmpHist" class="emp-filtro-select"
+                onchange="window.location.href='<%= ctx %>/historial' + (this.value ? '?emp=' + this.value : '')">
+          <option value="" <%= filtroActivo == 0 ? "selected" : "" %>>— Todos los emprendimientos —</option>
+          <% for (Emprendimiento emp : emprendimientos) { %>
+          <option value="<%= emp.getId() %>" <%= filtroActivo == emp.getId() ? "selected" : "" %>><%= emp.getNombre() %></option>
+          <% } %>
+        </select>
+      </div>
+      <% } %>
+
       <% if (error != null) { %>
       <div class="msg-error"><i class="fi fi-sr-triangle-warning"></i> <%= error %></div>
       <% } %>
@@ -184,6 +205,7 @@
           <span>#</span>
           <span>Fecha</span>
           <% if (esAdminOSuper) { %><span>Realizada por</span><% } %>
+          <% if (esSuperAdmin && filtroActivo == 0) { %><span>Emprendimiento</span><% } %>
           <span>Método de pago</span>
           <span>Total</span>
           <span></span>
@@ -198,6 +220,9 @@
             <span class="td-fecha"><%= v.fecha %></span>
             <% if (esAdminOSuper) { %>
             <span><span class="badge-quien"><%= v.realizadaPor != null ? v.realizadaPor : "—" %></span></span>
+            <% } %>
+            <% if (esSuperAdmin && filtroActivo == 0) { %>
+            <span style="font-size:0.82rem;color:#666"><%= v.nombreEmprendimiento != null ? v.nombreEmprendimiento : "—" %></span>
             <% } %>
             <span><span class="badge-mp"><%= v.metodoPago %></span></span>
             <span class="td-total">$<%= v.total != null ? String.format("%,.0f", v.total) : "0" %></span>

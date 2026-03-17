@@ -63,6 +63,7 @@ public class GastosDAO {
         public String     metodoPago;       // Nombre del método para mostrar en la tabla
         public String     registradoPor;    // Nombre completo del usuario que lo registró
         public BigDecimal total;            // Monto del gasto
+        public String     nombreEmprendimiento; // Para agrupar en SuperAdmin
     }
 
     // =========================================================
@@ -79,29 +80,38 @@ public class GastosDAO {
      * @return  lista de todos los gastos, más recientes primero
      * @throws SQLException si hay error al consultar la BD
      */
-    public List<FilaGasto> listar() throws SQLException {
+    /** Lista gastos. Si idEmprendimiento=0 (SuperAdmin todos), si >0 filtra. */
+    public List<FilaGasto> listar(int idEmprendimiento) throws SQLException {
+        boolean filtrar = idEmprendimiento > 0;
         String sql =
             "SELECT g.id, g.id_detalle_compra, dc.id_compra, " +
-            // Dos formatos de fecha en una sola consulta: display y edición
             "DATE_FORMAT(g.fecha_gasto,'%d/%m/%Y %H:%i') AS fecha, " +
             "DATE_FORMAT(g.fecha_gasto,'%Y-%m-%d') AS fecha_raw, " +
             "dc.descripcion, g.id_metodo_pago, mp.nombre AS metodo_pago, " +
-            "pu.nombre_completo AS registrado_por, g.total_gasto " +
+            "pu.nombre_completo AS registrado_por, g.total_gasto, " +
+            "e.nombre AS nombre_emprendimiento " +
             "FROM gastos g " +
             "JOIN detalle_compra dc ON dc.id=g.id_detalle_compra " +
             "JOIN metodo_pago mp ON mp.id=g.id_metodo_pago " +
             "JOIN usuarios u ON u.id=dc.id_usuario " +
             "JOIN perfil_usuario pu ON pu.id_usuario=u.id " +
-            "ORDER BY g.fecha_gasto DESC"; // Más recientes primero
+            "JOIN emprendimientos e ON e.id=u.id_emprendimiento " +
+            (filtrar ? "WHERE u.id_emprendimiento=? " : "") +
+            "ORDER BY g.fecha_gasto DESC";
 
         List<FilaGasto> lista = new ArrayList<>();
         try (Connection con = DB.obtenerConexion();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) lista.add(mapear(rs));
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            if (filtrar) ps.setInt(1, idEmprendimiento);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) lista.add(mapear(rs));
+            }
         }
         return lista;
     }
+
+    /** Retrocompatibilidad: lista todos. */
+    public List<FilaGasto> listar() throws SQLException { return listar(0); }
 
     // =========================================================
     // OBTENER UNO POR ID
@@ -274,7 +284,8 @@ public class GastosDAO {
      */
     public void editar(int idGasto, int idDetalleCompra, int idCompra,
                        String descripcion, BigDecimal total,
-                       int idMetodoPago, String fechaGasto) throws SQLException {
+                       int idMetodoPago, String fechaGasto,
+                       int idNuevoUsuario) throws SQLException {
         try (Connection con = DB.obtenerConexion()) {
             con.setAutoCommit(false); // Transacción: los 3 UPDATEs son atómicos
             try {
@@ -288,11 +299,14 @@ public class GastosDAO {
                     ps.executeUpdate();
                 }
 
-                // ── Paso 2: actualizar detalle_compra ─────────────────────
-                try (PreparedStatement ps = con.prepareStatement(
-                        "UPDATE detalle_compra SET descripcion=? WHERE id=?")) {
+                // ── Paso 2: actualizar detalle_compra (descripción + usuario si cambió) ──
+                String sqlDC = idNuevoUsuario > 0
+                    ? "UPDATE detalle_compra SET descripcion=?, id_usuario=? WHERE id=?"
+                    : "UPDATE detalle_compra SET descripcion=? WHERE id=?";
+                try (PreparedStatement ps = con.prepareStatement(sqlDC)) {
                     ps.setString(1, descripcion);
-                    ps.setInt(2, idDetalleCompra);
+                    if (idNuevoUsuario > 0) { ps.setInt(2, idNuevoUsuario); ps.setInt(3, idDetalleCompra); }
+                    else                    { ps.setInt(2, idDetalleCompra); }
                     ps.executeUpdate();
                 }
 
@@ -315,6 +329,13 @@ public class GastosDAO {
         }
     }
 
+    /** Retrocompatibilidad: editar sin cambiar usuario. */
+    public void editar(int idGasto, int idDetalleCompra, int idCompra,
+                       String descripcion, BigDecimal total,
+                       int idMetodoPago, String fechaGasto) throws SQLException {
+        editar(idGasto, idDetalleCompra, idCompra, descripcion, total, idMetodoPago, fechaGasto, 0);
+    }
+
     // =========================================================
     // HELPER PRIVADO
     // =========================================================
@@ -333,8 +354,9 @@ public class GastosDAO {
         f.descripcion     = rs.getString("descripcion");
         f.idMetodoPago    = rs.getInt("id_metodo_pago");
         f.metodoPago      = rs.getString("metodo_pago");
-        f.registradoPor   = rs.getString("registrado_por");
-        f.total           = rs.getBigDecimal("total_gasto");
+        f.registradoPor        = rs.getString("registrado_por");
+        f.total                = rs.getBigDecimal("total_gasto");
+        try { f.nombreEmprendimiento = rs.getString("nombre_emprendimiento"); } catch (Exception ignored) {}
         return f;
     }
 }

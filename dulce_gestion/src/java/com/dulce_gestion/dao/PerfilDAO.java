@@ -85,13 +85,16 @@ public class PerfilDAO {
                     p.id_genero,
                     p.id_telefono,
                     p.fecha_creacion,
-                    p.fecha_actualizacion
+                    p.fecha_actualizacion,
+                    COALESCE(u.id_emprendimiento, 0) AS id_emprendimiento,
+                    e.nombre AS nombre_emprendimiento
                 FROM usuarios u
                 JOIN correos c ON c.id = u.id_correo
                 JOIN roles r ON r.id = u.id_rol
                 JOIN perfil_usuario p ON p.id_usuario = u.id
                 JOIN telefonos t ON t.id = p.id_telefono
                 JOIN generos g ON g.id = p.id_genero
+                LEFT JOIN emprendimientos e ON e.id = u.id_emprendimiento
                 WHERE u.id = ?
                 """;
 
@@ -346,7 +349,11 @@ public class PerfilDAO {
         u.setNombreRol(rs.getString("nombre_rol"));
         u.setNombreCompleto(rs.getString("nombre_completo"));
         u.setTelefono(rs.getString("telefono"));
-        u.setGenero(rs.getString("nombre_genero")); // Alias del JOIN con generos
+        u.setGenero(rs.getString("nombre_genero"));
+        try {
+            u.setIdEmprendimiento(rs.getInt("id_emprendimiento"));
+            u.setNombreEmprendimiento(rs.getString("nombre_emprendimiento"));
+        } catch (Exception ignored) {} // columnas opcionales según la query
         return u;
     }
 }

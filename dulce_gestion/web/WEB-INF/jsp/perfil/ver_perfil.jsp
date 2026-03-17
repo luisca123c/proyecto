@@ -101,6 +101,12 @@
                         <p style="margin: 4px 0; font-size: 13px; opacity: 0.95;"><%= perfil.getTelefono() %></p>
                         <p style="margin: 6px 0 0 0; font-size: 12px; opacity: 0.9;">Género: <%= perfil.getGenero() %></p>
                         <span style="display: inline-block; background: rgba(255,255,255,0.25); color: white; padding: 6px 14px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-top: 12px;"><%= perfil.getNombreRol() %></span>
+                        <% if (!"SuperAdministrador".equals(perfil.getNombreRol()) && !perfil.getNombreEmprendimiento().isBlank()) { %>
+                        <p style="margin: 10px 0 0 0; font-size: 12px; opacity: 0.95; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            <i class="fi fi-sr-store-alt"></i>
+                            <%= perfil.getNombreEmprendimiento() %>
+                        </p>
+                        <% } %>
                     </div>
 
                     <!-- BODY PERFIL -->
@@ -127,10 +133,24 @@
                             <p style="margin: 0; padding: 11px 14px; background: #f5f5f5; border-radius: 6px; color: #333; font-size: 13px;"><%= perfil.getGenero() %></p>
                         </div>
 
-                        <div style="margin-bottom: 0;">
+                        <div style="margin-bottom: 16px;">
                             <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #666; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Rol</label>
                             <p style="margin: 0; padding: 11px 14px; background: #f5f5f5; border-radius: 6px; color: #333; font-size: 13px;"><%= perfil.getNombreRol() %></p>
                         </div>
+                        <% if (!"SuperAdministrador".equals(perfil.getNombreRol()) && !perfil.getNombreEmprendimiento().isBlank()) { %>
+                        <div style="margin-bottom: 0;">
+                            <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #666; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Emprendimiento</label>
+                            <p style="margin: 0; padding: 11px 14px; background: #f5f5f5; border-radius: 6px; color: #333; font-size: 13px; display: flex; align-items: center; gap: 8px;">
+                                <i class="fi fi-sr-store-alt" style="color: var(--color-principal-morado);"></i>
+                                <%= perfil.getNombreEmprendimiento() %>
+                            </p>
+                        </div>
+                        <% } else { %>
+                        <div style="margin-bottom: 0;">
+                            <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #666; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Emprendimiento</label>
+                            <p style="margin: 0; padding: 11px 14px; background: #f5f5f5; border-radius: 6px; color: #999; font-size: 13px; font-style: italic;">Sin emprendimiento asignado</p>
+                        </div>
+                        <% } %>
 
                         <div style="display: flex; gap: 12px; margin-top: 28px;">
                             <a href="<%= ctx %>/empleados" style="padding: 12px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; flex: 1; justify-content: center; text-transform: uppercase; letter-spacing: 0.5px;">

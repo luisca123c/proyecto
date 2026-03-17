@@ -97,6 +97,10 @@ public class EditarProductoServlet extends HttpServlet {
 
         if (!verificarAcceso(request, response)) return;
 
+        jakarta.servlet.http.HttpSession _sess = request.getSession(false);
+        com.dulce_gestion.models.Usuario _u = (_sess != null) ? (com.dulce_gestion.models.Usuario) _sess.getAttribute("usuario") : null;
+        boolean _esSuper = _u != null && "SuperAdministrador".equals(_u.getNombreRol());
+
         String idParam = request.getParameter("id"); // ID del producto desde la URL
         if (estaVacio(idParam)) {
             response.sendRedirect(request.getContextPath() + "/productos");
@@ -111,8 +115,12 @@ public class EditarProductoServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/productos");
                 return;
             }
-            request.setAttribute("producto", prod); // Para prellenar el formulario
-            cargarSelectores(request);              // Para los <select> de categoría y unidad
+            request.setAttribute("producto", prod);
+            request.setAttribute("esSuperAdmin", _esSuper);
+            cargarSelectores(request);
+            if (_esSuper) {
+                request.setAttribute("emprendimientos", new EmprendimientoDAO().listarActivos());
+            }
             request.getRequestDispatcher(VISTA).forward(request, response);
 
         } catch (Exception e) {
@@ -159,6 +167,10 @@ public class EditarProductoServlet extends HttpServlet {
         String fechaVenc    = request.getParameter("fechaVencimiento");
         String categoriaStr = request.getParameter("idCategoria");
         String unidadStr    = request.getParameter("idUnidad");
+        String empParamProd = request.getParameter("idEmprendimiento");
+        jakarta.servlet.http.HttpSession _sessP = request.getSession(false);
+        com.dulce_gestion.models.Usuario _uP = (_sessP != null) ? (com.dulce_gestion.models.Usuario) _sessP.getAttribute("usuario") : null;
+        boolean _esSuperP = _uP != null && "SuperAdministrador".equals(_uP.getNombreRol());
 
         // ── Paso 4: validar campos obligatorios ──────────────────────────
         if (estaVacio(nombre) || estaVacio(stockStr) || estaVacio(precioStr)
@@ -204,8 +216,13 @@ public class EditarProductoServlet extends HttpServlet {
 
         try {
             // ── Paso 7: actualizar los datos del producto en la BD ────────
+            int idEmpProd = 0;
+            if (_esSuperP && empParamProd != null && !empParamProd.isBlank()) {
+                try { idEmpProd = Integer.parseInt(empParamProd); } catch (NumberFormatException ignored) {}
+            }
             new EditarProductoDAO().actualizar(id, nombre, descripcion, stock,
-                                               precio, estado, fechaVenc, idCategoria, idUnidad);
+                                               precio, estado, fechaVenc, idCategoria, idUnidad,
+                                               _esSuperP, idEmpProd);
 
             // ── Paso 8: gestionar la imagen ───────────────────────────────
 
@@ -337,7 +354,14 @@ public class EditarProductoServlet extends HttpServlet {
             request.setAttribute("producto", prod);
         } catch (Exception ignored) {}
 
-        cargarSelectores(request); // Los selectores se pierden entre peticiones → recargar
+        cargarSelectores(request);
+        jakarta.servlet.http.HttpSession _sessR = request.getSession(false);
+        com.dulce_gestion.models.Usuario _uR = (_sessR != null) ? (com.dulce_gestion.models.Usuario) _sessR.getAttribute("usuario") : null;
+        boolean _esSuperR = _uR != null && "SuperAdministrador".equals(_uR.getNombreRol());
+        request.setAttribute("esSuperAdmin", _esSuperR);
+        if (_esSuperR) {
+            try { request.setAttribute("emprendimientos", new EmprendimientoDAO().listarActivos()); } catch (Exception ignored) {}
+        }
         request.setAttribute("error", error);
         request.getRequestDispatcher(VISTA).forward(request, response);
     }

@@ -1,5 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="com.dulce_gestion.models.Producto, com.dulce_gestion.models.Usuario, java.util.List" %>
+<%@ page import="com.dulce_gestion.models.Producto, com.dulce_gestion.models.Emprendimiento, com.dulce_gestion.models.Usuario, java.util.List" %>
 <%
     String   ctx       = request.getContextPath();
     String   error     = (String)   request.getAttribute("error");
@@ -20,6 +20,10 @@
     String vCat     = request.getParameter("idCategoria")      != null ? request.getParameter("idCategoria")      : String.valueOf(prod.getIdCategoria());
     String vUnidad  = request.getParameter("idUnidad")         != null ? request.getParameter("idUnidad")         : String.valueOf(prod.getIdUnidad());
     boolean tieneImagen = prod.getPathImagen() != null && !prod.getPathImagen().isBlank();
+    String vEmpId = request.getParameter("idEmprendimiento") != null
+                    ? request.getParameter("idEmprendimiento")
+                    : String.valueOf(prod.getIdEmprendimiento());
+    List<Emprendimiento> emprendimientos = (List<Emprendimiento>) request.getAttribute("emprendimientos");
 %>
 <!doctype html>
 <html lang="es">
@@ -223,6 +227,23 @@
             <i class="fi fi-sr-angle-down nv-campo__icono-edit"></i>
           </div>
         </div>
+
+        <!-- Emprendimiento (solo SuperAdmin) -->
+        <% if (esSuperAdmin && emprendimientos != null && !emprendimientos.isEmpty()) { %>
+        <div class="nv-campo">
+          <label class="nv-campo__label">Emprendimiento</label>
+          <div class="nv-campo__input-wrapper nv-campo__input-wrapper--select">
+            <select class="nv-campo__input" name="idEmprendimiento" required>
+              <% for (Emprendimiento emp : emprendimientos) { %>
+              <option value="<%= emp.getId() %>" <%= String.valueOf(emp.getId()).equals(vEmpId) ? "selected" : "" %>>
+                <%= emp.getNombre() %>
+              </option>
+              <% } %>
+            </select>
+            <i class="fi fi-sr-angle-down nv-campo__icono-edit"></i>
+          </div>
+        </div>
+        <% } %>
 
         <div class="nv-botones">
           <button type="submit" class="nv-btn nv-btn--agregar">Guardar cambios</button>

@@ -24,39 +24,50 @@ public class ComprasDAO {
         public int        idMetodoPago;
         public String     registradoPor;
         public BigDecimal total;
+        public String     nombreEmprendimiento;
     }
 
     // ── Listar todas las compras ───────────────────────────────────────────
-    public List<FilaCompra> listar() throws SQLException {
+    public List<FilaCompra> listar(int idEmprendimiento) throws SQLException {
+        boolean filtrar = idEmprendimiento > 0;
         String sql =
             "SELECT ci.id, DATE_FORMAT(ci.fecha_compra,'%d/%m/%Y %H:%i') AS fecha, " +
             "DATE_FORMAT(ci.fecha_compra,'%Y-%m-%d') AS fecha_raw, " +
             "ci.descripcion, mp.nombre AS metodo_pago, ci.id_metodo_pago, " +
-            "p.nombre_completo AS registrado_por, ci.total " +
+            "p.nombre_completo AS registrado_por, ci.total, " +
+            "e.nombre AS nombre_emprendimiento " +
             "FROM compras_insumos ci " +
             "JOIN metodo_pago mp ON mp.id = ci.id_metodo_pago " +
+            "JOIN usuarios u ON u.id = ci.id_usuario " +
             "JOIN perfil_usuario p ON p.id_usuario = ci.id_usuario " +
+            "JOIN emprendimientos e ON e.id = u.id_emprendimiento " +
+            (filtrar ? "WHERE ci.id_usuario IN (SELECT id FROM usuarios WHERE id_emprendimiento=?) " : "") +
             "ORDER BY ci.fecha_compra DESC";
 
         List<FilaCompra> lista = new ArrayList<>();
         try (Connection con = DB.obtenerConexion();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                FilaCompra fc = new FilaCompra();
-                fc.id            = rs.getInt("id");
-                fc.fecha         = rs.getString("fecha");
-                fc.fechaRaw      = rs.getString("fecha_raw");
-                fc.descripcion   = rs.getString("descripcion");
-                fc.metodoPago    = rs.getString("metodo_pago");
-                fc.idMetodoPago  = rs.getInt("id_metodo_pago");
-                fc.registradoPor = rs.getString("registrado_por");
-                fc.total         = rs.getBigDecimal("total");
-                lista.add(fc);
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            if (filtrar) ps.setInt(1, idEmprendimiento);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    FilaCompra fc = new FilaCompra();
+                    fc.id            = rs.getInt("id");
+                    fc.fecha         = rs.getString("fecha");
+                    fc.fechaRaw      = rs.getString("fecha_raw");
+                    fc.descripcion   = rs.getString("descripcion");
+                    fc.metodoPago    = rs.getString("metodo_pago");
+                    fc.idMetodoPago  = rs.getInt("id_metodo_pago");
+                    fc.registradoPor = rs.getString("registrado_por");
+                    fc.total         = rs.getBigDecimal("total");
+                    try { fc.nombreEmprendimiento = rs.getString("nombre_emprendimiento"); } catch (Exception ignored) {}
+                    lista.add(fc);
+                }
             }
         }
         return lista;
     }
+
+    public List<FilaCompra> listar() throws SQLException { return listar(0); }
 
     // ── Buscar una compra por ID (para el modal editar) ────────────────────
     public FilaCompra obtenerPorId(int id) throws SQLException {
@@ -112,19 +123,27 @@ public class ComprasDAO {
     // ── Editar compra existente ────────────────────────────────────────────
     public void editar(int id, String descripcion,
                        BigDecimal total, int idMetodoPago,
-                       String fechaDatetime) throws SQLException {
-        String sql =
-            "UPDATE compras_insumos SET descripcion=?, total=?, id_metodo_pago=?, fecha_compra=? " +
-            "WHERE id=?";
+                       String fechaDatetime, int idNuevoUsuario) throws SQLException {
+        String sql = idNuevoUsuario > 0
+            ? "UPDATE compras_insumos SET descripcion=?, total=?, id_metodo_pago=?, fecha_compra=?, id_usuario=? WHERE id=?"
+            : "UPDATE compras_insumos SET descripcion=?, total=?, id_metodo_pago=?, fecha_compra=? WHERE id=?";
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, descripcion);
             ps.setBigDecimal(2, total);
             ps.setInt(3, idMetodoPago);
             ps.setString(4, fechaDatetime);
-            ps.setInt(5, id);
+            if (idNuevoUsuario > 0) { ps.setInt(5, idNuevoUsuario); ps.setInt(6, id); }
+            else                    { ps.setInt(5, id); }
             ps.executeUpdate();
         }
+    }
+
+    /** Retrocompatibilidad. */
+    public void editar(int id, String descripcion,
+                       BigDecimal total, int idMetodoPago,
+                       String fechaDatetime) throws SQLException {
+        editar(id, descripcion, total, idMetodoPago, fechaDatetime, 0);
     }
 
     // ── Métodos de pago ────────────────────────────────────────────────────

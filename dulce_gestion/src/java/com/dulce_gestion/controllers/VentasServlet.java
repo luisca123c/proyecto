@@ -1,7 +1,10 @@
 package com.dulce_gestion.controllers;
 
 import com.dulce_gestion.dao.CarritoDAO;
+import com.dulce_gestion.dao.EmprendimientoDAO;
+import com.dulce_gestion.utils.EmpresaUtil;
 import com.dulce_gestion.models.CarritoItem;
+import com.dulce_gestion.models.Emprendimiento;
 import com.dulce_gestion.models.Producto;
 import com.dulce_gestion.models.Usuario;
 
@@ -97,7 +100,7 @@ public class VentasServlet extends HttpServlet {
         Usuario usuario = getUsuario(request, response);
         if (usuario == null) return; // Ya se redirigió al login
 
-        cargarCarrito(request, usuario.getId()); // Cargar todos los datos del carrito
+        cargarCarrito(request, usuario); // Cargar todos los datos del carrito
         request.getRequestDispatcher(VISTA).forward(request, response);
     }
 
@@ -201,7 +204,7 @@ public class VentasServlet extends HttpServlet {
 
         // Para todas las acciones excepto "confirmar":
         // Recargar el carrito y mostrar el estado actualizado
-        cargarCarrito(request, usuario.getId());
+        cargarCarrito(request, usuario);
         request.getRequestDispatcher(VISTA).forward(request, response);
     }
 
@@ -226,31 +229,49 @@ public class VentasServlet extends HttpServlet {
      * @param request   para poner los atributos
      * @param idUsuario ID del usuario propietario del carrito
      */
-    private void cargarCarrito(HttpServletRequest request, int idUsuario) {
+    private void cargarCarrito(HttpServletRequest request, Usuario usuario) {
+        int idUsuario        = usuario.getId();
+        int idEmprendimiento = EmpresaUtil.resolverEmprendimiento(usuario, request);
+        boolean esSuperAdmin = "SuperAdministrador".equals(usuario.getNombreRol());
         try {
             CarritoDAO dao = new CarritoDAO();
 
-            // Obtener o crear el carrito activo del usuario
             int idCarrito = dao.obtenerOCrearCarrito(idUsuario);
+            List<CarritoItem> items = dao.listarItems(idCarrito);
 
-            // Cargar los ítems del carrito (JOIN con productos e imágenes)
-            List<CarritoItem> items    = dao.listarItems(idCarrito);
+            // Detectar el emprendimiento de los ítems ya en el carrito
+            int empCarrito = dao.obtenerEmprendimientoDelCarrito(idCarrito);
 
-            // Catálogo de productos con stock > 0 para el selector "Agregar producto"
-            List<Producto>    productos = dao.listarProductosActivos();
+            // SuperAdmin: lee ?emp= de la URL como filtro visual del catálogo
+            // Pero si el carrito ya tiene ítems, el filtro se fuerza al emprendimiento del carrito
+            int empFiltroProductos;
+            if (esSuperAdmin) {
+                if (empCarrito > 0) {
+                    empFiltroProductos = empCarrito; // Forzar al del carrito
+                } else {
+                    String empParam = request.getParameter("emp");
+                    try { empFiltroProductos = (empParam != null) ? Integer.parseInt(empParam) : 0; }
+                    catch (NumberFormatException e) { empFiltroProductos = 0; }
+                }
+                // Cargar emprendimientos para el desplegable
+                List<Emprendimiento> emprendimientos = new EmprendimientoDAO().listarActivos();
+                request.setAttribute("emprendimientos", emprendimientos);
+                request.setAttribute("empFiltro",       empFiltroProductos);
+            } else {
+                empFiltroProductos = idEmprendimiento;
+            }
 
-            // Métodos de pago para el select del modal de confirmación
-            List<String[]>    metodos   = dao.listarMetodosPago();
+            List<Producto>  productos = dao.listarProductosActivos(empFiltroProductos);
+            List<String[]>  metodos   = dao.listarMetodosPago();
+            BigDecimal      total     = dao.calcularTotal(items);
 
-            // Calcular el total sumando los subtotales de todos los ítems
-            BigDecimal        total     = dao.calcularTotal(items);
-
-            // Poner todos los datos en el request para que el JSP los use
-            request.setAttribute("idCarrito", idCarrito);
-            request.setAttribute("items",     items);
-            request.setAttribute("productos", productos);
-            request.setAttribute("metodos",   metodos);
-            request.setAttribute("total",     total);
+            request.setAttribute("idCarrito",   idCarrito);
+            request.setAttribute("items",       items);
+            request.setAttribute("productos",   productos);
+            request.setAttribute("metodos",     metodos);
+            request.setAttribute("total",       total);
+            request.setAttribute("empCarrito",  empCarrito); // 0 = carrito vacío
+            request.setAttribute("esSuperAdmin", esSuperAdmin);
 
         } catch (SQLException e) {
             e.printStackTrace();

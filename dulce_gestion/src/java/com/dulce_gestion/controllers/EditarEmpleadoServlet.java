@@ -1,7 +1,10 @@
 package com.dulce_gestion.controllers;
 
 import com.dulce_gestion.dao.EditarEmpleadoDAO;
+import com.dulce_gestion.dao.EmprendimientoDAO;
+import com.dulce_gestion.models.Emprendimiento;
 import com.dulce_gestion.models.Usuario;
+import java.util.List;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -113,9 +116,13 @@ public class EditarEmpleadoServlet extends HttpServlet {
             }
 
             // Pasar al JSP el usuario a editar y si el solicitante es SuperAdmin
+            boolean esSuper = "SuperAdministrador".equals(solicitante.getNombreRol());
             request.setAttribute("objetivo",    objetivo);
-            request.setAttribute("esSuperAdmin",
-                "SuperAdministrador".equals(solicitante.getNombreRol())); // Para mostrar el select de rol
+            request.setAttribute("esSuperAdmin", esSuper);
+            if (esSuper) {
+                List<Emprendimiento> emps = new EmprendimientoDAO().listarActivos();
+                request.setAttribute("emprendimientos", emps);
+            }
 
             request.getRequestDispatcher(VISTA).forward(request, response);
 
@@ -170,6 +177,7 @@ public class EditarEmpleadoServlet extends HttpServlet {
         String nuevaContrasena = request.getParameter("contrasena");   // Puede ser vacío si no cambia
         String estado          = request.getParameter("estado");
         String rol             = request.getParameter("rol");          // Solo aplica si esSuperAdmin
+        String empParam        = request.getParameter("idEmprendimiento");
 
         // ── Paso 3: validar campos obligatorios ──────────────────────────
         // La contraseña NO es obligatoria — campo vacío = no cambiar
@@ -221,9 +229,15 @@ public class EditarEmpleadoServlet extends HttpServlet {
             // SuperAdmin sí puede → se usa el valor del formulario
             String rolFinal = esSuperAdmin ? rol : objetivo.getNombreRol();
 
+            // Resolver idEmprendimiento: SuperAdmin usa el del form, sino conserva el actual
+            int idEmpresaFinal = objetivo.getIdEmprendimiento(); // valor actual por defecto
+            if (esSuperAdmin && empParam != null && !empParam.isBlank()) {
+                try { idEmpresaFinal = Integer.parseInt(empParam); } catch (NumberFormatException ignored) {}
+            }
+
             // ── Paso 9: actualizar en la BD (transacción de 4 tablas) ─────
             dao.actualizar(idUsuario, nombreCompleto, telefono, genero,
-                           correo, nuevaContrasena, estado, rolFinal, esSuperAdmin);
+                           correo, nuevaContrasena, estado, rolFinal, esSuperAdmin, idEmpresaFinal);
 
         } catch (SQLException e) {
             e.printStackTrace();

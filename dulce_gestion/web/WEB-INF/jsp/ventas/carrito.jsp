@@ -1,5 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="com.dulce_gestion.models.Usuario, com.dulce_gestion.models.CarritoItem, com.dulce_gestion.models.Producto, java.util.List, java.math.BigDecimal" %>
+<%@ page import="com.dulce_gestion.models.Usuario, com.dulce_gestion.models.CarritoItem, com.dulce_gestion.models.Emprendimiento, com.dulce_gestion.models.Producto, java.util.List, java.math.BigDecimal" %>
 <%
     Usuario sesionUsuario = (Usuario) session.getAttribute("usuario");
     String ctx = request.getContextPath();
@@ -14,6 +14,12 @@
     String exitoParam   = request.getParameter("exito");
     String idVentaParam = request.getParameter("id");
     boolean exitoVenta  = "venta".equals(exitoParam);
+    // Variables de filtro para SuperAdmin
+    List<Emprendimiento> emprendimientos = (List<Emprendimiento>) request.getAttribute("emprendimientos");
+    Integer empFiltroAttr = (Integer) request.getAttribute("empFiltro");
+    int filtroActivo      = (empFiltroAttr != null) ? empFiltroAttr : 0;
+    Integer empCarritoAttr = (Integer) request.getAttribute("empCarrito");
+    int empCarrito        = (empCarritoAttr != null) ? empCarritoAttr : 0;
 %>
 <!doctype html>
 <html lang="es">
@@ -237,11 +243,49 @@
 
       <!-- AGREGAR PRODUCTOS -->
       <div class="agregar-titulo"><i class="fi fi-sr-add"></i> Agregar productos</div>
+
+      <% if (esSuperAdmin && emprendimientos != null) { %>
+        <% if (empCarrito > 0) { %>
+        <%-- Carrito con ítems: mostrar aviso del emprendimiento bloqueado --%>
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--color-principal-morado);color:#fff;border-radius:var(--radius-sm);margin-bottom:14px;font-size:13px;font-weight:600;">
+          <i class="fi fi-sr-store-alt"></i>
+          Carrito activo: solo puedes agregar productos de <strong style="margin-left:4px">
+          <% for (Emprendimiento emp : emprendimientos) { if (emp.getId() == empCarrito) { %><%= emp.getNombre() %><% } } %>
+          </strong>. Vacía el carrito para cambiar de emprendimiento.
+        </div>
+        <% } else { %>
+        <%-- Carrito vacío: mostrar desplegable de filtro --%>
+        <div class="emp-filtro-select-wrap" style="margin-bottom:16px">
+          <label class="emp-filtro-label" for="filtroEmpCarrito"><i class="fi fi-sr-store-alt"></i> Filtrar por emprendimiento</label>
+          <select id="filtroEmpCarrito" class="emp-filtro-select"
+                  onchange="window.location.href='<%= ctx %>/ventas' + (this.value ? '?emp=' + this.value : '')">
+            <option value="" <%= filtroActivo == 0 ? "selected" : "" %>>— Todos los emprendimientos —</option>
+            <% for (Emprendimiento emp : emprendimientos) { %>
+            <option value="<%= emp.getId() %>" <%= filtroActivo == emp.getId() ? "selected" : "" %>><%= emp.getNombre() %></option>
+            <% } %>
+          </select>
+        </div>
+        <% } %>
+      <% } %>
+
       <% if (productos == null || productos.isEmpty()) { %>
-      <p style="color:#aaa;font-size:0.9rem;">No hay productos activos con stock disponible.</p>
+      <p style="color:#aaa;font-size:0.9rem;">No hay productos activos con stock disponible<% if (esSuperAdmin && filtroActivo > 0) { %> en este emprendimiento<% } %>.</p>
       <% } else { %>
+      <%
+        // Para SuperAdmin viendo todos: agrupar por emprendimiento
+        String _empActualCatalogo = "";
+      %>
       <div class="productos-grid">
         <% for (Producto p : productos) { %>
+        <% if (esSuperAdmin && filtroActivo == 0 && empCarrito == 0) {
+             String _nomEmpP = p.getNombreEmprendimiento();
+             if (!_nomEmpP.equals(_empActualCatalogo)) {
+                 _empActualCatalogo = _nomEmpP; %>
+        <div class="emp-grupo-cabecera" style="grid-column:1/-1">
+          <i class="fi fi-sr-store-alt"></i><span><%= _nomEmpP %></span>
+        </div>
+        <%   }
+           } %>
         <%
           String _nom = p.getNombre().replace("\\", "\\\\").replace("'", "\\'");
         %>

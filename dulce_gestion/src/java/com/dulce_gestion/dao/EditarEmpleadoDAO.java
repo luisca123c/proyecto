@@ -61,13 +61,16 @@ public class EditarEmpleadoDAO {
                        r.nombre    AS nombre_rol,
                        p.nombre_completo,
                        t.telefono,
-                       g.nombre    AS genero
+                       g.nombre    AS genero,
+                       COALESCE(u.id_emprendimiento, 0) AS id_emprendimiento,
+                       e.nombre    AS nombre_emprendimiento
                 FROM usuarios u
                 JOIN correos        c ON c.id         = u.id_correo
                 JOIN roles          r ON r.id         = u.id_rol
                 JOIN perfil_usuario p ON p.id_usuario = u.id
                 JOIN telefonos      t ON t.id         = p.id_telefono
                 JOIN generos        g ON g.id         = p.id_genero
+                LEFT JOIN emprendimientos e ON e.id   = u.id_emprendimiento
                 WHERE u.id = ?
                 """;
 
@@ -85,6 +88,8 @@ public class EditarEmpleadoDAO {
                     u.setNombreCompleto(rs.getString("nombre_completo"));
                     u.setTelefono(rs.getString("telefono"));
                     u.setGenero(rs.getString("genero"));
+                    u.setIdEmprendimiento(rs.getInt("id_emprendimiento"));
+                    try { u.setNombreEmprendimiento(rs.getString("nombre_emprendimiento")); } catch (Exception ignored) {}
                     return u;
                 }
             }
@@ -179,7 +184,8 @@ public class EditarEmpleadoDAO {
      */
     public void actualizar(int idUsuario, String nombreCompleto, String telefono,
                            String genero, String correo, String nuevaContrasena,
-                           String estado, String rol, boolean esSuperAdmin) throws SQLException {
+                           String estado, String rol, boolean esSuperAdmin,
+                           int idEmprendimiento) throws SQLException {
 
         try (Connection con = DB.obtenerConexion()) {
             con.setAutoCommit(false); // Transacción: los 4 UPDATEs son atómicos
@@ -225,27 +231,23 @@ public class EditarEmpleadoDAO {
                     // Hay nueva contraseña → hashear antes de guardar
                     String hash = UsuarioDAO.hashSHA256(nuevaContrasena);
                     String sqlU = esSuperAdmin
-                        // SuperAdmin: cambia estado + contraseña + rol
-                        ? "UPDATE usuarios SET estado = ?, contrasena = ?, id_rol = (SELECT id FROM roles WHERE nombre = ?) WHERE id = ?"
-                        // Admin: cambia solo estado + contraseña (no puede cambiar el rol)
+                        ? "UPDATE usuarios SET estado = ?, contrasena = ?, id_rol = (SELECT id FROM roles WHERE nombre = ?), id_emprendimiento = ? WHERE id = ?"
                         : "UPDATE usuarios SET estado = ?, contrasena = ? WHERE id = ?";
                     try (PreparedStatement ps = con.prepareStatement(sqlU)) {
                         ps.setString(1, estado);
                         ps.setString(2, hash);
-                        if (esSuperAdmin) { ps.setString(3, rol); ps.setInt(4, idUsuario); }
+                        if (esSuperAdmin) { ps.setString(3, rol); ps.setInt(4, idEmprendimiento); ps.setInt(5, idUsuario); }
                         else              { ps.setInt(3, idUsuario); }
                         ps.executeUpdate();
                     }
                 } else {
                     // Sin nueva contraseña → omitir la columna contrasena del UPDATE
                     String sqlU = esSuperAdmin
-                        // SuperAdmin: cambia estado + rol
-                        ? "UPDATE usuarios SET estado = ?, id_rol = (SELECT id FROM roles WHERE nombre = ?) WHERE id = ?"
-                        // Admin: cambia solo estado
+                        ? "UPDATE usuarios SET estado = ?, id_rol = (SELECT id FROM roles WHERE nombre = ?), id_emprendimiento = ? WHERE id = ?"
                         : "UPDATE usuarios SET estado = ? WHERE id = ?";
                     try (PreparedStatement ps = con.prepareStatement(sqlU)) {
                         ps.setString(1, estado);
-                        if (esSuperAdmin) { ps.setString(2, rol); ps.setInt(3, idUsuario); }
+                        if (esSuperAdmin) { ps.setString(2, rol); ps.setInt(3, idEmprendimiento); ps.setInt(4, idUsuario); }
                         else              { ps.setInt(2, idUsuario); }
                         ps.executeUpdate();
                     }

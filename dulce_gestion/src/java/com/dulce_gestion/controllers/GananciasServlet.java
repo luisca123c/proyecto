@@ -1,6 +1,10 @@
 package com.dulce_gestion.controllers;
 
+import com.dulce_gestion.dao.EmprendimientoDAO;
+import com.dulce_gestion.utils.EmpresaUtil;
 import com.dulce_gestion.dao.GananciasDAO;
+import com.dulce_gestion.models.Emprendimiento;
+import java.util.List;
 import com.dulce_gestion.models.Usuario;
 
 import jakarta.servlet.ServletException;
@@ -122,9 +126,22 @@ public class GananciasServlet extends HttpServlet {
         try {
             GananciasDAO dao = new GananciasDAO();
 
-            // obtenerResumen() calcula fechas, consulta ventas y gastos, y computa ganancia
-            // usuario.getId() se usa para filtrar por empleado si esAdminOSuper = false
-            request.setAttribute("resumen",      dao.obtenerResumen(usuario.getId(), esAdminOSuper, periodo));
+            // Filtro por emprendimiento para SuperAdmin
+            boolean esSuperAdmin = "SuperAdministrador".equals(rol);
+            int empFiltro = 0;
+            if (esSuperAdmin) {
+                String empParam = request.getParameter("emp");
+                if (empParam != null && !empParam.isBlank()) {
+                    try { empFiltro = Integer.parseInt(empParam); } catch (NumberFormatException ignored) {}
+                }
+                List<Emprendimiento> emps = new EmprendimientoDAO().listarActivos();
+                request.setAttribute("emprendimientos", emps);
+                request.setAttribute("empFiltro", empFiltro);
+            } else {
+                // EmpresaUtil corrige sesiones antiguas con idEmprendimiento=0
+                empFiltro = EmpresaUtil.resolverEmprendimiento(usuario, request);
+            }
+            request.setAttribute("resumen", dao.obtenerResumen(usuario.getId(), esAdminOSuper, periodo, empFiltro));
 
             // Lista de los últimos 12 meses para el selector del filtro de período
             request.setAttribute("meses",        dao.listarMesesDisponibles());

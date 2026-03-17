@@ -113,6 +113,12 @@
                         <p style="margin: 4px 0; font-size: 13px; opacity: 0.95;"><%= perfil.getTelefono() %></p>
                         <p style="margin: 6px 0 0 0; font-size: 12px; opacity: 0.9;">Género: <%= perfil.getGenero() %></p>
                         <span style="display: inline-block; background: rgba(255,255,255,0.25); color: white; padding: 6px 14px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-top: 12px;"><%= perfil.getNombreRol() %></span>
+                        <% if (!"SuperAdministrador".equals(rolSolicitante) && perfil.getNombreEmprendimiento() != null && !perfil.getNombreEmprendimiento().isBlank()) { %>
+                        <p style="margin: 10px 0 0 0; font-size: 12px; opacity: 0.95; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            <i class="fi fi-sr-store-alt"></i>
+                            <%= perfil.getNombreEmprendimiento() %>
+                        </p>
+                        <% } %>
                     </div>
 
                     <!-- BODY PERFIL -->

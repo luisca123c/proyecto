@@ -2,6 +2,7 @@ package com.dulce_gestion.controllers;
 
 import com.dulce_gestion.dao.CrearEmpleadoDAO;
 import com.dulce_gestion.dao.EmprendimientoDAO;
+import com.dulce_gestion.utils.EmpresaUtil;
 import com.dulce_gestion.models.Emprendimiento;
 import com.dulce_gestion.models.Usuario;
 import java.util.List;
@@ -161,7 +162,7 @@ public class NuevoEmpleadoServlet extends HttpServlet {
             try { idEmprendimiento = Integer.parseInt(empParam); }
             catch (NumberFormatException e) { idEmprendimiento = 0; }
         } else {
-            idEmprendimiento = solicitante.getIdEmprendimiento();
+            idEmprendimiento = EmpresaUtil.resolverEmprendimiento(solicitante, request);
         }
 
         if (estaVacio(nombreCompleto) || estaVacio(telefono) || estaVacio(genero)

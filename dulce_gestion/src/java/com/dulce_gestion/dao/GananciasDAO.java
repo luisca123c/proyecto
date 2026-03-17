@@ -143,7 +143,8 @@ public class GananciasDAO {
      * @return                  objeto ResumenPeriodo con todos los datos calculados
      * @throws SQLException     si hay error al consultar la BD
      */
-    public ResumenPeriodo obtenerResumen(int idUsuario, boolean esAdminOSuperAdmin, String periodo)
+    public ResumenPeriodo obtenerResumen(int idUsuario, boolean esAdminOSuperAdmin,
+                                         String periodo, int idEmprendimiento)
             throws SQLException {
 
         ResumenPeriodo r = new ResumenPeriodo();
@@ -188,27 +189,42 @@ public class GananciasDAO {
         // ── Fase 2: consultar ventas del período ──────────────────────────
         // Para Admin/SuperAdmin: todas las ventas (sin filtro por usuario)
         // Para Empleado: solo sus propias ventas (AND c.id_usuario = ?)
-        String sqlVentas = esAdminOSuperAdmin
-            ? "SELECT v.id, DATE_FORMAT(v.fecha_venta,'%d/%m/%Y %H:%i') AS fecha, " +
+        // Admin/SuperAdmin filtra por emprendimiento; Empleado por su propio usuario
+        String sqlVentas;
+        int paramIdx3Ventas = 0; // 0=no param extra, >0=id a poner en ?3
+        if (esAdminOSuperAdmin && idEmprendimiento > 0) {
+            sqlVentas = "SELECT v.id, DATE_FORMAT(v.fecha_venta,'%d/%m/%Y %H:%i') AS fecha, " +
               "mp.nombre AS metodo_pago, pu.nombre_completo AS realizada_por, v.total_venta " +
               "FROM ventas v JOIN metodo_pago mp ON mp.id=v.id_metodo_pago " +
               "JOIN carrito c ON c.id=v.id_carrito " +
               "JOIN usuarios u ON u.id=c.id_usuario " +
               "JOIN perfil_usuario pu ON pu.id_usuario=u.id " +
-              "WHERE DATE(v.fecha_venta) BETWEEN ? AND ? ORDER BY v.fecha_venta DESC"
-            : "SELECT v.id, DATE_FORMAT(v.fecha_venta,'%d/%m/%Y %H:%i') AS fecha, " +
+              "WHERE DATE(v.fecha_venta) BETWEEN ? AND ? AND u.id_emprendimiento=? ORDER BY v.fecha_venta DESC";
+            paramIdx3Ventas = idEmprendimiento;
+        } else if (esAdminOSuperAdmin) {
+            sqlVentas = "SELECT v.id, DATE_FORMAT(v.fecha_venta,'%d/%m/%Y %H:%i') AS fecha, " +
+              "mp.nombre AS metodo_pago, pu.nombre_completo AS realizada_por, v.total_venta " +
+              "FROM ventas v JOIN metodo_pago mp ON mp.id=v.id_metodo_pago " +
+              "JOIN carrito c ON c.id=v.id_carrito " +
+              "JOIN usuarios u ON u.id=c.id_usuario " +
+              "JOIN perfil_usuario pu ON pu.id_usuario=u.id " +
+              "WHERE DATE(v.fecha_venta) BETWEEN ? AND ? ORDER BY v.fecha_venta DESC";
+        } else {
+            sqlVentas = "SELECT v.id, DATE_FORMAT(v.fecha_venta,'%d/%m/%Y %H:%i') AS fecha, " +
               "mp.nombre AS metodo_pago, pu.nombre_completo AS realizada_por, v.total_venta " +
               "FROM ventas v JOIN metodo_pago mp ON mp.id=v.id_metodo_pago " +
               "JOIN carrito c ON c.id=v.id_carrito " +
               "JOIN usuarios u ON u.id=c.id_usuario " +
               "JOIN perfil_usuario pu ON pu.id_usuario=u.id " +
               "WHERE DATE(v.fecha_venta) BETWEEN ? AND ? AND c.id_usuario=? ORDER BY v.fecha_venta DESC";
+            paramIdx3Ventas = idUsuario;
+        }
 
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(sqlVentas)) {
             ps.setString(1, r.fechaInicio);
             ps.setString(2, r.fechaFin);
-            if (!esAdminOSuperAdmin) ps.setInt(3, idUsuario); // Filtro por empleado
+            if (paramIdx3Ventas > 0) ps.setInt(3, paramIdx3Ventas);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     FilaVenta fv    = new FilaVenta();
@@ -226,16 +242,21 @@ public class GananciasDAO {
         // ── Fase 3: consultar gastos (solo Admin y SuperAdmin) ────────────
         // Los empleados no ven información de gastos del negocio
         if (esAdminOSuperAdmin) {
+            String filtroEmpGastos = idEmprendimiento > 0
+                ? "AND u.id_emprendimiento=? " : "";
             String sqlGastos =
                 "SELECT g.id, DATE_FORMAT(g.fecha_gasto,'%d/%m/%Y %H:%i') AS fecha, " +
                 "dc.descripcion, mp.nombre AS metodo_pago, g.total_gasto " +
                 "FROM gastos g JOIN detalle_compra dc ON dc.id=g.id_detalle_compra " +
                 "JOIN metodo_pago mp ON mp.id=g.id_metodo_pago " +
-                "WHERE DATE(g.fecha_gasto) BETWEEN ? AND ? ORDER BY g.fecha_gasto DESC";
+                "JOIN usuarios u ON u.id=dc.id_usuario " +
+                "WHERE DATE(g.fecha_gasto) BETWEEN ? AND ? " + filtroEmpGastos +
+                "ORDER BY g.fecha_gasto DESC";
             try (Connection con = DB.obtenerConexion();
                  PreparedStatement ps = con.prepareStatement(sqlGastos)) {
                 ps.setString(1, r.fechaInicio);
                 ps.setString(2, r.fechaFin);
+                if (idEmprendimiento > 0) ps.setInt(3, idEmprendimiento);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
                         FilaGasto fg    = new FilaGasto();
@@ -254,16 +275,21 @@ public class GananciasDAO {
         // Ganancia neta = ingresos por ventas menos egresos por gastos
         // Fase 4 — Consultar compras de insumos del período (solo admins)
         if (esAdminOSuperAdmin) {
+            String filtroEmpCompras = idEmprendimiento > 0
+                ? "AND u2.id_emprendimiento=? " : "";
             String sqlCompras =
                 "SELECT ci.id, DATE_FORMAT(ci.fecha_compra,'%d/%m/%Y %H:%i') AS fecha, " +
                 "ci.descripcion, mp.nombre AS metodo_pago, ci.total " +
                 "FROM compras_insumos ci " +
                 "JOIN metodo_pago mp ON mp.id = ci.id_metodo_pago " +
-                "WHERE DATE(ci.fecha_compra) BETWEEN ? AND ? ORDER BY ci.fecha_compra DESC";
+                "JOIN usuarios u2 ON u2.id = ci.id_usuario " +
+                "WHERE DATE(ci.fecha_compra) BETWEEN ? AND ? " + filtroEmpCompras +
+                "ORDER BY ci.fecha_compra DESC";
             try (Connection conC = DB.obtenerConexion();
                  PreparedStatement psC = conC.prepareStatement(sqlCompras)) {
                 psC.setString(1, r.fechaInicio);
                 psC.setString(2, r.fechaFin);
+                if (idEmprendimiento > 0) psC.setInt(3, idEmprendimiento);
                 try (ResultSet rsC = psC.executeQuery()) {
                     while (rsC.next()) {
                         FilaCompra fc = new FilaCompra();
@@ -308,6 +334,12 @@ public class GananciasDAO {
      *          ordenada del más reciente al más antiguo
      * @throws SQLException si hay error al consultar la BD
      */
+    /** Retrocompatibilidad. */
+    public ResumenPeriodo obtenerResumen(int idUsuario, boolean esAdmin, String periodo)
+            throws SQLException {
+        return obtenerResumen(idUsuario, esAdmin, periodo, 0);
+    }
+
     public List<String[]> listarMesesDisponibles() throws SQLException {
         // Genera 12 filas usando UNION de los números 0 al 11
         // seq=0 → mes actual, seq=1 → mes pasado, etc.

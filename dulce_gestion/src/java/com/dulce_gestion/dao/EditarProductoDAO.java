@@ -52,11 +52,24 @@ public class EditarProductoDAO {
      * @param idUnidad         nueva unidad de medida (FK)
      * @throws SQLException    si hay error al actualizar o si el ID no existe
      */
+    /**
+     * Actualiza los datos del producto. Si esSuperAdmin e idEmprendimiento > 0,
+     * también reasigna el emprendimiento.
+     */
     public void actualizar(int id, String nombre, String descripcion, int stock,
                            BigDecimal precio, String estado, String fechaVencimiento,
-                           int idCategoria, int idUnidad) throws SQLException {
+                           int idCategoria, int idUnidad,
+                           boolean esSuperAdmin, int idEmprendimiento) throws SQLException {
 
-        String sql = """
+        String sql = esSuperAdmin && idEmprendimiento > 0
+            ? """
+                UPDATE productos
+                SET nombre = ?, descripcion = ?, stock_actual = ?,
+                    precio_unitario = ?, estado = ?, fecha_vencimiento = ?,
+                    id_categoria = ?, id_unidad = ?, id_emprendimiento = ?
+                WHERE id = ?
+                """
+            : """
                 UPDATE productos
                 SET nombre = ?, descripcion = ?, stock_actual = ?,
                     precio_unitario = ?, estado = ?, fecha_vencimiento = ?,
@@ -68,16 +81,28 @@ public class EditarProductoDAO {
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, nombre.trim());
-            ps.setString(2, descripcion != null ? descripcion.trim() : ""); // null → string vacío
+            ps.setString(2, descripcion != null ? descripcion.trim() : "");
             ps.setInt(3, stock);
             ps.setBigDecimal(4, precio);
             ps.setString(5, estado);
             ps.setString(6, fechaVencimiento);
             ps.setInt(7, idCategoria);
             ps.setInt(8, idUnidad);
-            ps.setInt(9, id); // Condición WHERE: solo actualizar el producto con este ID
-
+            if (esSuperAdmin && idEmprendimiento > 0) {
+                ps.setInt(9, idEmprendimiento);
+                ps.setInt(10, id);
+            } else {
+                ps.setInt(9, id);
+            }
             ps.executeUpdate();
         }
+    }
+
+    /** Retrocompatibilidad: actualiza sin cambiar el emprendimiento. */
+    public void actualizar(int id, String nombre, String descripcion, int stock,
+                           BigDecimal precio, String estado, String fechaVencimiento,
+                           int idCategoria, int idUnidad) throws SQLException {
+        actualizar(id, nombre, descripcion, stock, precio, estado,
+                   fechaVencimiento, idCategoria, idUnidad, false, 0);
     }
 }

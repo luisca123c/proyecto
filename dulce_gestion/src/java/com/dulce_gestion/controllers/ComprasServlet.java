@@ -1,6 +1,11 @@
 package com.dulce_gestion.controllers;
 
 import com.dulce_gestion.dao.ComprasDAO;
+import com.dulce_gestion.dao.UsuarioDAO;
+import com.dulce_gestion.dao.EmprendimientoDAO;
+import com.dulce_gestion.utils.EmpresaUtil;
+import com.dulce_gestion.models.Emprendimiento;
+import java.util.List;
 import com.dulce_gestion.dao.ComprasDAO.FilaCompra;
 import com.dulce_gestion.models.Usuario;
 
@@ -25,6 +30,7 @@ public class ComprasServlet extends HttpServlet {
             throws ServletException, IOException {
 
         if (!verificarAcceso(request, response)) return;
+        Usuario usuario = (Usuario) request.getSession(false).getAttribute("usuario");
 
         String editarId = request.getParameter("editar");
         if (editarId != null) {
@@ -36,7 +42,7 @@ public class ComprasServlet extends HttpServlet {
             }
         }
 
-        cargarDatos(request);
+        cargarDatos(request, usuario);
         request.getRequestDispatcher(VISTA).forward(request, response);
     }
 
@@ -70,10 +76,32 @@ public class ComprasServlet extends HttpServlet {
 
             if ("editar".equals(accion)) {
                 int idCompra = Integer.parseInt(request.getParameter("idCompra"));
-                dao.editar(idCompra, descripcion.trim(), total, idMetodoPago, fechaHora);
+                int idNuevoUsuarioCompra = 0;
+                if ("SuperAdministrador".equals(usuario.getNombreRol())) {
+                    String empEditR = request.getParameter("idEmpresaRegistro");
+                    if (empEditR != null && !empEditR.isBlank()) {
+                        try {
+                            int empEditId = Integer.parseInt(empEditR);
+                            if (empEditId > 0) idNuevoUsuarioCompra = new UsuarioDAO().obtenerAdminDeEmprendimiento(empEditId);
+                        } catch (NumberFormatException ignored) {}
+                    }
+                }
+                dao.editar(idCompra, descripcion.trim(), total, idMetodoPago, fechaHora, idNuevoUsuarioCompra);
                 response.sendRedirect(request.getContextPath() + "/compras?exito=editado");
             } else {
-                dao.registrar(usuario.getId(), descripcion.trim(), total, idMetodoPago, fechaHora);
+                int idUsuarioRegistra = usuario.getId();
+                if ("SuperAdministrador".equals(usuario.getNombreRol())) {
+                    String empR = request.getParameter("idEmpresaRegistro");
+                    int empIdR = 0;
+                    if (empR != null && !empR.isBlank()) {
+                        try { empIdR = Integer.parseInt(empR); } catch (NumberFormatException ignored) {}
+                    }
+                    if (empIdR > 0) {
+                        int adminId = new UsuarioDAO().obtenerAdminDeEmprendimiento(empIdR);
+                        if (adminId > 0) idUsuarioRegistra = adminId;
+                    }
+                }
+                dao.registrar(idUsuarioRegistra, descripcion.trim(), total, idMetodoPago, fechaHora);
                 response.sendRedirect(request.getContextPath() + "/compras?exito=creado");
             }
             return;
@@ -93,14 +121,28 @@ public class ComprasServlet extends HttpServlet {
                 request.setAttribute("compraEditar", dao.obtenerPorId(id));
             } catch (Exception ignored) {}
         }
-        cargarDatos(request);
+        cargarDatos(request, usuario);
         request.getRequestDispatcher(VISTA).forward(request, response);
     }
 
-    private void cargarDatos(HttpServletRequest request) {
+    private void cargarDatos(HttpServletRequest request, Usuario usuario) {
         try {
             ComprasDAO dao = new ComprasDAO();
-            request.setAttribute("compras",  dao.listar());
+            boolean esSuperAdmin = "SuperAdministrador".equals(usuario.getNombreRol());
+            int empFiltro = 0;
+            if (esSuperAdmin) {
+                String empParam = request.getParameter("emp");
+                if (empParam != null && !empParam.isBlank()) {
+                    try { empFiltro = Integer.parseInt(empParam); } catch (NumberFormatException ignored) {}
+                }
+                List<Emprendimiento> emps = new EmprendimientoDAO().listarActivos();
+                request.setAttribute("emprendimientos", emps);
+                request.setAttribute("empFiltro", empFiltro);
+            } else {
+                // EmpresaUtil corrige sesiones antiguas con idEmprendimiento=0
+                empFiltro = EmpresaUtil.resolverEmprendimiento(usuario, request);
+            }
+            request.setAttribute("compras",  dao.listar(empFiltro));
             request.setAttribute("metodos",  dao.listarMetodosPago());
         } catch (SQLException e) {
             e.printStackTrace();

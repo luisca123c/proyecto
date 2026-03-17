@@ -1,7 +1,11 @@
 package com.dulce_gestion.controllers;
 
+import com.dulce_gestion.dao.EmprendimientoDAO;
+import com.dulce_gestion.utils.EmpresaUtil;
 import com.dulce_gestion.dao.HistorialDAO;
+import com.dulce_gestion.models.Emprendimiento;
 import com.dulce_gestion.models.Usuario;
+import java.util.List;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -10,6 +14,7 @@ import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
+import java.sql.Connection;
 
 /**
  * GET  /historial          → lista de ventas según rol
@@ -42,8 +47,28 @@ public class HistorialServlet extends HttpServlet {
         // Normal → cargar lista de ventas y forward al JSP
         try {
             HistorialDAO dao = new HistorialDAO();
-            request.setAttribute("ventas",       dao.listar(u.getId(), esAdminOSuper));
-            request.setAttribute("esAdminOSuper", esAdminOSuper);
+            boolean esSuperAdmin = "SuperAdministrador".equals(u.getNombreRol());
+
+            int empFiltro = 0;
+            if (esSuperAdmin) {
+                // SuperAdmin: leer ?emp= de la URL
+                String empParam = request.getParameter("emp");
+                if (empParam != null && !empParam.isBlank()) {
+                    try { empFiltro = Integer.parseInt(empParam); }
+                    catch (NumberFormatException ignored) { empFiltro = 0; }
+                }
+                // Cargar lista de emprendimientos para el desplegable
+                List<Emprendimiento> emprendimientos = new EmprendimientoDAO().listarActivos();
+                request.setAttribute("emprendimientos", emprendimientos);
+                request.setAttribute("empFiltro", empFiltro);
+            } else {
+                // EmpresaUtil corrige sesiones antiguas con idEmprendimiento=0
+                empFiltro = EmpresaUtil.resolverEmprendimiento(u, request);
+            }
+
+            request.setAttribute("ventas",        dao.listar(u.getId(), esAdminOSuper, empFiltro));
+            request.setAttribute("esAdminOSuper",  esAdminOSuper);
+            request.setAttribute("esSuperAdmin",   esSuperAdmin);
         } catch (SQLException e) {
             e.printStackTrace();
             request.setAttribute("error", "Error al cargar el historial de ventas.");

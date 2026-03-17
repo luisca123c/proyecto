@@ -1,5 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="com.dulce_gestion.models.Usuario" %>
+<%@ page import="com.dulce_gestion.models.Usuario, com.dulce_gestion.models.Emprendimiento, java.util.List" %>
 <%
     Usuario sesionUsuario = (Usuario) session.getAttribute("usuario");
     String ctx = request.getContextPath();
@@ -14,6 +14,8 @@
     String vCorreo   = request.getParameter("correo")         != null ? request.getParameter("correo")         : obj.getCorreo();
     String vEstado   = request.getParameter("estado")         != null ? request.getParameter("estado")         : obj.getEstado();
     String vRol      = request.getParameter("rol")            != null ? request.getParameter("rol")            : obj.getNombreRol();
+    String vEmpId    = request.getParameter("idEmprendimiento") != null ? request.getParameter("idEmprendimiento") : String.valueOf(obj.getIdEmprendimiento());
+    List<Emprendimiento> emprendimientos = (List<Emprendimiento>) request.getAttribute("emprendimientos");
 %>
 <!doctype html>
 <html lang="es">
@@ -207,6 +209,24 @@
             <% } %>
           </div>
         </div>
+
+        <!-- Emprendimiento (solo SuperAdmin) -->
+        <% if (esSuperAdmin && emprendimientos != null && !emprendimientos.isEmpty()) { %>
+        <div class="nv-campo">
+          <label class="nv-campo__label">Emprendimiento</label>
+          <div class="nv-campo__input-wrapper nv-campo__input-wrapper--select">
+            <select class="nv-campo__input" name="idEmprendimiento" required>
+              <option value="" disabled>Selecciona emprendimiento</option>
+              <% for (Emprendimiento emp : emprendimientos) { %>
+              <option value="<%= emp.getId() %>" <%= String.valueOf(emp.getId()).equals(vEmpId) ? "selected" : "" %>>
+                <%= emp.getNombre() %>
+              </option>
+              <% } %>
+            </select>
+            <i class="fi fi-sr-angle-down nv-campo__icono-edit"></i>
+          </div>
+        </div>
+        <% } %>
 
         <!-- Botones -->
         <div class="nv-botones">
