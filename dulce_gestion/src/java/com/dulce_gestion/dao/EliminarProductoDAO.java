@@ -9,25 +9,25 @@ import java.sql.SQLException;
 /**
  * ============================================================
  * DAO: EliminarProductoDAO
- * Tabla escrita:     productos
- * Tablas en CASCADE: imagenes_producto (se borra automáticamente)
- * Usado por:         EliminarProductoServlet
- * ============================================================
+ * Tabla escrita:  productos (UPDATE estado = 'Inactivo')
+ * Usado por:      EliminarProductoServlet
  *
+ * La eliminación es LÓGICA: el producto pasa a estado
+ * 'Inactivo' en vez de borrarse físicamente, preservando
+ * el historial de ventas asociado.
+ * ============================================================
  */
 public class EliminarProductoDAO {
 
     /**
-     * Elimina el producto con el ID dado.
-     * CASCADE elimina automáticamente su registro en imagenes_producto.
+     * Inactiva el producto con el ID dado (eliminación lógica).
+     * Un producto inactivo no aparece en catálogo ni en el carrito.
      *
-     * @param idProducto  ID del producto a eliminar
-     * @throws SQLException si la BD rechaza la eliminación (ej: tiene ventas)
+     * @param idProducto  ID del producto a inactivar
+     * @throws SQLException si ocurre un error de base de datos
      */
-    public void eliminar(int idProducto) throws SQLException {
-        // DELETE simple: la integridad referencial la maneja la BD con CASCADE/RESTRICT
-        String sql = "DELETE FROM productos WHERE id = ?";
-
+    public void inactivar(int idProducto) throws SQLException {
+        String sql = "UPDATE productos SET estado = 'Inactivo' WHERE id = ?";
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, idProducto);

@@ -1,330 +1,282 @@
 /**
  * validaciones.js
  * Validaciones en tiempo real para todos los formularios del sistema.
- * - nombreCompleto: sin números, máx 100 caracteres
- * - telefono: solo dígitos, 7–10 caracteres
- * - correo: formato válido, máx 100 caracteres
- * - nombre (producto): sin números, máx 200 caracteres
- * - stock: entero >= 0
- * - precio: decimal > 0
- * - fechaVencimiento: no en el pasado
- * - contraseña: mínimo 8 caracteres (en perfil)
  */
 
-/* ── Helpers globales ─────────────────────────────────────────────────── */
+/* ── Helpers ─────────────────────────────────────────────────────────── */
 function valMostrarError(input, mensaje) {
-  let span = input.parentElement.querySelector('.val-error');
+  const contenedor = input.parentElement;
+  let span = contenedor.querySelector('.val-error');
   if (!span) {
     span = document.createElement('span');
     span.className = 'val-error';
-    span.style.cssText = 'display:block;color:#e53935;font-size:12px;margin-top:4px;';
-    input.parentElement.appendChild(span);
+    span.setAttribute('aria-live', 'polite');
+    span.style.cssText = 'display:block;color:#e53935;font-size:12px;margin-top:5px;font-weight:500;';
+    contenedor.appendChild(span);
   }
   span.textContent = mensaje;
   input.style.borderColor = '#e53935';
+  input.style.boxShadow   = '0 0 0 2px rgba(229,57,53,.20)';
 }
 
 function valLimpiarError(input) {
   const span = input.parentElement.querySelector('.val-error');
   if (span) span.textContent = '';
   input.style.borderColor = '';
+  input.style.boxShadow   = '';
 }
 
-/* ── Toggle mostrar/ocultar contraseña ───────────────────────────────── */
 function togglePass(btn) {
-  var input = btn.previousElementSibling;
-  if (!input || input.tagName !== 'INPUT') {
-    input = btn.parentElement.querySelector('input[type="password"], input[type="text"]');
-  }
+  const input = btn.previousElementSibling ||
+    btn.parentElement.querySelector('input[type="password"],input[type="text"]');
   if (!input) return;
-  var mostrar = input.type === 'password';
+  const mostrar = input.type === 'password';
   input.type = mostrar ? 'text' : 'password';
-  var icon = btn.querySelector('i');
-  if (icon) {
-    icon.className = mostrar ? 'fi fi-sr-eye-crossed' : 'fi fi-sr-eye';
-  }
+  const icon = btn.querySelector('i');
+  if (icon) icon.className = mostrar ? 'fi fi-sr-eye-crossed' : 'fi fi-sr-eye';
 }
 
-/* ── Constantes de límites (deben coincidir con la BD) ────────────────── */
+/* ── Constantes ─────────────────────────────────────────────────────── */
 const LIMITE = {
-  nombre:     100,  // perfil_usuario.nombre_completo VARCHAR(100)
-  correo:     100,  // correos.correo VARCHAR(100)
-  telefono:    10,  // telefonos.telefono VARCHAR(20) — máx dígitos prácticos
-  telMin:       7,  // mínimo dígitos
-  producto:    50,  // productos.nombre VARCHAR(50)
-  prodDesc:   100,  // productos.descripcion VARCHAR(100)
-  gastoDesc:  150,  // detalle_compra.descripcion / compras_insumos.descripcion VARCHAR(150)
-  pasMin:       8,  // mínimo contraseña (perfil)
-  pasMinEmp:    6,  // mínimo contraseña (crear/editar empleado)
+  nombre:    100,  correo:    100,  telefono:  10,
+  telMin:      7,  producto:   50,  prodDesc: 100,
+  gastoDesc: 150,  pasMin:      6,
 };
-
 const REGEX_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-/* ══════════════════════════════════════════════════════════════════════
-   Se ejecuta cuando el DOM está listo
-══════════════════════════════════════════════════════════════════════ */
+/* ── Inicialización ─────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', function () {
 
-  /* ── NOMBRE COMPLETO ─────────────────────────────────────────────── */
+  /* NOMBRE COMPLETO */
   document.querySelectorAll('input[name="nombreCompleto"]').forEach(function (input) {
     if (input.type === 'hidden') return;
     input.setAttribute('maxlength', LIMITE.nombre);
-
     input.addEventListener('input', function () {
-      // Eliminar dígitos en tiempo real
-      const limpio = this.value.replace(/[0-9]/g, '');
-      if (this.value !== limpio) this.value = limpio;
-
-      const len = this.value.trim().length;
-      if (/[0-9]/.test(this.value)) {
+      const tieneNum = /[0-9]/.test(this.value);
+      if (tieneNum) {
+        this.value = this.value.replace(/[0-9]/g, '');
         valMostrarError(this, 'El nombre no puede contener números.');
-      } else if (len > LIMITE.nombre) {
-        valMostrarError(this, `Máximo ${LIMITE.nombre} caracteres (tienes ${len}).`);
-      } else {
-        valLimpiarError(this);
+        return;
       }
+      this.value.trim().length > LIMITE.nombre
+        ? valMostrarError(this, 'Máximo ' + LIMITE.nombre + ' caracteres.')
+        : valLimpiarError(this);
     });
-
     input.addEventListener('blur', function () {
       if (this.value.trim() === '') { valLimpiarError(this); return; }
-      if (/[0-9]/.test(this.value)) {
-        valMostrarError(this, 'El nombre no puede contener números.');
-      } else if (this.value.trim().length > LIMITE.nombre) {
-        valMostrarError(this, `Máximo ${LIMITE.nombre} caracteres.`);
-      } else {
-        valLimpiarError(this);
-      }
+      /[0-9]/.test(this.value)
+        ? valMostrarError(this, 'El nombre no puede contener números.')
+        : valLimpiarError(this);
     });
   });
 
-  /* ── TELÉFONO ────────────────────────────────────────────────────── */
-  document.querySelectorAll('input[name="telefono"]').forEach(function (input) {
-    input.setAttribute('maxlength', LIMITE.telefono);
-
-    input.addEventListener('keydown', function (e) {
-      const permitidas = ['Backspace','Delete','Tab','ArrowLeft','ArrowRight','Home','End'];
-      if (permitidas.includes(e.key) || e.ctrlKey || e.metaKey) return;
-      if (!/^\d$/.test(e.key)) {
-        e.preventDefault();
-        valMostrarError(this, 'El teléfono solo acepta números.');
-      }
-    });
-
-    input.addEventListener('input', function () {
-      const limpio = this.value.replace(/\D/g, '').slice(0, LIMITE.telefono);
-      if (this.value !== limpio) this.value = limpio;
-
-      const len = this.value.length;
-      if (len > 0 && len < LIMITE.telMin) {
-        valMostrarError(this, `Mínimo ${LIMITE.telMin} dígitos (tienes ${len}).`);
-      } else if (len > LIMITE.telefono) {
-        valMostrarError(this, `Máximo ${LIMITE.telefono} dígitos.`);
-      } else {
-        valLimpiarError(this);
-      }
-    });
-
-    input.addEventListener('blur', function () {
-      if (this.value.trim() === '') { valLimpiarError(this); return; }
-      const len = this.value.length;
-      if (len < LIMITE.telMin) {
-        valMostrarError(this, `Mínimo ${LIMITE.telMin} dígitos (tienes ${len}).`);
-      } else {
-        valLimpiarError(this);
-      }
-    });
-  });
-
-  /* ── CORREO ──────────────────────────────────────────────────────── */
-  document.querySelectorAll('input[name="correo"]').forEach(function (input) {
-    input.setAttribute('maxlength', LIMITE.correo);
-
-    input.addEventListener('input', function () {
-      if (this.value.length > LIMITE.correo) {
-        valMostrarError(this, `Máximo ${LIMITE.correo} caracteres.`);
-      } else if (REGEX_CORREO.test(this.value.trim())) {
-        valLimpiarError(this);
-      }
-    });
-
-    input.addEventListener('blur', function () {
-      if (this.value.trim() === '') { valLimpiarError(this); return; }
-      if (this.value.length > LIMITE.correo) {
-        valMostrarError(this, `Máximo ${LIMITE.correo} caracteres.`);
-      } else if (!REGEX_CORREO.test(this.value.trim())) {
-        valMostrarError(this, 'Escribe un correo válido (ej: usuario@dominio.com).');
-      } else {
-        valLimpiarError(this);
-      }
-    });
-  });
-
-  /* ── DESCRIPCIÓN DE PRODUCTO (opcional, máx 200) ───────────────── */
-  document.querySelectorAll('input[name="descripcion"]').forEach(function (input) {
-    input.setAttribute('maxlength', LIMITE.prodDesc);
-    input.addEventListener('blur', function () {
-      if (this.value.length > LIMITE.prodDesc) {
-        valMostrarError(this, `Máximo ${LIMITE.prodDesc} caracteres.`);
-      } else {
-        valLimpiarError(this);
-      }
-    });
-  });
-
-  /* ── DESCRIPCIÓN DE GASTOS/COMPRAS (obligatoria, máx 150) ───────── */
-  document.querySelectorAll('textarea[name="descripcion"]').forEach(function (input) {
-    input.setAttribute('maxlength', LIMITE.gastoDesc);
-    input.addEventListener('blur', function () {
-      if (this.value.trim() === '') {
-        valMostrarError(this, 'La descripción es obligatoria.');
-      } else if (this.value.length > LIMITE.gastoDesc) {
-        valMostrarError(this, `Máximo ${LIMITE.gastoDesc} caracteres (tienes ${this.value.length}).`);
-      } else {
-        valLimpiarError(this);
-      }
-    });
-    input.addEventListener('input', function () {
-      if (this.value.length <= LIMITE.gastoDesc && this.value.trim() !== '') valLimpiarError(this);
-    });
-  });
-
-    /* ── NOMBRE DE PRODUCTO ──────────────────────────────────────────── */
+  /* NOMBRE DE PRODUCTO */
   document.querySelectorAll('input[name="nombre"]').forEach(function (input) {
     if (input.type === 'hidden') return;
     input.setAttribute('maxlength', LIMITE.producto);
-
     input.addEventListener('input', function () {
-      const limpio = this.value.replace(/[0-9]/g, '');
-      if (this.value !== limpio) this.value = limpio;
-
-      const len = this.value.trim().length;
-      if (/[0-9]/.test(this.value)) {
-        valMostrarError(this, 'El nombre no puede contener números.');
-      } else if (len > LIMITE.producto) {
-        valMostrarError(this, `Máximo ${LIMITE.producto} caracteres (tienes ${len}).`);
-      } else {
-        valLimpiarError(this);
+      const tieneNum = /[0-9]/.test(this.value);
+      if (tieneNum) {
+        this.value = this.value.replace(/[0-9]/g, '');
+        valMostrarError(this, 'El nombre del producto no puede contener números.');
+        return;
       }
+      this.value.trim().length > LIMITE.producto
+        ? valMostrarError(this, 'Máximo ' + LIMITE.producto + ' caracteres (tienes ' + this.value.trim().length + ').')
+        : valLimpiarError(this);
     });
-
     input.addEventListener('blur', function () {
       if (this.value.trim() === '') { valLimpiarError(this); return; }
-      if (/[0-9]/.test(this.value)) {
-        valMostrarError(this, 'El nombre no puede contener números.');
-      } else if (this.value.trim().length > LIMITE.producto) {
-        valMostrarError(this, `Máximo ${LIMITE.producto} caracteres.`);
-      } else {
-        valLimpiarError(this);
-      }
+      /[0-9]/.test(this.value)
+        ? valMostrarError(this, 'El nombre del producto no puede contener números.')
+        : valLimpiarError(this);
     });
   });
 
-  /* ── STOCK ───────────────────────────────────────────────────────── */
-  document.querySelectorAll('input[name="stock"]').forEach(function (input) {
-    input.addEventListener('blur', function () {
-      if (this.value === '') { valLimpiarError(this); return; }
-      const val = parseInt(this.value);
-      if (isNaN(val) || val < 0) {
-        valMostrarError(this, 'El stock debe ser un número mayor o igual a 0.');
-      } else {
-        valLimpiarError(this);
-      }
+  /* TELÉFONO */
+  document.querySelectorAll('input[name="telefono"]').forEach(function (input) {
+    input.setAttribute('maxlength', LIMITE.telefono);
+    input.addEventListener('keydown', function (e) {
+      const ok = ['Backspace','Delete','Tab','ArrowLeft','ArrowRight','Home','End'];
+      if (ok.includes(e.key) || e.ctrlKey || e.metaKey) return;
+      if (!/^\d$/.test(e.key)) { e.preventDefault(); valMostrarError(this, 'Solo se permiten dígitos (0–9).'); }
     });
     input.addEventListener('input', function () {
-      if (parseInt(this.value) >= 0) valLimpiarError(this);
+      const limpio = this.value.replace(/\D/g, '').slice(0, LIMITE.telefono);
+      if (this.value !== limpio) this.value = limpio;
+      const len = this.value.length;
+      if (len > 0 && len < LIMITE.telMin)
+        valMostrarError(this, 'Mínimo ' + LIMITE.telMin + ' dígitos (llevas ' + len + ').');
+      else valLimpiarError(this);
+    });
+    input.addEventListener('blur', function () {
+      if (!this.value.trim()) { valLimpiarError(this); return; }
+      this.value.length < LIMITE.telMin
+        ? valMostrarError(this, 'Mínimo ' + LIMITE.telMin + ' dígitos.')
+        : valLimpiarError(this);
     });
   });
 
-  /* ── PRECIO ──────────────────────────────────────────────────────── */
+  /* CORREO */
+  document.querySelectorAll('input[name="correo"]').forEach(function (input) {
+    input.setAttribute('maxlength', LIMITE.correo);
+    input.addEventListener('input', function () {
+      if (this.value.length > LIMITE.correo)
+        valMostrarError(this, 'Máximo ' + LIMITE.correo + ' caracteres.');
+      else if (REGEX_CORREO.test(this.value.trim())) valLimpiarError(this);
+    });
+    input.addEventListener('blur', function () {
+      if (!this.value.trim()) { valLimpiarError(this); return; }
+      if (!REGEX_CORREO.test(this.value.trim()))
+        valMostrarError(this, 'Escribe un correo válido (ej: usuario@dominio.com).');
+      else valLimpiarError(this);
+    });
+  });
+
+  /* DESCRIPCIÓN PRODUCTO (input, opcional) */
+  document.querySelectorAll('input[name="descripcion"]').forEach(function (input) {
+    input.setAttribute('maxlength', LIMITE.prodDesc);
+    input.addEventListener('input', function () {
+      const restantes = LIMITE.prodDesc - this.value.length;
+      if (restantes < 0)
+        valMostrarError(this, 'Máximo ' + LIMITE.prodDesc + ' caracteres.');
+      else if (restantes <= 15) {
+        valMostrarError(this, 'Te quedan ' + restantes + ' caracteres.');
+        input.style.borderColor = '#ff9800';
+        input.style.boxShadow   = '0 0 0 2px rgba(255,152,0,.20)';
+      } else valLimpiarError(this);
+    });
+  });
+
+  /* DESCRIPCIÓN GASTOS/COMPRAS (textarea, obligatoria) */
+  document.querySelectorAll('textarea[name="descripcion"]').forEach(function (input) {
+    input.setAttribute('maxlength', LIMITE.gastoDesc);
+    input.addEventListener('input', function () {
+      if (this.value.trim()) valLimpiarError(this);
+      if (this.value.length > LIMITE.gastoDesc)
+        valMostrarError(this, 'Máximo ' + LIMITE.gastoDesc + ' caracteres.');
+    });
+    input.addEventListener('blur', function () {
+      if (!this.value.trim()) valMostrarError(this, 'La descripción es obligatoria.');
+      else if (this.value.length > LIMITE.gastoDesc) valMostrarError(this, 'Máximo ' + LIMITE.gastoDesc + ' caracteres.');
+      else valLimpiarError(this);
+    });
+  });
+
+  /* STOCK */
+  document.querySelectorAll('input[name="stock"]').forEach(function (input) {
+    input.addEventListener('input', function () {
+      if (this.value === '') { valLimpiarError(this); return; }
+      if (this.value.includes('.') || this.value.includes(','))
+        { valMostrarError(this, 'El stock debe ser un número entero (sin decimales).'); return; }
+      const val = parseInt(this.value, 10);
+      if (isNaN(val)) valMostrarError(this, 'El stock debe ser un número válido.');
+      else if (val < 0) valMostrarError(this, 'El stock no puede ser negativo.');
+      else valLimpiarError(this);
+    });
+    input.addEventListener('blur', function () {
+      if (this.value === '') { valLimpiarError(this); return; }
+      const val = parseInt(this.value, 10);
+      (isNaN(val) || val < 0)
+        ? valMostrarError(this, 'El stock debe ser un número entero mayor o igual a 0.')
+        : valLimpiarError(this);
+    });
+  });
+
+  /* PRECIO */
   document.querySelectorAll('input[name="precio"]').forEach(function (input) {
+    input.addEventListener('input', function () {
+      if (this.value === '') { valLimpiarError(this); return; }
+      const val = parseFloat(this.value);
+      if (isNaN(val)) valMostrarError(this, 'El precio debe ser un número válido (ej: 1500 o 1500.50).');
+      else if (val < 0) valMostrarError(this, 'El precio no puede ser negativo.');
+      else if (val === 0) valMostrarError(this, 'El precio debe ser mayor a cero.');
+      else valLimpiarError(this);
+    });
     input.addEventListener('blur', function () {
       if (this.value === '') { valLimpiarError(this); return; }
       const val = parseFloat(this.value);
-      if (isNaN(val) || val <= 0) {
-        valMostrarError(this, 'El precio debe ser mayor a cero.');
-      } else {
-        valLimpiarError(this);
-      }
-    });
-    input.addEventListener('input', function () {
-      if (parseFloat(this.value) > 0) valLimpiarError(this);
+      (isNaN(val) || val <= 0)
+        ? valMostrarError(this, 'El precio debe ser un número mayor a cero.')
+        : valLimpiarError(this);
     });
   });
 
-  /* ── FECHA DE VENCIMIENTO ────────────────────────────────────────── */
+  /* FECHA DE VENCIMIENTO */
   document.querySelectorAll('input[name="fechaVencimiento"]').forEach(function (input) {
-    // Establecer mínimo como hoy
-    const hoyISO = new Date().toISOString().split('T')[0];
-    input.setAttribute('min', hoyISO);
-
-    input.addEventListener('change', function () {
+    input.setAttribute('min', new Date().toISOString().split('T')[0]);
+    function validar() {
       if (!this.value) { valLimpiarError(this); return; }
-      const hoy     = new Date(); hoy.setHours(0,0,0,0);
-      const elegida = new Date(this.value + 'T00:00:00');
-      if (elegida < hoy) {
-        valMostrarError(this, 'La fecha de vencimiento no puede ser anterior a hoy.');
-      } else {
-        valLimpiarError(this);
-      }
-    });
-  });
-
-  /* ── FECHA DE GASTO/COMPRA (no puede ser futura) ─────────────────── */
-  document.querySelectorAll('input[name="fecha"]').forEach(function (input) {
-    function validarFecha() {
-      if (!input.value) { valLimpiarError(input); return; }
-      const hoy     = new Date(); hoy.setHours(0,0,0,0);
-      const elegida = new Date(input.value + 'T00:00:00');
-      if (elegida > hoy) {
-        valMostrarError(input, 'La fecha no puede ser una fecha futura.');
-      } else {
-        valLimpiarError(input);
-      }
+      const hoy = new Date(); hoy.setHours(0,0,0,0);
+      new Date(this.value + 'T00:00:00') < hoy
+        ? valMostrarError(this, 'La fecha de vencimiento no puede ser anterior a hoy.')
+        : valLimpiarError(this);
     }
-    input.addEventListener('change', validarFecha);
-    input.addEventListener('blur',   validarFecha);
-    input.addEventListener('input',  validarFecha);
+    input.addEventListener('change', validar);
+    input.addEventListener('blur',   validar);
   });
 
-  /* ── CONTRASEÑA NUEVA (perfil) ───────────────────────────────────── */
+  /* FECHA GASTO/COMPRA */
+  document.querySelectorAll('input[name="fecha"]').forEach(function (input) {
+    input.setAttribute('max', new Date().toISOString().split('T')[0]);
+    function validar() {
+      if (!this.value) { valLimpiarError(this); return; }
+      const hoy = new Date(); hoy.setHours(0,0,0,0);
+      new Date(this.value + 'T00:00:00') > hoy
+        ? valMostrarError(this, 'La fecha no puede ser futura.')
+        : valLimpiarError(this);
+    }
+    input.addEventListener('change', validar);
+    input.addEventListener('blur',   validar);
+    input.addEventListener('input',  validar);
+  });
+
+  /* CONTRASEÑA NUEVA + CONFIRMAR (perfil) */
   document.querySelectorAll('input[name="contrasennaNueva"]').forEach(function (input) {
-    input.addEventListener('blur', function () {
-      if (this.value === '') { valLimpiarError(this); return; }
+    input.addEventListener('input', function () {
+      if (!this.value) { valLimpiarError(this); return; }
       if (this.value.length < LIMITE.pasMin) {
-        valMostrarError(this, `Mínimo ${LIMITE.pasMin} caracteres.`);
+        valMostrarError(this, 'Mínimo ' + LIMITE.pasMin + ' caracteres (llevas ' + this.value.length + ').');
       } else {
         valLimpiarError(this);
+        const confirmar = document.querySelector('input[name="contrasennaNuevaConfirm"]');
+        if (confirmar && confirmar.value)
+          confirmar.value !== this.value
+            ? valMostrarError(confirmar, 'Las contraseñas no coinciden.')
+            : valLimpiarError(confirmar);
       }
     });
   });
 
   document.querySelectorAll('input[name="contrasennaNuevaConfirm"]').forEach(function (input) {
-    input.addEventListener('blur', function () {
-      if (this.value === '') { valLimpiarError(this); return; }
+    function validar() {
+      if (!this.value) { valLimpiarError(this); return; }
       const nueva = document.querySelector('input[name="contrasennaNueva"]');
-      if (nueva && this.value !== nueva.value) {
-        valMostrarError(this, 'Las contraseñas no coinciden.');
-      } else {
-        valLimpiarError(this);
-      }
+      nueva && this.value !== nueva.value
+        ? valMostrarError(this, 'Las contraseñas no coinciden.')
+        : valLimpiarError(this);
+    }
+    input.addEventListener('input', validar);
+    input.addEventListener('blur',  validar);
+  });
+
+  /* CONTRASEÑA (crear/editar empleado) */
+  document.querySelectorAll('input[name="contrasena"][type="password"]').forEach(function (input) {
+    input.addEventListener('input', function () {
+      if (!this.value.trim()) { valLimpiarError(this); return; }
+      this.value.trim().length < LIMITE.pasMin
+        ? valMostrarError(this, 'Mínimo ' + LIMITE.pasMin + ' caracteres (llevas ' + this.value.trim().length + ').')
+        : valLimpiarError(this);
+    });
+    input.addEventListener('blur', function () {
+      if (!this.value.trim()) { valLimpiarError(this); return; }
+      this.value.trim().length < LIMITE.pasMin
+        ? valMostrarError(this, 'Mínimo ' + LIMITE.pasMin + ' caracteres.')
+        : valLimpiarError(this);
     });
   });
 
-  /* ── CONTRASEÑA (nuevo/editar empleado) ──────────────────────────── */
-  document.querySelectorAll('input[name="contrasena"]').forEach(function (input) {
-    if (input.type === 'password') {
-      input.addEventListener('blur', function () {
-        if (this.value === '' || this.value.trim() === '') { valLimpiarError(this); return; }
-        if (this.value.trim().length < 6) {
-          valMostrarError(this, 'Mínimo 6 caracteres.');
-        } else {
-          valLimpiarError(this);
-        }
-      });
-    }
-  });
-
-  /* ── BLOQUEO EN SUBMIT ───────────────────────────────────────────── */
+  /* ── BLOQUEO EN SUBMIT ─────────────────────────────────────────── */
   document.querySelectorAll('form').forEach(function (form) {
     if (form.dataset.valInit) return;
     form.dataset.valInit = '1';
@@ -332,97 +284,81 @@ document.addEventListener('DOMContentLoaded', function () {
     form.addEventListener('submit', function (e) {
       let hayErrores = false;
 
-      const check = (selector, fn) => {
-        form.querySelectorAll(selector).forEach(function (input) {
-          if (input.type === 'hidden') return;
-          const msg = fn(input);
-          if (msg) { valMostrarError(input, msg); hayErrores = true; }
-        });
-      };
-
-      // Nombre completo
-      check('input[name="nombreCompleto"]', inp => {
-        if (/[0-9]/.test(inp.value)) return 'El nombre no puede contener números.';
-        if (inp.value.trim().length > LIMITE.nombre) return `Máximo ${LIMITE.nombre} caracteres.`;
-        return null;
+      const check = (selector, fn) => form.querySelectorAll(selector).forEach(function (inp) {
+        if (inp.type === 'hidden') return;
+        const msg = fn(inp);
+        if (msg) { valMostrarError(inp, msg); hayErrores = true; }
       });
 
-      // Teléfono
-      check('input[name="telefono"]', inp => {
-        const val = inp.value.replace(/\D/g, '');
-        if (val.length > 0 && val.length < LIMITE.telMin) return `Mínimo ${LIMITE.telMin} dígitos.`;
-        if (val.length > LIMITE.telefono) return `Máximo ${LIMITE.telefono} dígitos.`;
+      check('input[name="nombreCompleto"]', i => {
+        if (!i.value.trim()) return 'El nombre completo es obligatorio.';
+        if (/[0-9]/.test(i.value)) return 'El nombre no puede contener números.';
         return null;
       });
-
-      // Correo
-      check('input[name="correo"]', inp => {
-        if (inp.value.trim() === '') return null;
-        if (inp.value.length > LIMITE.correo) return `Máximo ${LIMITE.correo} caracteres.`;
-        if (!REGEX_CORREO.test(inp.value.trim())) return 'Correo inválido (ej: usuario@dominio.com).';
+      check('input[name="nombre"]', i => {
+        if (!i.value.trim()) return 'El nombre es obligatorio.';
+        if (/[0-9]/.test(i.value)) return 'El nombre del producto no puede contener números.';
         return null;
       });
-
-      // Nombre producto
-      check('input[name="nombre"]', inp => {
-        if (/[0-9]/.test(inp.value)) return 'El nombre no puede contener números.';
-        if (inp.value.trim().length > LIMITE.producto) return `Máximo ${LIMITE.producto} caracteres.`;
+      check('input[name="telefono"]', i => {
+        if (!i.value.trim()) return 'El teléfono es obligatorio.';
+        const d = i.value.replace(/\D/g,'');
+        if (d.length < LIMITE.telMin) return 'Mínimo ' + LIMITE.telMin + ' dígitos.';
         return null;
       });
-
-      // Stock
-      check('input[name="stock"]', inp => {
-        if (inp.value === '') return null;
-        const val = parseInt(inp.value);
-        if (isNaN(val) || val < 0) return 'El stock debe ser mayor o igual a 0.';
+      check('input[name="correo"]', i => {
+        if (!i.value.trim()) return 'El correo es obligatorio.';
+        if (!REGEX_CORREO.test(i.value.trim())) return 'Correo inválido (ej: usuario@dominio.com).';
         return null;
       });
-
-      // Precio
-      check('input[name="precio"]', inp => {
-        if (inp.value === '') return null;
-        const val = parseFloat(inp.value);
-        if (isNaN(val) || val <= 0) return 'El precio debe ser mayor a cero.';
+      check('input[name="stock"]', i => {
+        if (i.value === '') return 'El stock es obligatorio.';
+        const v = parseInt(i.value,10);
+        if (isNaN(v)) return 'Stock debe ser un número entero válido.';
+        if (v < 0)    return 'El stock no puede ser negativo.';
         return null;
       });
-
-      // Fecha vencimiento (no puede ser en el pasado)
-      check('input[name="fechaVencimiento"]', inp => {
-        if (!inp.value) return null;
-        const hoy     = new Date(); hoy.setHours(0,0,0,0);
-        const elegida = new Date(inp.value + 'T00:00:00');
-        if (elegida < hoy) return 'La fecha de vencimiento no puede ser anterior a hoy.';
+      check('input[name="precio"]', i => {
+        if (i.value === '') return 'El precio es obligatorio.';
+        const v = parseFloat(i.value);
+        if (isNaN(v) || v <= 0) return 'El precio debe ser mayor a cero.';
         return null;
       });
-
-      // Fecha de gasto/compra (no puede ser futura)
-      check('input[name="fecha"]', inp => {
-        if (!inp.value) return null;
-        const hoy     = new Date(); hoy.setHours(0,0,0,0);
-        const elegida = new Date(inp.value + 'T00:00:00');
-        if (elegida > hoy) return 'La fecha no puede ser una fecha futura.';
+      check('input[name="fechaVencimiento"]', i => {
+        if (!i.value) return 'La fecha de vencimiento es obligatoria.';
+        const hoy = new Date(); hoy.setHours(0,0,0,0);
+        if (new Date(i.value+'T00:00:00') < hoy) return 'No puede ser anterior a hoy.';
         return null;
       });
-
-      // Contraseña nueva (perfil)
-      check('input[name="contrasennaNueva"]', inp => {
-        if (inp.value === '') return null;
-        if (inp.value.length < LIMITE.pasMin) return `Mínimo ${LIMITE.pasMin} caracteres.`;
+      check('input[name="fecha"]', i => {
+        if (!i.value) return 'La fecha es obligatoria.';
+        const hoy = new Date(); hoy.setHours(0,0,0,0);
+        if (new Date(i.value+'T00:00:00') > hoy) return 'La fecha no puede ser futura.';
         return null;
       });
-      check('input[name="contrasennaNuevaConfirm"]', inp => {
-        if (inp.value === '') return null;
-        const nueva = form.querySelector('input[name="contrasennaNueva"]');
-        if (nueva && inp.value !== nueva.value) return 'Las contraseñas no coinciden.';
+      check('input[name="contrasennaNueva"]', i => {
+        if (!i.value) return null;
+        if (i.value.length < LIMITE.pasMin) return 'Mínimo ' + LIMITE.pasMin + ' caracteres.';
+        return null;
+      });
+      check('input[name="contrasennaNuevaConfirm"]', i => {
+        if (!i.value) return null;
+        const n = form.querySelector('input[name="contrasennaNueva"]');
+        if (n && i.value !== n.value) return 'Las contraseñas no coinciden.';
+        return null;
+      });
+      check('input[name="contrasena"][type="password"]', i => {
+        if (!i.value.trim()) return null;
+        if (i.value.trim().length < LIMITE.pasMin) return 'Mínimo ' + LIMITE.pasMin + ' caracteres.';
         return null;
       });
 
       if (hayErrores) {
         e.preventDefault();
-        const primerError = form.querySelector('.val-error:not(:empty)');
-        if (primerError) primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const primero = form.querySelector('.val-error:not(:empty)');
+        if (primero) primero.scrollIntoView({ behavior:'smooth', block:'center' });
       }
     });
   });
 
-});
+}); // fin DOMContentLoaded

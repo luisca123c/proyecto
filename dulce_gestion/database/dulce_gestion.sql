@@ -21,7 +21,7 @@ CREATE TABLE permisos (
 
 CREATE TABLE categorias (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(100) UNIQUE NOT NULL,
+    nombre VARCHAR(25) UNIQUE NOT NULL,
     descripcion VARCHAR(150),
     activo TINYINT(1) NOT NULL DEFAULT 1
 );
@@ -33,13 +33,13 @@ CREATE TABLE estado_carrito (
 
 CREATE TABLE unidad_medida (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(50) UNIQUE NOT NULL,
+    nombre VARCHAR(25) UNIQUE NOT NULL,
     activo TINYINT(1) NOT NULL DEFAULT 1
 );
 
 CREATE TABLE metodo_pago (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(50) UNIQUE NOT NULL,
+    nombre VARCHAR(25) UNIQUE NOT NULL,
     activo TINYINT(1) NOT NULL DEFAULT 1
 );
 
@@ -113,8 +113,7 @@ CREATE TABLE rol_permiso (
 );
 
 -- ── PRODUCTOS ────────────────────────────────────────────────────────────
--- Cada producto pertenece a un emprendimiento directamente
--- porque un producto no tiene un "usuario responsable" fijo.
+-- Cada producto pertenece a un emprendimiento directamente.
 
 CREATE TABLE productos (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -136,8 +135,6 @@ CREATE TABLE productos (
 );
 
 -- ── CARRITO Y VENTAS ──────────────────────────────────────────────────────
--- El emprendimiento se deriva por: ventas → carrito → usuarios → id_emprendimiento
--- No hay redundancia: cada usuario ya sabe a qué emprendimiento pertenece.
 
 CREATE TABLE carrito (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -170,15 +167,16 @@ CREATE TABLE ventas (
     id_carrito INT NOT NULL,
     id_metodo_pago INT NOT NULL,
     total_venta DECIMAL(10,2) NOT NULL,
+    id_emprendimiento INT NULL COMMENT 'Emprendimiento al que pertenece la venta, derivado de los productos del carrito.',
     FOREIGN KEY (id_carrito) REFERENCES carrito(id)
         ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (id_metodo_pago) REFERENCES metodo_pago(id)
-        ON DELETE RESTRICT ON UPDATE CASCADE
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (id_emprendimiento) REFERENCES emprendimientos(id)
+        ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- ── GASTOS ────────────────────────────────────────────────────────────────
--- El emprendimiento se deriva por: gastos → detalle_compra → usuarios → id_emprendimiento
--- No hay redundancia.
 
 CREATE TABLE compras (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -188,13 +186,16 @@ CREATE TABLE compras (
 
 CREATE TABLE detalle_compra (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    id_usuario INT NOT NULL,           -- de aquí se saca el emprendimiento
+    id_usuario INT NOT NULL,
     descripcion VARCHAR(150),
     id_compra INT NOT NULL,
+    id_emprendimiento INT NULL COMMENT 'Emprendimiento destino del gasto. Solo se popula cuando lo registra el SuperAdministrador.',
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id)
         ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (id_compra) REFERENCES compras(id)
-        ON DELETE CASCADE ON UPDATE CASCADE
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (id_emprendimiento) REFERENCES emprendimientos(id)
+        ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 CREATE TABLE gastos (
@@ -210,20 +211,21 @@ CREATE TABLE gastos (
 );
 
 -- ── COMPRAS DE INSUMOS ────────────────────────────────────────────────────
--- El emprendimiento se deriva por: compras_insumos → usuarios → id_emprendimiento
--- No hay redundancia.
 
 CREATE TABLE compras_insumos (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    id_usuario INT NOT NULL,           -- de aquí se saca el emprendimiento
+    id_usuario INT NOT NULL,
     descripcion VARCHAR(150) NOT NULL,
     total DECIMAL(10,2) NOT NULL,
     id_metodo_pago INT NOT NULL,
     fecha_compra DATETIME NOT NULL,
+    id_emprendimiento INT NULL COMMENT 'Emprendimiento destino de la compra. Solo se popula cuando lo registra el SuperAdministrador.',
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id)
         ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (id_metodo_pago) REFERENCES metodo_pago(id)
-        ON DELETE RESTRICT ON UPDATE CASCADE
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (id_emprendimiento) REFERENCES emprendimientos(id)
+        ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- ── AUXILIARES ────────────────────────────────────────────────────────────
@@ -364,7 +366,6 @@ INSERT INTO productos (nombre, descripcion, stock_actual, id_unidad, precio_unit
 -- ════════════════════════════════════════════════════════════════
 -- DATOS HISTÓRICOS (Enero–Marzo 2026)
 -- Enero: GANANCIA | Febrero: GANANCIA | Marzo: PÉRDIDA
--- El emprendimiento se deriva siempre del id_usuario del carrito
 -- Carritos 1-23: históricos (Inactivo=2), 24-31: activos (Activo=1)
 -- ════════════════════════════════════════════════════════════════
 
@@ -450,39 +451,42 @@ INSERT INTO detalle_carrito (id_carrito, id_producto, cantidad) VALUES
 (23, 10, 3);
 
 -- ── VENTAS CONFIRMADAS ────────────────────────────────────────
--- Emp1 Enero: 39500 | Emp2 Enero: 36500 (ambos GANANCIA)
--- Emp1 Feb:   50500 | Emp2 Feb:   55500 (ambos GANANCIA)
--- Emp1 Mar:   10500 | Emp2 Mar:   11000 (ambos PÉRDIDA)
-INSERT INTO ventas (fecha_venta, id_carrito, id_metodo_pago, total_venta) VALUES
+-- id_emprendimiento deriva del emprendimiento de los productos del carrito:
+--   Carritos 1-5, 10-14, 20-21 → emp1 (Dulce Gestión)
+--   Carritos 6-9, 15-19, 22-23 → emp2 (Postres del Valle)
+-- Emp1 Enero: 39500 | Emp2 Enero: 36500
+-- Emp1 Feb:   50500 | Emp2 Feb:   55500
+-- Emp1 Mar:   10500 | Emp2 Mar:   11000
+INSERT INTO ventas (fecha_venta, id_carrito, id_metodo_pago, total_venta, id_emprendimiento) VALUES
 -- Enero emp1
-('2026-01-05 10:45:00',  1, 1,  10500.00),
-('2026-01-09 11:30:00',  2, 1,   5000.00),
-('2026-01-15 14:50:00',  3, 2,  10500.00),
-('2026-01-20 16:20:00',  4, 1,   6000.00),
-('2026-01-26 10:00:00',  5, 2,   7500.00),
+('2026-01-05 10:45:00',  1, 1,  10500.00, 1),
+('2026-01-09 11:30:00',  2, 1,   5000.00, 1),
+('2026-01-15 14:50:00',  3, 2,  10500.00, 1),
+('2026-01-20 16:20:00',  4, 1,   6000.00, 1),
+('2026-01-26 10:00:00',  5, 2,   7500.00, 1),
 -- Enero emp2
-('2026-01-06 10:40:00',  6, 1,  12000.00),
-('2026-01-12 12:35:00',  7, 2,  11500.00),
-('2026-01-18 15:25:00',  8, 1,   7000.00),
-('2026-01-24 17:15:00',  9, 1,   6000.00),
+('2026-01-06 10:40:00',  6, 1,  12000.00, 2),
+('2026-01-12 12:35:00',  7, 2,  11500.00, 2),
+('2026-01-18 15:25:00',  8, 1,   7000.00, 2),
+('2026-01-24 17:15:00',  9, 1,   6000.00, 2),
 -- Febrero emp1
-('2026-02-03 10:55:00', 10, 1,  16000.00),
-('2026-02-08 13:30:00', 11, 2,   7500.00),
-('2026-02-13 15:40:00', 12, 1,  10500.00),
-('2026-02-19 09:25:00', 13, 1,   9000.00),
-('2026-02-25 11:20:00', 14, 2,   7500.00),
+('2026-02-03 10:55:00', 10, 1,  16000.00, 1),
+('2026-02-08 13:30:00', 11, 2,   7500.00, 1),
+('2026-02-13 15:40:00', 12, 1,  10500.00, 1),
+('2026-02-19 09:25:00', 13, 1,   9000.00, 1),
+('2026-02-25 11:20:00', 14, 2,   7500.00, 1),
 -- Febrero emp2
-('2026-02-04 10:50:00', 15, 2,  12000.00),
-('2026-02-10 14:30:00', 16, 1,   9000.00),
-('2026-02-16 16:25:00', 17, 1,  12000.00),
-('2026-02-22 09:35:00', 18, 2,  12000.00),
-('2026-02-27 11:40:00', 19, 1,  10500.00),
--- Marzo emp1 (pocas ventas → pérdida vs costos altos)
-('2026-03-04 10:20:00', 20, 1,   5000.00),
-('2026-03-11 14:15:00', 21, 2,   5500.00),
--- Marzo emp2 (pocas ventas → pérdida)
-('2026-03-05 11:10:00', 22, 1,   5000.00),
-('2026-03-12 15:20:00', 23, 2,   6000.00);
+('2026-02-04 10:50:00', 15, 2,  12000.00, 2),
+('2026-02-10 14:30:00', 16, 1,   9000.00, 2),
+('2026-02-16 16:25:00', 17, 1,  12000.00, 2),
+('2026-02-22 09:35:00', 18, 2,  12000.00, 2),
+('2026-02-27 11:40:00', 19, 1,  10500.00, 2),
+-- Marzo emp1
+('2026-03-04 10:20:00', 20, 1,   5000.00, 1),
+('2026-03-11 14:15:00', 21, 2,   5500.00, 1),
+-- Marzo emp2
+('2026-03-05 11:10:00', 22, 1,   5000.00, 2),
+('2026-03-12 15:20:00', 23, 2,   6000.00, 2);
 
 -- ── CARRITOS ACTIVOS (uno por usuario para operar normalmente) ─
 INSERT INTO carrito (id_usuario, fecha_creacion, id_estado_carro) VALUES
@@ -498,35 +502,34 @@ INSERT INTO carrito (id_usuario, fecha_creacion, id_estado_carro) VALUES
 -- ── STOCK ACTUALIZADO TRAS VENTAS HISTÓRICAS ──────────────────
 -- prod1: vendidas 11 unid  | prod2: 9  | prod3: 7  | prod4: 6  | prod5: 5
 -- prod6: vendidas  4 unid  | prod7: 5  | prod8: 1  | prod9: 10 | prod10: 11
-UPDATE productos SET stock_actual = 39 WHERE id = 1;  -- Helado chocolate
-UPDATE productos SET stock_actual = 41 WHERE id = 2;  -- Helado maracuyá
-UPDATE productos SET stock_actual = 33 WHERE id = 3;  -- Helado coco
-UPDATE productos SET stock_actual = 34 WHERE id = 4;  -- Helado oreo
-UPDATE productos SET stock_actual = 40 WHERE id = 5;  -- Helado arequipe
-UPDATE productos SET stock_actual = 26 WHERE id = 6;  -- Brownie chocolate
-UPDATE productos SET stock_actual = 20 WHERE id = 7;  -- Cheesecake fresas
-UPDATE productos SET stock_actual = 19 WHERE id = 8;  -- Torta vainilla
-UPDATE productos SET stock_actual = 25 WHERE id = 9;  -- Helado vainilla
-UPDATE productos SET stock_actual = 29 WHERE id = 10; -- Paleta mango
+UPDATE productos SET stock_actual = 39 WHERE id = 1;
+UPDATE productos SET stock_actual = 41 WHERE id = 2;
+UPDATE productos SET stock_actual = 33 WHERE id = 3;
+UPDATE productos SET stock_actual = 34 WHERE id = 4;
+UPDATE productos SET stock_actual = 40 WHERE id = 5;
+UPDATE productos SET stock_actual = 26 WHERE id = 6;
+UPDATE productos SET stock_actual = 20 WHERE id = 7;
+UPDATE productos SET stock_actual = 19 WHERE id = 8;
+UPDATE productos SET stock_actual = 25 WHERE id = 9;
+UPDATE productos SET stock_actual = 29 WHERE id = 10;
 
--- ── COMPRAS DE INSUMOS ── 3 por mes, derivadas del usuario (emp1 o emp2)
+-- ── COMPRAS DE INSUMOS ── derivadas del usuario (emp1 o emp2)
 INSERT INTO compras_insumos (id_usuario, descripcion, total, id_metodo_pago, fecha_compra) VALUES
--- Enero (total: 18,000)
-(2, 'Leche entera para helados (20 L)',    5000.00, 1, '2026-01-05 09:00:00'),  -- carlos emp1
-(6, 'Frutas tropicales: maracuyá y coco', 7000.00, 2, '2026-01-12 10:00:00'),  -- sofia  emp2
-(3, 'Azúcar, crema de leche y vainilla',  6000.00, 1, '2026-01-19 11:00:00'),  -- ana    emp1
--- Febrero (total: 20,000)
-(2, 'Cacao en polvo y chocolate bitter',  8000.00, 1, '2026-02-03 09:30:00'),  -- carlos emp1
-(6, 'Galletas Oreo y arequipe x 2 kg',   6000.00, 2, '2026-02-10 10:30:00'),  -- sofia  emp2
-(3, 'Harina, huevos y mantequilla',       6000.00, 1, '2026-02-17 11:30:00'),  -- ana    emp1
--- Marzo (total: 22,000)
-(2, 'Frutas frescas: fresas y mangos',    7000.00, 1, '2026-03-02 09:00:00'),  -- carlos emp1
-(6, 'Crema de leche y queso crema',       8000.00, 2, '2026-03-09 10:00:00'),  -- sofia  emp2
-(3, 'Azúcar, colorantes y esencias',      7000.00, 1, '2026-03-16 11:00:00');  -- ana    emp1
+-- Enero
+(2, 'Leche entera para helados (20 L)',    5000.00, 1, '2026-01-05 09:00:00'),
+(6, 'Frutas tropicales: maracuyá y coco', 7000.00, 2, '2026-01-12 10:00:00'),
+(3, 'Azúcar, crema de leche y vainilla',  6000.00, 1, '2026-01-19 11:00:00'),
+-- Febrero
+(2, 'Cacao en polvo y chocolate bitter',  8000.00, 1, '2026-02-03 09:30:00'),
+(6, 'Galletas Oreo y arequipe x 2 kg',   6000.00, 2, '2026-02-10 10:30:00'),
+(3, 'Harina, huevos y mantequilla',       6000.00, 1, '2026-02-17 11:30:00'),
+-- Marzo
+(2, 'Frutas frescas: fresas y mangos',    7000.00, 1, '2026-03-02 09:00:00'),
+(6, 'Crema de leche y queso crema',       8000.00, 2, '2026-03-09 10:00:00'),
+(3, 'Azúcar, colorantes y esencias',      7000.00, 1, '2026-03-16 11:00:00');
 
--- ── GASTOS ── derivados del usuario registrado en detalle_compra
+-- ── GASTOS ────────────────────────────────────────────────────
 -- Enero gastos: 16,000 | Febrero: 20,000 | Marzo: 45,000
-
 INSERT INTO compras (fecha_compra, total_compra) VALUES
 ('2026-01-07 08:00:00',  5500.00),   -- 1
 ('2026-01-14 08:00:00',  4500.00),   -- 2
@@ -538,16 +541,16 @@ INSERT INTO compras (fecha_compra, total_compra) VALUES
 ('2026-03-10 08:00:00', 15000.00),   -- 8
 ('2026-03-17 08:00:00', 15000.00);   -- 9
 
-INSERT INTO detalle_compra (id_usuario, descripcion, id_compra) VALUES
-(2, 'Alquiler local Dulce Gestión enero',       1),   -- carlos emp1
-(2, 'Servicios públicos enero',                 2),   -- carlos emp1
-(6, 'Alquiler Postres del Valle enero',         3),   -- sofia  emp2
-(2, 'Alquiler local Dulce Gestión febrero',     4),   -- carlos emp1
-(2, 'Servicios públicos febrero',               5),   -- carlos emp1
-(6, 'Alquiler Postres del Valle febrero',       6),   -- sofia  emp2
-(2, 'Alquiler local Dulce Gestión marzo',       7),   -- carlos emp1
-(2, 'Mantenimiento equipos refrigeración',      8),   -- carlos emp1
-(6, 'Alquiler Postres del Valle + mora marzo',  9);   -- sofia  emp2
+INSERT INTO detalle_compra (id_usuario, descripcion, id_compra, id_emprendimiento) VALUES
+(2, 'Alquiler local Dulce Gestión enero',       1, NULL),
+(2, 'Servicios públicos enero',                 2, NULL),
+(6, 'Alquiler Postres del Valle enero',         3, NULL),
+(2, 'Alquiler local Dulce Gestión febrero',     4, NULL),
+(2, 'Servicios públicos febrero',               5, NULL),
+(6, 'Alquiler Postres del Valle febrero',       6, NULL),
+(2, 'Alquiler local Dulce Gestión marzo',       7, NULL),
+(2, 'Mantenimiento equipos refrigeración',      8, NULL),
+(6, 'Alquiler Postres del Valle + mora marzo',  9, NULL);
 
 INSERT INTO gastos (id_detalle_compra, id_metodo_pago, fecha_gasto, total_gasto) VALUES
 (1, 1, '2026-01-07 08:30:00',  5500.00),

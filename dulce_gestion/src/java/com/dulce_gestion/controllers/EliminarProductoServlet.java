@@ -1,24 +1,33 @@
 package com.dulce_gestion.controllers;
 
+import com.dulce_gestion.dao.EliminarProductoDAO;
 import com.dulce_gestion.models.Usuario;
-import com.dulce_gestion.utils.DB;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
- * POST /productos/eliminar → inactiva el producto en vez de borrarlo.
- * El producto pasa a estado 'Inactivo' y deja de aparecer en el catálogo
- * y el carrito. No se puede reactivar desde la UI (solo directo en BD).
+ * ============================================================
+ * SERVLET: EliminarProductoServlet
+ * URL:     POST /productos/eliminar
+ * MÉTODOS: POST
+ * ============================================================
+ *
+ * Inactiva un producto (eliminación lógica).
+ * Cambia el campo estado a 'Inactivo' — no borra el registro.
+ * Un producto inactivo no aparece en catálogo ni en el carrito,
+ * pero su historial de ventas queda intacto.
+ *
+ * Permisos: Administrador y SuperAdministrador.
  */
+@WebServlet("/productos/eliminar")
 public class EliminarProductoServlet extends HttpServlet {
 
     @Override
@@ -27,7 +36,7 @@ public class EliminarProductoServlet extends HttpServlet {
 
         String ctx = request.getContextPath();
 
-        // Verificar sesión y rol
+        // ── Paso 1: verificar sesión y rol ───────────────────────────────
         HttpSession session = request.getSession(false);
         Usuario usuario = (session != null) ? (Usuario) session.getAttribute("usuario") : null;
         if (usuario == null) { response.sendRedirect(ctx + "/login"); return; }
@@ -37,19 +46,17 @@ public class EliminarProductoServlet extends HttpServlet {
             response.sendRedirect(ctx + "/dashboard"); return;
         }
 
+        // ── Paso 2: leer y validar el ID del producto a inactivar ────────
         String idParam = request.getParameter("id");
-        if (idParam == null || idParam.isBlank()) { response.sendRedirect(ctx + "/productos"); return; }
+        if (idParam == null || idParam.isBlank()) {
+            response.sendRedirect(ctx + "/productos"); return;
+        }
 
         try {
-            int id = Integer.parseInt(idParam);
+            int idProducto = Integer.parseInt(idParam);
 
-            // Inactivar el producto en vez de borrarlo
-            try (Connection con = DB.obtenerConexion();
-                 PreparedStatement ps = con.prepareStatement(
-                         "UPDATE productos SET estado = 'Inactivo' WHERE id = ?")) {
-                ps.setInt(1, id);
-                ps.executeUpdate();
-            }
+            // ── Paso 3: inactivar mediante el DAO ─────────────────────────
+            new EliminarProductoDAO().inactivar(idProducto);
 
             response.sendRedirect(ctx + "/productos?exito=eliminado");
 

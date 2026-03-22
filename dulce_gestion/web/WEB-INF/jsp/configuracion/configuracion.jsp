@@ -321,7 +321,7 @@
         <input type="hidden" name="tab" value="categorias">
         <div class="campo">
           <label>Nombre *</label>
-          <input type="text" name="nombre" id="catNombre" maxlength="100" required placeholder="Ej: Helados">
+          <input type="text" name="nombre" id="catNombre" maxlength="25" required placeholder="Ej: Helados">
         </div>
         <div class="campo">
           <label>Descripción (opcional)</label>
@@ -352,7 +352,7 @@
         <input type="hidden" name="tab" value="unidades">
         <div class="campo">
           <label>Nombre *</label>
-          <input type="text" name="nombre" id="uniNombre" maxlength="50" required placeholder="Ej: Kilogramos">
+          <input type="text" name="nombre" id="uniNombre" maxlength="25" required placeholder="Ej: Kilogramos">
         </div>
         <div class="toggle-row" id="uniActivoRow" style="display:none">
           <span class="toggle-label">Estado activo</span>
@@ -379,7 +379,7 @@
         <input type="hidden" name="tab" value="metodos">
         <div class="campo">
           <label>Nombre *</label>
-          <input type="text" name="nombre" id="metNombre" maxlength="50" required placeholder="Ej: Tarjeta débito">
+          <input type="text" name="nombre" id="metNombre" maxlength="25" required placeholder="Ej: Tarjeta débito">
         </div>
         <div class="toggle-row" id="metActivoRow" style="display:none">
           <span class="toggle-label">Estado activo</span>
@@ -425,25 +425,33 @@ function limpiarError(inp) {
 }
 function validarNombre(inp, max) {
   inp.addEventListener('input', function() {
-    if (this.value.trim() === '') mostrarError(this, 'El nombre es obligatorio.');
-    else if (this.value.length > max) mostrarError(this, 'Máximo ' + max + ' caracteres.');
+    var tieneNumeros = /[0-9]/.test(this.value);
+    if (tieneNumeros) {
+      this.value = this.value.replace(/[0-9]/g, '');
+      mostrarError(this, 'El nombre no puede contener números.');
+      return;
+    }
+    if (this.value.trim() === '') { limpiarError(this); return; }
+    if (this.value.length > max) mostrarError(this, 'Máximo ' + max + ' caracteres.');
     else limpiarError(this);
   });
   inp.addEventListener('blur', function() {
-    if (this.value.trim() === '') mostrarError(this, 'El nombre es obligatorio.');
-    else if (this.value.length > max) mostrarError(this, 'Máximo ' + max + ' caracteres.');
+    if (this.value.trim() === '') { mostrarError(this, 'El nombre es obligatorio.'); return; }
+    if (/[0-9]/.test(this.value)) { mostrarError(this, 'El nombre no puede contener números.'); return; }
+    if (this.value.length > max) mostrarError(this, 'Máximo ' + max + ' caracteres.');
     else limpiarError(this);
   });
 }
-validarNombre(document.getElementById('catNombre'), 100);
-validarNombre(document.getElementById('uniNombre'), 50);
-validarNombre(document.getElementById('metNombre'), 50);
+validarNombre(document.getElementById('catNombre'), 25);
+validarNombre(document.getElementById('uniNombre'), 25);
+validarNombre(document.getElementById('metNombre'), 25);
 
 document.querySelectorAll('.modal-overlay form').forEach(function(form) {
   form.addEventListener('submit', function(e) {
     var ok = true;
     this.querySelectorAll('input[name="nombre"]').forEach(function(inp) {
       if (inp.value.trim() === '') { mostrarError(inp, 'El nombre es obligatorio.'); ok = false; }
+      else if (/[0-9]/.test(inp.value)) { mostrarError(inp, 'El nombre no puede contener números.'); ok = false; }
     });
     if (!ok) e.preventDefault();
   });

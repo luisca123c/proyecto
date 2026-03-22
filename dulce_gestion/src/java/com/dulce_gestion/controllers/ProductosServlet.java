@@ -7,6 +7,7 @@ import com.dulce_gestion.models.Emprendimiento;
 import com.dulce_gestion.models.Producto;
 import com.dulce_gestion.models.Usuario;
 
+import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,7 +26,11 @@ import java.util.List;
  * ============================================================
  *
  */
+@WebServlet("/productos")
 public class ProductosServlet extends HttpServlet {
+
+    private static final String VISTA = "/WEB-INF/jsp/productos/lista.jsp";
+
 
     /**
      * GET /productos → carga la lista de productos y hace forward al JSP.
@@ -78,7 +83,7 @@ public class ProductosServlet extends HttpServlet {
         request.setAttribute("empFiltro",      empFiltro);
 
         // ── Paso 4: forward al JSP ──────────────────────────────────────
-        request.getRequestDispatcher("/WEB-INF/jsp/productos/lista.jsp")
+        request.getRequestDispatcher(VISTA)
                .forward(request, response);
     }
 }

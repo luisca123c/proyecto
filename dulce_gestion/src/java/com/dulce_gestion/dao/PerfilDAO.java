@@ -210,6 +210,54 @@ public class PerfilDAO {
     }
 
     /**
+     * Actualiza solo el teléfono y el correo de un usuario.
+     * Usado por Empleados, que no pueden cambiar nombre ni género.
+     */
+    public boolean actualizarTelefonoYCorreo(int idUsuario, String telefono, String correo)
+            throws SQLException {
+
+        String sqlObtener = """
+                SELECT u.id_correo, p.id_telefono
+                FROM usuarios u
+                JOIN perfil_usuario p ON p.id_usuario = u.id
+                WHERE u.id = ?
+                """;
+
+        int idCorreo = -1, idTelefono = -1;
+
+        try (Connection con = DB.obtenerConexion();
+             PreparedStatement ps = con.prepareStatement(sqlObtener)) {
+            ps.setInt(1, idUsuario);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    idCorreo   = rs.getInt("id_correo");
+                    idTelefono = rs.getInt("id_telefono");
+                }
+            }
+        }
+
+        if (idCorreo == -1 || idTelefono == -1) return false;
+
+        try (Connection con = DB.obtenerConexion();
+             PreparedStatement ps = con.prepareStatement(
+                     "UPDATE correos SET correo = ? WHERE id = ?")) {
+            ps.setString(1, correo.toLowerCase().trim());
+            ps.setInt(2, idCorreo);
+            ps.executeUpdate();
+        }
+
+        try (Connection con = DB.obtenerConexion();
+             PreparedStatement ps = con.prepareStatement(
+                     "UPDATE telefonos SET telefono = ? WHERE id = ?")) {
+            ps.setString(1, telefono.trim());
+            ps.setInt(2, idTelefono);
+            ps.executeUpdate();
+        }
+
+        return true;
+    }
+
+    /**
      * Cambia la contraseña del usuario, verificando primero que la contraseña
      * actual sea correcta.
      *

@@ -1,25 +1,35 @@
 package com.dulce_gestion.controllers;
 
 import com.dulce_gestion.dao.EditarEmpleadoDAO;
+import com.dulce_gestion.dao.EliminarEmpleadoDAO;
 import com.dulce_gestion.models.Usuario;
-import com.dulce_gestion.utils.DB;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
- * POST /empleados/eliminar → inactiva al empleado en vez de borrarlo.
- * Si tiene ventas u otras dependencias, igual se puede inactivar
- * porque solo cambia el campo estado de 'Activo' a 'Inactivo'.
+ * ============================================================
+ * SERVLET: EliminarEmpleadoServlet
+ * URL:     POST /empleados/eliminar
+ * MÉTODOS: POST
+ * ============================================================
+ *
+ * Inactiva un usuario (eliminación lógica).
+ * Cambia el campo estado a 'Inactivo' — no borra el registro.
+ * Esto preserva el historial de ventas y transacciones.
+ *
+ * Permisos:
+ *   SuperAdministrador → puede inactivar Admin y Empleado
+ *   Administrador      → puede inactivar solo Empleados
  */
+@WebServlet("/empleados/eliminar")
 public class EliminarEmpleadoServlet extends HttpServlet {
 
     @Override
@@ -28,42 +38,49 @@ public class EliminarEmpleadoServlet extends HttpServlet {
 
         String ctx = request.getContextPath();
 
+        // ── Paso 1: verificar sesión y rol ───────────────────────────────
         HttpSession session = request.getSession(false);
         Usuario solicitante = (session != null) ? (Usuario) session.getAttribute("usuario") : null;
         if (solicitante == null) { response.sendRedirect(ctx + "/login"); return; }
 
-        String rolSol = solicitante.getNombreRol();
-        if (!"SuperAdministrador".equals(rolSol) && !"Administrador".equals(rolSol)) {
+        String rolSolicitante = solicitante.getNombreRol();
+        if (!"SuperAdministrador".equals(rolSolicitante) && !"Administrador".equals(rolSolicitante)) {
             response.sendRedirect(ctx + "/dashboard"); return;
         }
 
+        // ── Paso 2: leer y validar el ID del usuario a inactivar ─────────
         String idParam = request.getParameter("id");
-        if (idParam == null || idParam.isBlank()) { response.sendRedirect(ctx + "/empleados"); return; }
+        if (idParam == null || idParam.isBlank()) {
+            response.sendRedirect(ctx + "/empleados"); return;
+        }
 
         int idUsuario;
         try { idUsuario = Integer.parseInt(idParam); }
         catch (NumberFormatException e) { response.sendRedirect(ctx + "/empleados"); return; }
 
         try {
+            // ── Paso 3: verificar que el usuario objetivo existe ──────────
             Usuario objetivo = new EditarEmpleadoDAO().buscarPorId(idUsuario);
-            if (objetivo == null) { response.sendRedirect(ctx + "/empleados?error=noexiste"); return; }
-
-            String rolObj = objetivo.getNombreRol();
-            boolean tienePermiso =
-                ("SuperAdministrador".equals(rolSol) &&
-                    ("Administrador".equals(rolObj) || "Empleado".equals(rolObj)))
-                ||
-                ("Administrador".equals(rolSol) && "Empleado".equals(rolObj));
-
-            if (!tienePermiso) { response.sendRedirect(ctx + "/empleados?error=sinpermiso"); return; }
-
-            // Inactivar en vez de borrar
-            try (Connection con = DB.obtenerConexion();
-                 PreparedStatement ps = con.prepareStatement(
-                         "UPDATE usuarios SET estado = 'Inactivo' WHERE id = ?")) {
-                ps.setInt(1, idUsuario);
-                ps.executeUpdate();
+            if (objetivo == null) {
+                response.sendRedirect(ctx + "/empleados?error=noexiste"); return;
             }
+
+            // ── Paso 4: verificar permisos sobre el rol del objetivo ──────
+            // SuperAdmin puede inactivar Admin y Empleado.
+            // Admin solo puede inactivar Empleados.
+            String rolObjetivo = objetivo.getNombreRol();
+            boolean tienePermiso =
+                ("SuperAdministrador".equals(rolSolicitante) &&
+                    ("Administrador".equals(rolObjetivo) || "Empleado".equals(rolObjetivo)))
+                ||
+                ("Administrador".equals(rolSolicitante) && "Empleado".equals(rolObjetivo));
+
+            if (!tienePermiso) {
+                response.sendRedirect(ctx + "/empleados?error=sinpermiso"); return;
+            }
+
+            // ── Paso 5: inactivar mediante el DAO ─────────────────────────
+            new EliminarEmpleadoDAO().inactivar(idUsuario);
 
             response.sendRedirect(ctx + "/empleados?exito=eliminado");
 

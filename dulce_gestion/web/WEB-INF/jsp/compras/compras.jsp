@@ -211,7 +211,13 @@
               <td><%= c.fecha %></td>
               <td class="td-desc"><%= c.descripcion %></td>
               <td><span class="badge-mp"><%= c.metodoPago %></span></td>
-              <td><%= c.registradoPor %></td>
+              <td>
+                <% if (c.registradoPorSuperAdmin) { %>
+                  <span style="font-size:0.78rem;font-weight:700;color:#6a0dad;background:rgba(106,13,173,.1);padding:2px 8px;border-radius:10px;">SuperAdmin</span>
+                <% } else { %>
+                  <%= c.registradoPor != null ? c.registradoPor : "—" %>
+                <% } %>
+              </td>
               <td class="td-total">$<%= String.format("%,.0f", c.total) %></td>
               <td>
                 <a href="<%= ctx %>/compras?editar=<%= c.id %>"
@@ -244,11 +250,10 @@
       <div class="modal-titulo"><i class="fi fi-sr-add"></i> Registrar compra de insumos</div>
       <form method="POST" action="<%= ctx %>/compras" id="formCrear" novalidate>
         <input type="hidden" name="accion" value="crear">
-        <input type="hidden" name="idEmpresaRegistro" id="crearC_idEmpresa" value="<%= filtroActivo %>">
         <% if (esSuperAdmin && emprendimientos != null && !emprendimientos.isEmpty()) { %>
         <div class="campo">
           <label>Emprendimiento *</label>
-          <select onchange="document.getElementById('crearC_idEmpresa').value=this.value" required>
+          <select name="idEmpresaRegistro" required>
             <option value="" disabled <%= filtroActivo == 0 ? "selected" : "" %>>Selecciona emprendimiento</option>
             <% for (Emprendimiento empM : emprendimientos) { %>
             <option value="<%= empM.getId() %>" <%= filtroActivo == empM.getId() ? "selected" : "" %>><%= empM.getNombre() %></option>
@@ -291,17 +296,14 @@
       <form method="POST" action="<%= ctx %>/compras" id="formEditar" novalidate>
         <input type="hidden" name="accion" value="editar">
         <input type='hidden' name='idCompra' id='e_idCompra' value='<%= ce != null ? ce.id : "" %>'>
-        <input type="hidden" name="idEmpresaRegistro" id="eC_idEmpresa" value="">
         <% if (esSuperAdmin && emprendimientos != null && !emprendimientos.isEmpty()
                && ce != null && ce.registradoPorSuperAdmin) { %>
         <div class="campo">
           <label>Emprendimiento *</label>
-          <select id="eC_emprendimiento"
-                  onchange="document.getElementById('eC_idEmpresa').value=this.value" required>
+          <select name="idEmpresaRegistro" required>
             <option value="" disabled>Selecciona emprendimiento</option>
             <% for (Emprendimiento empM : emprendimientos) { %>
             <option value="<%= empM.getId() %>"
-              data-nombre="<%= empM.getNombre() %>"
               <%= (ce != null && empM.getNombre().equals(ce.nombreEmprendimiento)) ? "selected" : "" %>>
               <%= empM.getNombre() %>
             </option>

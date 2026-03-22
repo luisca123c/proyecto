@@ -42,6 +42,8 @@ import java.util.List;
 @WebServlet("/empleados")
 public class EmpleadosServlet extends HttpServlet {
 
+    private static final String VISTA = "/WEB-INF/jsp/empleados/lista.jsp";
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -99,7 +101,7 @@ public class EmpleadosServlet extends HttpServlet {
         request.setAttribute("empleados",      lista);
         request.setAttribute("rolSolicitante", rol);
 
-        request.getRequestDispatcher("/WEB-INF/jsp/empleados/lista.jsp")
+        request.getRequestDispatcher(VISTA)
                .forward(request, response);
     }
 }

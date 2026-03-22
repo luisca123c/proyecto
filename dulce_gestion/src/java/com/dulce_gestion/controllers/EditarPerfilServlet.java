@@ -86,11 +86,26 @@ public class EditarPerfilServlet extends HttpServlet {
             return;
         }
 
-        // ── Restricción de rol: Empleados no pueden cambiar nombre ni género ──
+        // ── Restricción de rol: Empleados solo pueden cambiar teléfono y correo ──
         if ("Empleado".equals(usuarioSesion.getNombreRol())) {
-            // El formulario no debería enviar esto para empleados, pero verificamos en el servidor
-            reenviarConError(request, response, usuarioSesion,
-                "Los empleados solo pueden cambiar teléfono y correo");
+            try {
+                PerfilDAO dao = new PerfilDAO();
+                boolean actualizado = dao.actualizarTelefonoYCorreo(
+                    usuarioSesion.getId(),
+                    telefono.trim(),
+                    correo.toLowerCase().trim()
+                );
+                if (actualizado) {
+                    Usuario perfilActualizado = dao.obtenerPerfil(usuarioSesion.getId());
+                    request.getSession().setAttribute("usuario", perfilActualizado);
+                    response.sendRedirect(request.getContextPath() + "/perfil?exito=actualizado");
+                } else {
+                    reenviarConError(request, response, usuarioSesion, "No se pudo actualizar el perfil");
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                reenviarConError(request, response, usuarioSesion, "Error al actualizar perfil");
+            }
             return;
         }
 
@@ -160,9 +175,9 @@ public class EditarPerfilServlet extends HttpServlet {
             return;
         }
 
-        // ── Validación 3: longitud mínima 8 caracteres ────────────────────
-        if (contrasennaNueva.length() < 8) {
-            reenviarConError(request, response, usuarioSesion, "La contraseña debe tener al menos 8 caracteres");
+        // ── Validación 3: longitud mínima 6 caracteres ────────────────────
+        if (contrasennaNueva.length() < 6) {
+            reenviarConError(request, response, usuarioSesion, "La contraseña debe tener al menos 6 caracteres");
             return;
         }
 

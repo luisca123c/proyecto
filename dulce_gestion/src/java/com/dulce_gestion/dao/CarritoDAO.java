@@ -291,8 +291,13 @@ public class CarritoDAO {
      * Confirma la venta: registra en ventas, descuenta stock y vacía el carrito.
      * Todo dentro de una transacción para garantizar consistencia.
      *
+     * @param idEmprendimiento  ID del emprendimiento al que pertenece la venta.
+     *                          Se usa para que las ventas del SuperAdmin queden
+     *                          correctamente asociadas en el historial.
+     *                          0 o negativo → se guarda NULL en la BD.
      */
-    public int confirmarVenta(int idCarrito, int idUsuario, int idMetodoPago) throws SQLException {
+    public int confirmarVenta(int idCarrito, int idUsuario, int idMetodoPago,
+                              int idEmprendimiento) throws SQLException {
 
         List<CarritoItem> items = listarItems(idCarrito);
         if (items.isEmpty()) throw new SQLException("El carrito está vacío.");
@@ -332,12 +337,14 @@ public class CarritoDAO {
                 // ── Paso 3: registrar la venta ────────────────────────────
                 int idVenta;
                 try (PreparedStatement ps = con.prepareStatement(
-                        "INSERT INTO ventas (fecha_venta, id_carrito, id_metodo_pago, total_venta) " +
-                        "VALUES (NOW(), ?, ?, ?)",
+                        "INSERT INTO ventas (fecha_venta, id_carrito, id_metodo_pago, total_venta, id_emprendimiento) " +
+                        "VALUES (NOW(), ?, ?, ?, ?)",
                         Statement.RETURN_GENERATED_KEYS)) {
                     ps.setInt(1, idCarrito);
                     ps.setInt(2, idMetodoPago);
                     ps.setBigDecimal(3, total);
+                    if (idEmprendimiento > 0) ps.setInt(4, idEmprendimiento);
+                    else                      ps.setNull(4, java.sql.Types.INTEGER);
                     ps.executeUpdate();
                     try (ResultSet rs = ps.getGeneratedKeys()) {
                         rs.next();

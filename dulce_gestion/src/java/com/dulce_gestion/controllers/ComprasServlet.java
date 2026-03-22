@@ -1,13 +1,12 @@
 package com.dulce_gestion.controllers;
 
 import com.dulce_gestion.dao.ComprasDAO;
-import com.dulce_gestion.dao.UsuarioDAO;
-import com.dulce_gestion.dao.EmprendimientoDAO;
-import com.dulce_gestion.utils.EmpresaUtil;
-import com.dulce_gestion.models.Emprendimiento;
-import java.util.List;
 import com.dulce_gestion.dao.ComprasDAO.FilaCompra;
+import com.dulce_gestion.dao.EmprendimientoDAO;
+import com.dulce_gestion.dao.UsuarioDAO;
+import com.dulce_gestion.models.Emprendimiento;
 import com.dulce_gestion.models.Usuario;
+import com.dulce_gestion.utils.EmpresaUtil;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -20,6 +19,18 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Servlet para el módulo de Compras de Insumos.
+ *
+ * <ul>
+ *   <li>{@code GET  /compras}              — lista el historial de compras. Si viene
+ *       {@code ?editar=ID} precarga la compra en el modal de edición.</li>
+ *   <li>{@code POST /compras?accion=crear}  — registra una nueva compra.</li>
+ *   <li>{@code POST /compras?accion=editar} — actualiza una compra existente.</li>
+ * </ul>
+ *
+ * <p>Solo accesible para roles {@code Administrador} y {@code SuperAdministrador}.</p>
+ */
 @WebServlet("/compras")
 public class ComprasServlet extends HttpServlet {
 
@@ -52,60 +63,51 @@ public class ComprasServlet extends HttpServlet {
 
         if (!verificarAcceso(request, response)) return;
 
-        Usuario usuario = (Usuario) request.getSession(false).getAttribute("usuario");
-        String accion   = request.getParameter("accion");
-        ComprasDAO dao  = new ComprasDAO();
+        Usuario usuario  = (Usuario) request.getSession(false).getAttribute("usuario");
+        String accion    = request.getParameter("accion");
+        ComprasDAO dao   = new ComprasDAO();
 
         try {
-            String descripcion   = validar(request.getParameter("descripcion"), "La descripcion es obligatoria.");
-            String totalStr      = validar(request.getParameter("total"),       "El monto es obligatorio.");
-            String metodoPagoStr = request.getParameter("idMetodoPago");
-            String fecha         = validar(request.getParameter("fecha"),       "La fecha es obligatoria.");
+            String descripcion   = validar(request.getParameter("descripcion"),  "La descripcion es obligatoria.");
+            String totalStr      = validar(request.getParameter("total"),         "El monto es obligatorio.");
+            String metodoPagoStr = validar(request.getParameter("idMetodoPago"),  "Debes seleccionar un método de pago.");
+            String fecha         = validar(request.getParameter("fecha"),         "La fecha es obligatoria.");
 
             BigDecimal total = new BigDecimal(totalStr.replace(",", "."));
             if (total.compareTo(BigDecimal.ZERO) <= 0)
                 throw new IllegalArgumentException("El monto debe ser mayor a cero.");
 
             int idMetodoPago = Integer.parseInt(metodoPagoStr);
-            // Validar que la fecha no sea futura
+
             java.time.LocalDate fechaDate = java.time.LocalDate.parse(fecha);
-            if (fechaDate.isAfter(java.time.LocalDate.now())) {
+            if (fechaDate.isAfter(java.time.LocalDate.now()))
                 throw new IllegalArgumentException("La fecha no puede ser una fecha futura.");
-            }
+
             String fechaHora = fecha + " " + new SimpleDateFormat("HH:mm:ss").format(new Date());
 
             if ("editar".equals(accion)) {
                 int idCompra = Integer.parseInt(request.getParameter("idCompra"));
-                // Cambio de emprendimiento: solo permitido si el registro fue creado por SuperAdmin.
-                int idNuevoUsuarioCompra = 0;
+
+                int idEmprendimientoCompra = 0;
                 if ("SuperAdministrador".equals(usuario.getNombreRol())) {
-                    com.dulce_gestion.dao.ComprasDAO.FilaCompra compraOriginal = dao.obtenerPorId(idCompra);
-                    if (compraOriginal != null && compraOriginal.registradoPorSuperAdmin) {
-                        String empEditR = request.getParameter("idEmpresaRegistro");
-                        if (empEditR != null && !empEditR.isBlank()) {
-                            try {
-                                int empEditId = Integer.parseInt(empEditR);
-                                if (empEditId > 0) idNuevoUsuarioCompra = new UsuarioDAO().obtenerAdminDeEmprendimiento(empEditId);
-                            } catch (NumberFormatException ignored) {}
-                        }
+                    String empEditR = request.getParameter("idEmpresaRegistro");
+                    if (empEditR != null && !empEditR.isBlank()) {
+                        try { idEmprendimientoCompra = Integer.parseInt(empEditR); } catch (NumberFormatException ignored) {}
                     }
                 }
-                dao.editar(idCompra, descripcion.trim(), total, idMetodoPago, fechaHora, idNuevoUsuarioCompra);
+                dao.editar(idCompra, descripcion.trim(), total, idMetodoPago, fechaHora, idEmprendimientoCompra);
                 response.sendRedirect(request.getContextPath() + "/compras?exito=editado");
+
             } else {
-                int idUsuarioRegistra = usuario.getId();
+                int idEmpresaRegistro = 0;
                 if ("SuperAdministrador".equals(usuario.getNombreRol())) {
                     String empR = request.getParameter("idEmpresaRegistro");
-                    int empIdR = 0;
                     if (empR != null && !empR.isBlank()) {
-                        try { empIdR = Integer.parseInt(empR); } catch (NumberFormatException ignored) {}
-                    }
-                    if (empIdR > 0) {
-                        int adminId = new UsuarioDAO().obtenerAdminDeEmprendimiento(empIdR);
-                        if (adminId > 0) idUsuarioRegistra = adminId;
+                        try { idEmpresaRegistro = Integer.parseInt(empR); } catch (NumberFormatException ignored) {}
                     }
                 }
-                dao.registrar(idUsuarioRegistra, descripcion.trim(), total, idMetodoPago, fechaHora);
+                dao.registrar(usuario.getId(), descripcion.trim(), total,
+                              idMetodoPago, fechaHora, idEmpresaRegistro);
                 response.sendRedirect(request.getContextPath() + "/compras?exito=creado");
             }
             return;
@@ -129,6 +131,17 @@ public class ComprasServlet extends HttpServlet {
         request.getRequestDispatcher(VISTA).forward(request, response);
     }
 
+    // =========================================================
+    // HELPERS
+    // =========================================================
+
+    /**
+     * Carga la lista de compras y los métodos de pago como atributos del request.
+     * Para el SuperAdmin también carga la lista de emprendimientos y el filtro activo.
+     *
+     * @param request el request donde se depositan los atributos para el JSP.
+     * @param usuario el usuario en sesión.
+     */
     private void cargarDatos(HttpServletRequest request, Usuario usuario) {
         try {
             ComprasDAO dao = new ComprasDAO();
@@ -139,26 +152,38 @@ public class ComprasServlet extends HttpServlet {
                 if (empParam != null && !empParam.isBlank()) {
                     try { empFiltro = Integer.parseInt(empParam); } catch (NumberFormatException ignored) {}
                 }
-                List<Emprendimiento> emps = new EmprendimientoDAO().listarActivos();
-                request.setAttribute("emprendimientos", emps);
+                request.setAttribute("emprendimientos", new EmprendimientoDAO().listarActivos());
                 request.setAttribute("empFiltro", empFiltro);
             } else {
-                // EmpresaUtil corrige sesiones antiguas con idEmprendimiento=0
                 empFiltro = EmpresaUtil.resolverEmprendimiento(usuario, request);
             }
-            request.setAttribute("compras",  dao.listar(empFiltro));
-            request.setAttribute("metodos",  dao.listarMetodosPago());
+            request.setAttribute("compras", dao.listar(empFiltro));
+            request.setAttribute("metodos", dao.listarMetodosPago());
         } catch (SQLException e) {
             e.printStackTrace();
             request.setAttribute("error", "Error al cargar las compras.");
         }
     }
 
+    /**
+     * Lanza {@link IllegalArgumentException} si {@code val} es nulo o vacío.
+     *
+     * @param val valor del parámetro del formulario.
+     * @param msg mensaje de error a mostrar al usuario.
+     * @return {@code val} si no está vacío.
+     */
     private String validar(String val, String msg) {
         if (val == null || val.isBlank()) throw new IllegalArgumentException(msg);
         return val;
     }
 
+    /**
+     * Verifica que el usuario en sesión tenga rol de Administrador o SuperAdministrador.
+     * Redirige a {@code /login} si no hay sesión activa, o a {@code /dashboard} si el
+     * rol es Empleado.
+     *
+     * @return {@code true} si el acceso está permitido; {@code false} si ya se redirigió.
+     */
     private boolean verificarAcceso(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         HttpSession session = request.getSession(false);

@@ -33,6 +33,7 @@ import java.util.List;
  *
  */
 @MultipartConfig(maxFileSize = 5 * 1024 * 1024) // Máximo 5 MB por archivo
+@WebServlet("/productos/nuevo")
 public class NuevoProductoServlet extends HttpServlet {
 
     /** Ruta interna del JSP del formulario */
@@ -138,7 +139,11 @@ public class NuevoProductoServlet extends HttpServlet {
                 throw new IllegalArgumentException("La fecha de vencimiento no puede ser anterior a hoy.");
             }
         } catch (java.time.format.DateTimeParseException ex) {
-            // formato inválido — el servlet lo rechazará igualmente
+            cargarSelectores(request);
+            cargarEmprendimientos(request);
+            request.setAttribute("error", "El formato de la fecha de vencimiento no es válido.");
+            request.getRequestDispatcher(VISTA).forward(request, response);
+            return;
         } catch (IllegalArgumentException ex) {
             cargarSelectores(request);
             cargarEmprendimientos(request);

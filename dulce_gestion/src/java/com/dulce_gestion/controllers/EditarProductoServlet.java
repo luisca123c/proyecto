@@ -12,6 +12,7 @@ import java.util.List;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
+import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -33,6 +34,7 @@ import java.util.List;
  *
  */
 @MultipartConfig(maxFileSize = 5 * 1024 * 1024) // Máximo 5 MB por archivo
+@WebServlet("/productos/editar")
 public class EditarProductoServlet extends HttpServlet {
 
     /** Ruta interna del JSP del formulario de edición */
@@ -145,7 +147,10 @@ public class EditarProductoServlet extends HttpServlet {
                 throw new IllegalArgumentException("La fecha de vencimiento no puede ser anterior a hoy.");
             }
         } catch (java.time.format.DateTimeParseException ex) {
-            // formato inválido — el servlet lo rechazará igualmente
+            cargarSelectores(request);
+            request.setAttribute("error", "El formato de la fecha de vencimiento no es válido.");
+            request.getRequestDispatcher(VISTA).forward(request, response);
+            return;
         } catch (IllegalArgumentException ex) {
             cargarSelectores(request);
             request.setAttribute("error", ex.getMessage());

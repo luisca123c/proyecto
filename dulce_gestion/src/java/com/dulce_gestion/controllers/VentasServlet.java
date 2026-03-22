@@ -2,11 +2,11 @@ package com.dulce_gestion.controllers;
 
 import com.dulce_gestion.dao.CarritoDAO;
 import com.dulce_gestion.dao.EmprendimientoDAO;
-import com.dulce_gestion.utils.EmpresaUtil;
 import com.dulce_gestion.models.CarritoItem;
 import com.dulce_gestion.models.Emprendimiento;
 import com.dulce_gestion.models.Producto;
 import com.dulce_gestion.models.Usuario;
+import com.dulce_gestion.utils.EmpresaUtil;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -21,48 +21,37 @@ import java.sql.SQLException;
 import java.util.List;
 
 /**
- * ============================================================
- * SERVLET: VentasServlet
- * URL:     /ventas
- * MÉTODOS: GET, POST
- * ============================================================
+ * Servlet del carrito de ventas.
  *
+ * <ul>
+ *   <li>{@code GET  /ventas} — muestra el carrito activo del usuario junto con
+ *       el catálogo de productos disponibles.</li>
+ *   <li>{@code POST /ventas?accion=agregar}    — agrega un producto al carrito.</li>
+ *   <li>{@code POST /ventas?accion=actualizar} — modifica la cantidad de un ítem.</li>
+ *   <li>{@code POST /ventas?accion=eliminar}   — quita un ítem del carrito.</li>
+ *   <li>{@code POST /ventas?accion=vaciar}     — vacía todos los ítems del carrito.</li>
+ *   <li>{@code POST /ventas?accion=confirmar}  — confirma la venta: descuenta stock,
+ *       registra la venta y abre un carrito nuevo.</li>
+ * </ul>
+ *
+ * <p>El emprendimiento de la venta se toma directamente de los productos presentes
+ * en el carrito (todos pertenecen al mismo emprendimiento via
+ * {@code productos.id_emprendimiento}), sin depender del emprendimiento del usuario.</p>
  */
 @WebServlet("/ventas")
 public class VentasServlet extends HttpServlet {
 
-    /** Ruta interna del JSP del carrito de ventas */
     private static final String VISTA = "/WEB-INF/jsp/ventas/carrito.jsp";
 
-    // =========================================================
-    // GET /ventas
-    // =========================================================
-
-    /**
-     * Muestra el carrito activo del usuario con el catálogo de productos.
-     *
-     * @param request  contiene la sesión activa y posibles params ?exito= / ?error=
-     * @param response para redirigir si no hay sesión, o forward al JSP
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
         Usuario usuario = getUsuario(request, response);
-        if (usuario == null) return; // Ya se redirigió al login
-
-        cargarCarrito(request, usuario); // Cargar todos los datos del carrito
+        if (usuario == null) return;
+        cargarCarrito(request, usuario);
         request.getRequestDispatcher(VISTA).forward(request, response);
     }
 
-    // =========================================================
-    // POST /ventas
-    // =========================================================
-
-    /**
-     * Procesa la acción del carrito indicada por el parámetro "accion".
-     *
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -70,135 +59,118 @@ public class VentasServlet extends HttpServlet {
         Usuario usuario = getUsuario(request, response);
         if (usuario == null) return;
 
-        String accion  = request.getParameter("accion"); // "agregar", "actualizar", "eliminar", "vaciar", "confirmar"
+        String accion  = request.getParameter("accion");
         CarritoDAO dao = new CarritoDAO();
 
         try {
-            // Obtener el carrito activo, o crear uno nuevo si es la primera vez
             int idCarrito = dao.obtenerOCrearCarrito(usuario.getId());
 
             switch (accion == null ? "" : accion) {
 
-                // ── Acción: agregar un producto al carrito ────────────────
                 case "agregar": {
-                    int idProducto = Integer.parseInt(request.getParameter("idProducto"));
-                    int cantidad   = Integer.parseInt(request.getParameter("cantidad"));
-                    if (cantidad < 1) cantidad = 1; // Mínimo 1 unidad
-                    // El DAO verifica stock antes de agregar
-                    dao.agregarProducto(idCarrito, idProducto, cantidad);
+                    String idProdStr = request.getParameter("idProducto");
+                    String cantStr   = request.getParameter("cantidad");
+                    if (idProdStr == null || idProdStr.isBlank() || cantStr == null || cantStr.isBlank())
+                        throw new NumberFormatException("Datos de producto incompletos.");
+                    int cantidad = Integer.parseInt(cantStr);
+                    if (cantidad < 1) cantidad = 1;
+                    dao.agregarProducto(idCarrito, Integer.parseInt(idProdStr), cantidad);
                     break;
                 }
 
-                // ── Acción: actualizar la cantidad de un ítem del carrito ─
                 case "actualizar": {
-                    int idDetalle     = Integer.parseInt(request.getParameter("idDetalle")); // PK en detalle_carrito
-                    int nuevaCantidad = Integer.parseInt(request.getParameter("cantidad"));
-                    // El DAO verifica stock y elimina el ítem si cantidad = 0
-                    dao.actualizarCantidad(idDetalle, nuevaCantidad);
+                    String idDetStr = request.getParameter("idDetalle");
+                    String cantStr  = request.getParameter("cantidad");
+                    if (idDetStr == null || idDetStr.isBlank() || cantStr == null || cantStr.isBlank())
+                        throw new NumberFormatException("Datos de actualización incompletos.");
+                    dao.actualizarCantidad(Integer.parseInt(idDetStr), Integer.parseInt(cantStr));
                     break;
                 }
 
-                // ── Acción: quitar un ítem específico del carrito ─────────
                 case "eliminar": {
-                    int idDetalle = Integer.parseInt(request.getParameter("idDetalle"));
-                    dao.eliminarItem(idDetalle); // Borra la fila en detalle_carrito
+                    String idDetStr = request.getParameter("idDetalle");
+                    if (idDetStr == null || idDetStr.isBlank())
+                        throw new NumberFormatException("Ítem de carrito no especificado.");
+                    dao.eliminarItem(Integer.parseInt(idDetStr));
                     break;
                 }
 
-                // ── Acción: vaciar todos los ítems del carrito ────────────
                 case "vaciar": {
-                    dao.vaciarCarrito(idCarrito); // DELETE en detalle_carrito para este carrito
+                    dao.vaciarCarrito(idCarrito);
                     break;
                 }
 
-                // ── Acción: confirmar la venta (la más importante) ────────
                 case "confirmar": {
-                    int idMetodoPago = Integer.parseInt(request.getParameter("idMetodoPago"));
+                    String mpStr = request.getParameter("idMetodoPago");
+                    if (mpStr == null || mpStr.isBlank())
+                        throw new SQLException("Debes seleccionar un método de pago.");
+                    int idMetodoPago = Integer.parseInt(mpStr);
 
-                    // confirmarVenta() en una transacción:
-                    //   1. Verifica stock de todos los ítems
-                    //   2. Descuenta stock de cada producto
-                    //   3. Inserta registro en ventas
-                    //   4. Vacía el carrito
-                    int idVenta = dao.confirmarVenta(idCarrito, usuario.getId(), idMetodoPago);
+                    // El emprendimiento de la venta se toma de los productos del carrito,
+                    // ya que todos pertenecen al mismo via productos.id_emprendimiento.
+                    int idEmprendimiento = dao.obtenerEmprendimientoDelCarrito(idCarrito);
 
-                    // PRG Pattern: redirect para evitar re-envío del POST al recargar
-                    // ?id=X permite que el JSP muestre "Venta #X registrada exitosamente"
+                    int idVenta = dao.confirmarVenta(idCarrito, usuario.getId(),
+                                                     idMetodoPago, idEmprendimiento);
                     response.sendRedirect(request.getContextPath() + "/ventas?exito=venta&id=" + idVenta);
-                    return; // Detener — no continuar al forward al final del método
+                    return;
                 }
 
                 default:
-                    // Acción desconocida → no hacer nada, recargar el carrito
                     break;
             }
 
         } catch (NumberFormatException e) {
-            // Algún ID o cantidad no era un número válido (¿manipulación del form?)
             request.setAttribute("error", "Datos inválidos.");
         } catch (SQLException e) {
             e.printStackTrace();
-            // Puede ser "Stock insuficiente" o cualquier error de BD
             request.setAttribute("error", e.getMessage());
         }
 
-        // Para todas las acciones excepto "confirmar":
-        // Recargar el carrito y mostrar el estado actualizado
         cargarCarrito(request, usuario);
         request.getRequestDispatcher(VISTA).forward(request, response);
     }
 
     // =========================================================
-    // MÉTODOS AUXILIARES (HELPERS)
+    // HELPERS
     // =========================================================
 
     /**
-     * Carga todos los datos que necesita el JSP del carrito y los pone
-     * como atributos del request.
+     * Carga todos los datos del carrito como atributos del request para el JSP.
      *
-     * Datos cargados:
-     *   idCarrito  → ID del carrito activo del usuario
-     *   items      → lista de CarritoItem con los productos en el carrito
-     *   productos  → catálogo de productos disponibles (stock > 0)
-     *   metodos    → métodos de pago para el modal de confirmación
-     *   total      → suma de subtotales (BigDecimal)
+     * <p>Para el SuperAdmin, si el carrito ya tiene ítems el catálogo se filtra
+     * automáticamente al emprendimiento de esos ítems. Si está vacío, se respeta
+     * el parámetro {@code ?emp=} de la URL.</p>
      *
-     * En caso de error de BD, se pone un mensaje de error y los datos
-     * quedan vacíos — el JSP mostrará el carrito vacío con el error.
+     * <p>Atributos depositados: {@code idCarrito}, {@code items}, {@code productos},
+     * {@code metodos}, {@code total}, {@code empCarrito}, {@code esSuperAdmin},
+     * y para SuperAdmin también {@code emprendimientos} y {@code empFiltro}.</p>
      *
-     * @param request   para poner los atributos
-     * @param idUsuario ID del usuario propietario del carrito
+     * @param request   request donde se depositan los atributos.
+     * @param usuario   usuario propietario del carrito.
      */
     private void cargarCarrito(HttpServletRequest request, Usuario usuario) {
-        int idUsuario        = usuario.getId();
-        int idEmprendimiento = EmpresaUtil.resolverEmprendimiento(usuario, request);
         boolean esSuperAdmin = "SuperAdministrador".equals(usuario.getNombreRol());
         try {
             CarritoDAO dao = new CarritoDAO();
 
-            int idCarrito = dao.obtenerOCrearCarrito(idUsuario);
+            int idCarrito = dao.obtenerOCrearCarrito(usuario.getId());
             List<CarritoItem> items = dao.listarItems(idCarrito);
-
-            // Detectar el emprendimiento de los ítems ya en el carrito
             int empCarrito = dao.obtenerEmprendimientoDelCarrito(idCarrito);
 
-            // SuperAdmin: lee ?emp= de la URL como filtro visual del catálogo
-            // Pero si el carrito ya tiene ítems, el filtro se fuerza al emprendimiento del carrito
             int empFiltroProductos;
             if (esSuperAdmin) {
                 if (empCarrito > 0) {
-                    empFiltroProductos = empCarrito; // Forzar al del carrito
+                    empFiltroProductos = empCarrito;
                 } else {
                     String empParam = request.getParameter("emp");
                     try { empFiltroProductos = (empParam != null) ? Integer.parseInt(empParam) : 0; }
                     catch (NumberFormatException e) { empFiltroProductos = 0; }
                 }
-                // Cargar emprendimientos para el desplegable
-                List<Emprendimiento> emprendimientos = new EmprendimientoDAO().listarActivos();
-                request.setAttribute("emprendimientos", emprendimientos);
-                request.setAttribute("empFiltro",       empFiltroProductos);
+                request.setAttribute("emprendimientos", new EmprendimientoDAO().listarActivos());
+                request.setAttribute("empFiltro", empFiltroProductos);
             } else {
-                empFiltroProductos = idEmprendimiento;
+                empFiltroProductos = EmpresaUtil.resolverEmprendimiento(usuario, request);
             }
 
             List<Producto>  productos = dao.listarProductosActivos(empFiltroProductos);
@@ -210,7 +182,7 @@ public class VentasServlet extends HttpServlet {
             request.setAttribute("productos",   productos);
             request.setAttribute("metodos",     metodos);
             request.setAttribute("total",       total);
-            request.setAttribute("empCarrito",  empCarrito); // 0 = carrito vacío
+            request.setAttribute("empCarrito",  empCarrito);
             request.setAttribute("esSuperAdmin", esSuperAdmin);
 
         } catch (SQLException e) {
@@ -220,19 +192,15 @@ public class VentasServlet extends HttpServlet {
     }
 
     /**
-     * Obtiene el usuario en sesión. Si no hay sesión activa, redirige al login.
-     * El llamador debe retornar inmediatamente si el resultado es null.
+     * Obtiene el usuario en sesión. Redirige a {@code /login} si no hay sesión activa.
      *
-     * @return Usuario en sesión, o null si no hay sesión (ya se redirigió)
+     * @return el usuario en sesión, o {@code null} si ya se redirigió.
      */
     private Usuario getUsuario(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         HttpSession session = request.getSession(false);
         Usuario u = (session != null) ? (Usuario) session.getAttribute("usuario") : null;
-        if (u == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return null;
-        }
+        if (u == null) { response.sendRedirect(request.getContextPath() + "/login"); return null; }
         return u;
     }
 }

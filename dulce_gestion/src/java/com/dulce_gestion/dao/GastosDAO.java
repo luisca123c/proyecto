@@ -8,13 +8,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * ============================================================
- * DAO: GastosDAO
- * Tablas escritas:    compras, detalle_compra, gastos
- * Tablas leídas:      metodo_pago, usuarios, perfil_usuario
- * Usado por:          GastosServlet
- * ============================================================
+ * DAO para el módulo de gastos.
  *
+ * <p>Cada gasto se distribuye en tres tablas relacionadas:</p>
+ * <ul>
+ *   <li>{@code compras} — encabezado: fecha y total de la compra.</li>
+ *   <li>{@code detalle_compra} — quién registró el gasto, descripción e
+ *       {@code id_emprendimiento} (permite asociar gastos del SuperAdmin
+ *       a un emprendimiento específico).</li>
+ *   <li>{@code gastos} — registro financiero: método de pago, fecha y monto.</li>
+ * </ul>
+ *
+ * <p>Las operaciones de escritura ({@link #registrar} y {@link #editar})
+ * ejecutan las tres modificaciones dentro de una única transacción.</p>
+ *
+ * <p>Tablas escritas: {@code compras}, {@code detalle_compra}, {@code gastos}.<br>
+ * Tablas leídas: {@code metodo_pago}, {@code usuarios}, {@code perfil_usuario},
+ * {@code emprendimientos}, {@code roles}.</p>
  */
 public class GastosDAO {
 
@@ -23,39 +33,42 @@ public class GastosDAO {
     // =========================================================
 
     /**
-     * Representa una fila del historial de gastos.
-     * Incluye los IDs de las 3 tablas subyacentes para poder editarlas.
+     * Proyección plana de un gasto para la vista del historial.
+     * Incluye los IDs de las tres tablas subyacentes para permitir ediciones.
      */
     public static class FilaGasto {
-        public int        id;               // gastos.id (clave principal para editar/eliminar)
-        public int        idDetalleCompra;  // detalle_compra.id (para editar descripción)
-        public int        idCompra;         // compras.id (para editar fecha y total de compras)
-        public String     fecha;            // Formateada para mostrar: "15/03/2025 14:30"
-        public String     fechaRaw;         // En formato yyyy-MM-dd para el input type="date"
-        public String     descripcion;      // Descripción del gasto (qué se compró)
-        public int        idMetodoPago;     // FK para seleccionar la opción en el <select>
-        public String     metodoPago;       // Nombre del método para mostrar en la tabla
-        public String     registradoPor;    // Nombre completo del usuario que lo registró
-        public BigDecimal total;            // Monto del gasto
-        public String     nombreEmprendimiento;   // nombre del emprendimiento
-        public boolean    registradoPorSuperAdmin; // true si id_usuario en detalle_compra es SuperAdmin
+        public int        id;
+        public int        idDetalleCompra;
+        public int        idCompra;
+        /** Fecha formateada {@code dd/MM/yyyy HH:mm} para mostrar en tabla. */
+        public String     fecha;
+        /** Fecha en formato {@code yyyy-MM-dd} para usar en {@code <input type="date">}. */
+        public String     fechaRaw;
+        public String     descripcion;
+        public int        idMetodoPago;
+        public String     metodoPago;
+        public String     registradoPor;
+        public BigDecimal total;
+        public String     nombreEmprendimiento;
+        /** {@code true} cuando quien registró el gasto tiene rol SuperAdministrador. */
+        public boolean    registradoPorSuperAdmin;
     }
 
     // =========================================================
-    // LISTAR TODOS
+    // LISTAR
     // =========================================================
 
     /**
-     * Retorna el historial completo de gastos ordenado del más reciente al más antiguo.
+     * Retorna el historial de gastos ordenado del más reciente al más antiguo.
      *
-     * El JOIN de 5 tablas trae en una sola consulta todos los datos
-     * necesarios para la tabla del historial, incluyendo el nombre
-     * del método de pago y el nombre de quien registró el gasto.
+     * <p>El emprendimiento se resuelve con {@code COALESCE(dc.id_emprendimiento,
+     * u.id_emprendimiento)}: si el gasto fue registrado por el SuperAdmin con un
+     * emprendimiento explícito usa ese; si no, cae al emprendimiento del usuario.</p>
      *
-     * @return  lista de todos los gastos, más recientes primero
-     * @throws SQLException si hay error al consultar la BD
+     * @param idEmprendimiento filtro de emprendimiento; {@code 0} retorna todos.
+     * @return lista de gastos según el filtro aplicado.
+     * @throws SQLException si falla la consulta.
      */
-    /** Lista gastos. Si idEmprendimiento=0 (SuperAdmin todos), si >0 filtra. */
     public List<FilaGasto> listar(int idEmprendimiento) throws SQLException {
         boolean filtrar = idEmprendimiento > 0;
         String sql =
@@ -64,16 +77,19 @@ public class GastosDAO {
             "DATE_FORMAT(g.fecha_gasto,'%Y-%m-%d') AS fecha_raw, " +
             "dc.descripcion, g.id_metodo_pago, mp.nombre AS metodo_pago, " +
             "pu.nombre_completo AS registrado_por, g.total_gasto, " +
-            "e.nombre AS nombre_emprendimiento, " +
+            "COALESCE(e2.nombre, e1.nombre) AS nombre_emprendimiento, " +
             "r.nombre AS rol_registrador " +
             "FROM gastos g " +
-            "JOIN detalle_compra dc ON dc.id=g.id_detalle_compra " +
-            "JOIN metodo_pago mp ON mp.id=g.id_metodo_pago " +
-            "JOIN usuarios u ON u.id=dc.id_usuario " +
-            "JOIN perfil_usuario pu ON pu.id_usuario=u.id " +
-            "JOIN emprendimientos e ON e.id=u.id_emprendimiento " +
-            "JOIN roles r ON r.id=u.id_rol " +
-            (filtrar ? "WHERE u.id_emprendimiento=? " : "") +
+            "JOIN detalle_compra dc ON dc.id = g.id_detalle_compra " +
+            "JOIN metodo_pago mp ON mp.id = g.id_metodo_pago " +
+            "JOIN usuarios u ON u.id = dc.id_usuario " +
+            "JOIN perfil_usuario pu ON pu.id_usuario = u.id " +
+            "JOIN roles r ON r.id = u.id_rol " +
+            "LEFT JOIN emprendimientos e1 ON e1.id = u.id_emprendimiento " +
+            "LEFT JOIN emprendimientos e2 ON e2.id = dc.id_emprendimiento " +
+            (filtrar
+                ? "WHERE COALESCE(dc.id_emprendimiento, u.id_emprendimiento) = ? "
+                : "") +
             "ORDER BY g.fecha_gasto DESC";
 
         List<FilaGasto> lista = new ArrayList<>();
@@ -87,7 +103,7 @@ public class GastosDAO {
         return lista;
     }
 
-    /** Retrocompatibilidad: lista todos. */
+    /** Lista todos los gastos sin filtro de emprendimiento. */
     public List<FilaGasto> listar() throws SQLException { return listar(0); }
 
     // =========================================================
@@ -95,12 +111,11 @@ public class GastosDAO {
     // =========================================================
 
     /**
-     * Busca un gasto por su ID en la tabla gastos.
-     * Se usa en GastosServlet para prellenar el modal de edición.
+     * Busca un gasto por su ID para prellenar el modal de edición.
      *
-     * @param idGasto  ID del gasto a buscar
-     * @return         objeto FilaGasto con todos los datos
-     * @throws SQLException si el gasto no existe o hay error de BD
+     * @param idGasto ID del registro en {@code gastos}.
+     * @return objeto {@link FilaGasto} con todos sus campos.
+     * @throws SQLException si el gasto no existe o hay error de BD.
      */
     public FilaGasto obtenerPorId(int idGasto) throws SQLException {
         String sql =
@@ -109,14 +124,17 @@ public class GastosDAO {
             "DATE_FORMAT(g.fecha_gasto,'%Y-%m-%d') AS fecha_raw, " +
             "dc.descripcion, g.id_metodo_pago, mp.nombre AS metodo_pago, " +
             "pu.nombre_completo AS registrado_por, g.total_gasto, " +
+            "COALESCE(e2.nombre, e1.nombre) AS nombre_emprendimiento, " +
             "r.nombre AS rol_registrador " +
             "FROM gastos g " +
-            "JOIN detalle_compra dc ON dc.id=g.id_detalle_compra " +
-            "JOIN metodo_pago mp ON mp.id=g.id_metodo_pago " +
-            "JOIN usuarios u ON u.id=dc.id_usuario " +
-            "JOIN perfil_usuario pu ON pu.id_usuario=u.id " +
-            "JOIN roles r ON r.id=u.id_rol " +
-            "WHERE g.id=?";
+            "JOIN detalle_compra dc ON dc.id = g.id_detalle_compra " +
+            "JOIN metodo_pago mp ON mp.id = g.id_metodo_pago " +
+            "JOIN usuarios u ON u.id = dc.id_usuario " +
+            "JOIN perfil_usuario pu ON pu.id_usuario = u.id " +
+            "JOIN roles r ON r.id = u.id_rol " +
+            "LEFT JOIN emprendimientos e1 ON e1.id = u.id_emprendimiento " +
+            "LEFT JOIN emprendimientos e2 ON e2.id = dc.id_emprendimiento " +
+            "WHERE g.id = ?";
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, idGasto);
@@ -132,10 +150,10 @@ public class GastosDAO {
     // =========================================================
 
     /**
-     * Retorna los métodos de pago disponibles para el <select> del formulario.
+     * Retorna los métodos de pago para el {@code <select>} del formulario.
      *
-     * @return  lista de [id, nombre] por método de pago
-     * @throws SQLException si hay error al consultar la BD
+     * @return lista de pares {@code [id, nombre]}.
+     * @throws SQLException si falla la consulta.
      */
     public List<String[]> listarMetodosPago() throws SQLException {
         List<String[]> lista = new ArrayList<>();
@@ -150,43 +168,32 @@ public class GastosDAO {
     }
 
     // =========================================================
-    // REGISTRAR NUEVO GASTO (TRANSACCIÓN 3 TABLAS)
+    // REGISTRAR (TRANSACCIÓN 3 TABLAS)
     // =========================================================
 
     /**
-     * Registra un nuevo gasto insertando en 3 tablas dentro de una transacción.
+     * Registra un nuevo gasto en {@code compras}, {@code detalle_compra} y {@code gastos}
+     * dentro de una única transacción. Si cualquier inserción falla se hace rollback completo.
      *
-     * ORDEN DE INSERCIÓN (respetando las FK):
+     * <p>{@code idEmprendimiento} es necesario cuando {@code idUsuario} pertenece al
+     * SuperAdministrador (cuyo {@code usuarios.id_emprendimiento} es {@code NULL}).
+     * Se persiste en {@code detalle_compra.id_emprendimiento} para que el historial
+     * pueda filtrar y mostrar el emprendimiento correcto.</p>
      *
-     * Paso 1 — INSERT compras:
-     *   Encabezado del gasto. Retorna idCompra.
-     *   compras.fecha_compra = mismo valor que gastos.fecha_gasto
-     *   compras.total_compra = mismo total (redundante pero exigido por el esquema)
-     *
-     * Paso 2 — INSERT detalle_compra:
-     *   Quién registró el gasto y qué se compró. Usa idCompra del paso 1.
-     *   Retorna idDetalle.
-     *
-     * Paso 3 — INSERT gastos:
-     *   El registro financiero con el método de pago. Usa idDetalle del paso 2.
-     *
-     * Si cualquier paso falla → ROLLBACK → ninguna tabla queda modificada.
-     *
-     * @param idUsuario    ID del usuario que registra el gasto
-     * @param descripcion  descripción de qué se compró
-     * @param total        monto del gasto (BigDecimal para exactitud)
-     * @param idMetodoPago FK a metodo_pago
-     * @param fechaGasto   datetime completo en formato "yyyy-MM-dd HH:mm:ss"
-     * @throws SQLException si hay error de BD
+     * @param idUsuario        ID del usuario que registra el gasto.
+     * @param descripcion      descripción de la compra.
+     * @param total            monto del gasto.
+     * @param idMetodoPago     FK a {@code metodo_pago}.
+     * @param fechaGasto       datetime en formato {@code yyyy-MM-dd HH:mm:ss}.
+     * @param idEmprendimiento emprendimiento destino; {@code 0} si no aplica.
+     * @throws SQLException si falla alguna inserción o la transacción no puede completarse.
      */
     public void registrar(int idUsuario, String descripcion,
                           BigDecimal total, int idMetodoPago,
-                          String fechaGasto) throws SQLException {
+                          String fechaGasto, int idEmprendimiento) throws SQLException {
         try (Connection con = DB.obtenerConexion()) {
-            con.setAutoCommit(false); // Transacción: los 3 INSERTs son atómicos
+            con.setAutoCommit(false);
             try {
-
-                // ── Paso 1: insertar en compras ───────────────────────────
                 int idCompra;
                 try (PreparedStatement ps = con.prepareStatement(
                         "INSERT INTO compras (fecha_compra, total_compra) VALUES (?, ?)",
@@ -197,21 +204,23 @@ public class GastosDAO {
                     try (ResultSet rs = ps.getGeneratedKeys()) { rs.next(); idCompra = rs.getInt(1); }
                 }
 
-                // ── Paso 2: insertar en detalle_compra ────────────────────
                 int idDetalle;
                 try (PreparedStatement ps = con.prepareStatement(
-                        "INSERT INTO detalle_compra (id_usuario, descripcion, id_compra) VALUES (?, ?, ?)",
+                        "INSERT INTO detalle_compra (id_usuario, descripcion, id_compra, id_emprendimiento) " +
+                        "VALUES (?, ?, ?, ?)",
                         Statement.RETURN_GENERATED_KEYS)) {
                     ps.setInt(1, idUsuario);
                     ps.setString(2, descripcion);
                     ps.setInt(3, idCompra);
+                    if (idEmprendimiento > 0) ps.setInt(4, idEmprendimiento);
+                    else                      ps.setNull(4, Types.INTEGER);
                     ps.executeUpdate();
                     try (ResultSet rs = ps.getGeneratedKeys()) { rs.next(); idDetalle = rs.getInt(1); }
                 }
 
-                // ── Paso 3: insertar en gastos ────────────────────────────
                 try (PreparedStatement ps = con.prepareStatement(
-                        "INSERT INTO gastos (id_detalle_compra, id_metodo_pago, fecha_gasto, total_gasto) VALUES (?, ?, ?, ?)")) {
+                        "INSERT INTO gastos (id_detalle_compra, id_metodo_pago, fecha_gasto, total_gasto) " +
+                        "VALUES (?, ?, ?, ?)")) {
                     ps.setInt(1, idDetalle);
                     ps.setInt(2, idMetodoPago);
                     ps.setString(3, fechaGasto);
@@ -219,43 +228,42 @@ public class GastosDAO {
                     ps.executeUpdate();
                 }
 
-                con.commit(); // Todo bien → confirmar los 3 INSERTs
-
+                con.commit();
             } catch (SQLException e) {
-                con.rollback(); // Algo falló → deshacer todo
+                con.rollback();
                 throw e;
             }
         }
     }
 
     // =========================================================
-    // EDITAR GASTO (TRANSACCIÓN 3 TABLAS)
+    // EDITAR (TRANSACCIÓN 3 TABLAS)
     // =========================================================
 
     /**
-     * Actualiza un gasto existente modificando las 3 tablas dentro de una transacción.
+     * Actualiza un gasto existente en las tres tablas dentro de una transacción.
      *
-     * ORDEN DE ACTUALIZACIÓN:
+     * <p>Si {@code idNuevoUsuario} es mayor que cero, también reasigna el
+     * {@code id_usuario} en {@code detalle_compra} (solo permitido cuando el
+     * gasto fue registrado originalmente por el SuperAdministrador).</p>
      *
-     * Paso 1 — UPDATE compras:
-     *   Actualiza fecha y total de la tabla de encabezado.
-     *
-     * Paso 2 — UPDATE detalle_compra:
-     *   Actualiza la descripción del detalle.
-     *
-     * Paso 3 — UPDATE gastos:
-     *   Actualiza el método de pago, la fecha y el total del registro financiero.
-     *
+     * @param idGasto          ID del registro en {@code gastos}.
+     * @param idDetalleCompra  ID del registro en {@code detalle_compra}.
+     * @param idCompra         ID del registro en {@code compras}.
+     * @param descripcion      nueva descripción.
+     * @param total            nuevo monto.
+     * @param idMetodoPago     nuevo método de pago.
+     * @param fechaGasto       nueva fecha en formato {@code yyyy-MM-dd HH:mm:ss}.
+     * @param idEmprendimiento emprendimiento al que pertenece el gasto; {@code 0} para limpiar.
+     * @throws SQLException si falla alguna actualización o la transacción no puede completarse.
      */
     public void editar(int idGasto, int idDetalleCompra, int idCompra,
                        String descripcion, BigDecimal total,
                        int idMetodoPago, String fechaGasto,
-                       int idNuevoUsuario) throws SQLException {
+                       int idEmprendimiento) throws SQLException {
         try (Connection con = DB.obtenerConexion()) {
-            con.setAutoCommit(false); // Transacción: los 3 UPDATEs son atómicos
+            con.setAutoCommit(false);
             try {
-
-                // ── Paso 1: actualizar compras ────────────────────────────
                 try (PreparedStatement ps = con.prepareStatement(
                         "UPDATE compras SET fecha_compra=?, total_compra=? WHERE id=?")) {
                     ps.setString(1, fechaGasto);
@@ -264,18 +272,16 @@ public class GastosDAO {
                     ps.executeUpdate();
                 }
 
-                // ── Paso 2: actualizar detalle_compra (descripción + usuario si cambió) ──
-                String sqlDC = idNuevoUsuario > 0
-                    ? "UPDATE detalle_compra SET descripcion=?, id_usuario=? WHERE id=?"
-                    : "UPDATE detalle_compra SET descripcion=? WHERE id=?";
+                String sqlDC = idEmprendimiento > 0
+                    ? "UPDATE detalle_compra SET descripcion=?, id_emprendimiento=? WHERE id=?"
+                    : "UPDATE detalle_compra SET descripcion=?, id_emprendimiento=NULL WHERE id=?";
                 try (PreparedStatement ps = con.prepareStatement(sqlDC)) {
                     ps.setString(1, descripcion);
-                    if (idNuevoUsuario > 0) { ps.setInt(2, idNuevoUsuario); ps.setInt(3, idDetalleCompra); }
-                    else                    { ps.setInt(2, idDetalleCompra); }
+                    if (idEmprendimiento > 0) { ps.setInt(2, idEmprendimiento); ps.setInt(3, idDetalleCompra); }
+                    else                      { ps.setInt(2, idDetalleCompra); }
                     ps.executeUpdate();
                 }
 
-                // ── Paso 3: actualizar gastos ─────────────────────────────
                 try (PreparedStatement ps = con.prepareStatement(
                         "UPDATE gastos SET id_metodo_pago=?, fecha_gasto=?, total_gasto=? WHERE id=?")) {
                     ps.setInt(1, idMetodoPago);
@@ -285,16 +291,15 @@ public class GastosDAO {
                     ps.executeUpdate();
                 }
 
-                con.commit(); // Todo bien → confirmar los 3 UPDATEs
-
+                con.commit();
             } catch (SQLException e) {
-                con.rollback(); // Algo falló → deshacer todo
+                con.rollback();
                 throw e;
             }
         }
     }
 
-    /** Retrocompatibilidad: editar sin cambiar usuario. */
+    /** Edita un gasto sin cambiar el emprendimiento asignado. */
     public void editar(int idGasto, int idDetalleCompra, int idCompra,
                        String descripcion, BigDecimal total,
                        int idMetodoPago, String fechaGasto) throws SQLException {
@@ -302,26 +307,26 @@ public class GastosDAO {
     }
 
     // =========================================================
-    // HELPER PRIVADO
+    // HELPER
     // =========================================================
 
     /**
-     * Convierte una fila del ResultSet en un objeto FilaGasto.
-     * Reutilizado por listar() y obtenerPorId() para evitar duplicar el mapeo.
+     * Convierte una fila del {@link ResultSet} en un objeto {@link FilaGasto}.
+     * Reutilizado por {@link #listar} y {@link #obtenerPorId}.
      */
     private FilaGasto mapear(ResultSet rs) throws SQLException {
         FilaGasto f = new FilaGasto();
         f.id              = rs.getInt("id");
         f.idDetalleCompra = rs.getInt("id_detalle_compra");
         f.idCompra        = rs.getInt("id_compra");
-        f.fecha           = rs.getString("fecha");     // "15/03/2025 14:30" → mostrar en tabla
-        f.fechaRaw        = rs.getString("fecha_raw"); // "2025-03-15" → para el input type="date"
+        f.fecha           = rs.getString("fecha");
+        f.fechaRaw        = rs.getString("fecha_raw");
         f.descripcion     = rs.getString("descripcion");
         f.idMetodoPago    = rs.getInt("id_metodo_pago");
         f.metodoPago      = rs.getString("metodo_pago");
-        f.registradoPor        = rs.getString("registrado_por");
-        f.total                = rs.getBigDecimal("total_gasto");
-        try { f.nombreEmprendimiento = rs.getString("nombre_emprendimiento"); } catch (Exception ignored) {}
+        f.registradoPor   = rs.getString("registrado_por");
+        f.total           = rs.getBigDecimal("total_gasto");
+        try { f.nombreEmprendimiento    = rs.getString("nombre_emprendimiento"); } catch (Exception ignored) {}
         try { f.registradoPorSuperAdmin = "SuperAdministrador".equals(rs.getString("rol_registrador")); } catch (Exception ignored) {}
         return f;
     }

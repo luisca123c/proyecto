@@ -13,6 +13,10 @@
   <title>Nuevo Emprendimiento | Dulce Gestión</title>
   <link rel="stylesheet" href="<%= ctx %>/assets/css/styles.css">
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.2.0/uicons-solid-rounded/css/uicons-solid-rounded.css">
+  <style>
+    .val-err { color:#e53935; font-size:0.78rem; margin-top:4px; display:block; }
+    .nv-campo__input.input-error { border-color:#e53935; }
+  </style>
 </head>
 <body class="layout-app">
 
@@ -73,48 +77,54 @@
       <% } %>
 
       <div class="card-form">
-        <form method="POST" action="<%= ctx %>/emprendimientos/nuevo">
+        <form id="formNuevo" method="POST" action="<%= ctx %>/emprendimientos/nuevo" novalidate>
 
           <div class="nv-campo">
             <label class="nv-campo__etiqueta">NOMBRE <span style="color:#e53935">*</span></label>
-            <input class="nv-campo__input" type="text" name="nombre"
-                   maxlength="100" required placeholder="Ej: Dulce Gestión"
+            <input class="nv-campo__input" type="text" name="nombre" id="f_nombre"
+                   maxlength="100" placeholder="Ej: Dulce Gestión"
                    value="<%= request.getParameter("nombre") != null ? request.getParameter("nombre") : "" %>">
+            <span class="val-err" id="err_nombre"></span>
           </div>
 
           <div class="nv-campo">
-            <label class="nv-campo__etiqueta">NIT</label>
-            <input class="nv-campo__input" type="text" name="nit"
+            <label class="nv-campo__etiqueta">NIT <span style="color:#e53935">*</span></label>
+            <input class="nv-campo__input" type="text" name="nit" id="f_nit"
                    maxlength="30" placeholder="Ej: 900123456-1"
                    value="<%= request.getParameter("nit") != null ? request.getParameter("nit") : "" %>">
+            <span class="val-err" id="err_nit"></span>
           </div>
 
           <div class="nv-campo">
-            <label class="nv-campo__etiqueta">DIRECCIÓN</label>
-            <input class="nv-campo__input" type="text" name="direccion"
+            <label class="nv-campo__etiqueta">DIRECCIÓN <span style="color:#e53935">*</span></label>
+            <input class="nv-campo__input" type="text" name="direccion" id="f_direccion"
                    maxlength="150" placeholder="Ej: Calle 10 # 5-20"
                    value="<%= request.getParameter("direccion") != null ? request.getParameter("direccion") : "" %>">
+            <span class="val-err" id="err_direccion"></span>
           </div>
 
           <div class="nv-campo">
-            <label class="nv-campo__etiqueta">CIUDAD</label>
-            <input class="nv-campo__input" type="text" name="ciudad"
+            <label class="nv-campo__etiqueta">CIUDAD <span style="color:#e53935">*</span></label>
+            <input class="nv-campo__input" type="text" name="ciudad" id="f_ciudad"
                    maxlength="100" placeholder="Ej: Bucaramanga"
                    value="<%= request.getParameter("ciudad") != null ? request.getParameter("ciudad") : "" %>">
+            <span class="val-err" id="err_ciudad"></span>
           </div>
 
           <div class="nv-campo">
-            <label class="nv-campo__etiqueta">TELÉFONO</label>
-            <input class="nv-campo__input" type="tel" name="telefono"
+            <label class="nv-campo__etiqueta">TELÉFONO <span style="color:#e53935">*</span></label>
+            <input class="nv-campo__input" type="tel" name="telefono" id="f_telefono"
                    maxlength="20" placeholder="Ej: 3001234567"
                    value="<%= request.getParameter("telefono") != null ? request.getParameter("telefono") : "" %>">
+            <span class="val-err" id="err_telefono"></span>
           </div>
 
           <div class="nv-campo">
-            <label class="nv-campo__etiqueta">CORREO</label>
-            <input class="nv-campo__input" type="email" name="correo"
+            <label class="nv-campo__etiqueta">CORREO <span style="color:#e53935">*</span></label>
+            <input class="nv-campo__input" type="email" name="correo" id="f_correo"
                    maxlength="100" placeholder="Ej: contacto@emprendimiento.com"
                    value="<%= request.getParameter("correo") != null ? request.getParameter("correo") : "" %>">
+            <span class="val-err" id="err_correo"></span>
           </div>
 
           <div class="form-botones">
@@ -131,5 +141,52 @@
 
     </div>
   </main>
+
+<script>
+(function () {
+  var regexEmail    = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  var regexTel      = /^[0-9+\-\s()]{7,20}$/;
+  var regexNit      = /^[0-9]{6,15}(-[0-9])?$/;
+  var regexCiudad   = /^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]{2,100}$/;
+  var regexDireccion = /^[a-zA-Z0-9áéíóúÁÉÍÓÚüÜñÑ\s#\-\.°]+$/;
+
+  function err(id, msg) {
+    var el = document.getElementById('err_' + id);
+    var inp = document.getElementById('f_' + id);
+    if (el) el.textContent = msg;
+    if (inp) inp.classList.toggle('input-error', !!msg);
+  }
+
+  function validarCampo(id) {
+    var inp = document.getElementById('f_' + id);
+    if (!inp) return true;
+    var v = inp.value.trim();
+    if (!v) { err(id, 'Este campo es obligatorio.'); return false; }
+    if (id === 'nombre'    && v.length < 2)            { err(id, 'Mínimo 2 caracteres.'); return false; }
+    if (id === 'nit'       && !regexNit.test(v))        { err(id, 'Formato inválido. Ej: 900123456-1'); return false; }
+    if (id === 'ciudad'    && v.length < 2)             { err(id, 'Mínimo 2 caracteres.'); return false; }
+    if (id === 'ciudad'    && !regexCiudad.test(v))      { err(id, 'Solo letras y espacios, sin números ni símbolos.'); return false; }
+    if (id === 'direccion' && v.length < 5)             { err(id, 'Mínimo 5 caracteres.'); return false; }
+    if (id === 'direccion' && !regexDireccion.test(v))   { err(id, 'Solo letras, números, #, - y punto.'); return false; }
+    if (id === 'telefono'  && !regexTel.test(v))        { err(id, 'Solo dígitos, +, - y espacios (mín. 7).'); return false; }
+    if (id === 'correo'    && !regexEmail.test(v))      { err(id, 'Formato de correo inválido.'); return false; }
+    err(id, '');
+    return true;
+  }
+
+  ['nombre','nit','direccion','ciudad','telefono','correo'].forEach(function(id) {
+    var inp = document.getElementById('f_' + id);
+    if (inp) {
+      inp.addEventListener('blur',  function() { validarCampo(id); });
+      inp.addEventListener('input', function() { if (inp.classList.contains('input-error')) validarCampo(id); });
+    }
+  });
+
+  document.getElementById('formNuevo').addEventListener('submit', function(e) {
+    var ok = ['nombre','nit','direccion','ciudad','telefono','correo'].map(validarCampo).every(Boolean);
+    if (!ok) e.preventDefault();
+  });
+})();
+</script>
 </body>
 </html>

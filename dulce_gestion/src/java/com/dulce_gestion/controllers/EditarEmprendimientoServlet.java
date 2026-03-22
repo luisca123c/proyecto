@@ -5,6 +5,7 @@ import com.dulce_gestion.models.Emprendimiento;
 import com.dulce_gestion.models.Usuario;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,6 +19,7 @@ import java.sql.SQLException;
  * POST /emprendimientos/editar       → guarda cambios o cambia estado
  * Solo SuperAdministrador.
  */
+@WebServlet("/emprendimientos/editar")
 public class EditarEmprendimientoServlet extends HttpServlet {
 
     private static final String VISTA = "/WEB-INF/jsp/emprendimientos/editar.jsp";
@@ -71,21 +73,43 @@ public class EditarEmprendimientoServlet extends HttpServlet {
             } else {
                 // Editar datos
                 String nombre    = req.getParameter("nombre");
-                if (nombre == null || nombre.isBlank()) {
+                String nit       = req.getParameter("nit");
+                String direccion = req.getParameter("direccion");
+                String ciudad    = req.getParameter("ciudad");
+                String telefono  = req.getParameter("telefono");
+                String correo    = req.getParameter("correo");
+
+                // Validación completa en servidor
+                String campoError = null;
+                if (nombre    == null || nombre.isBlank())    campoError = "El nombre es obligatorio.";
+                else if (nit  == null || nit.isBlank())       campoError = "El NIT es obligatorio.";
+                else if (direccion == null || direccion.isBlank()) campoError = "La dirección es obligatoria.";
+                else if (ciudad == null || ciudad.isBlank())  campoError = "La ciudad es obligatoria.";
+                else if (telefono == null || telefono.isBlank()) campoError = "El teléfono es obligatorio.";
+                else if (correo == null || correo.isBlank())  campoError = "El correo es obligatorio.";
+
+                // Validaciones de formato
+                if (campoError == null && !nit.trim().matches("[0-9]{6,15}(-[0-9])?"))
+                    campoError = "El NIT tiene un formato inválido. Ej: 900123456-1";
+                if (campoError == null && !telefono.trim().matches("[0-9+\\-\\s()]{7,20}"))
+                    campoError = "El teléfono tiene un formato inválido.";
+                if (campoError == null && !ciudad.trim().matches("[a-zA-Z\u00C0-\u024F\\s]{2,100}"))
+                    campoError = "La ciudad solo puede contener letras y espacios.";
+                if (campoError == null && !direccion.trim().matches("[a-zA-Z0-9\u00C0-\u024F\\s#\\-\\.\u00b0]+"))
+                    campoError = "La dirección contiene caracteres no permitidos.";
+                if (campoError == null && !correo.trim().matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"))
+                    campoError = "El correo tiene un formato inválido.";
+
+                if (campoError != null) {
                     Emprendimiento emp = dao.buscarPorId(id);
                     req.setAttribute("emprendimiento", emp);
-                    req.setAttribute("error", "El nombre es obligatorio.");
+                    req.setAttribute("error", campoError);
                     req.getRequestDispatcher(VISTA).forward(req, res);
                     return;
                 }
-                dao.editar(id,
-                    nombre,
-                    req.getParameter("nit"),
-                    req.getParameter("direccion"),
-                    req.getParameter("ciudad"),
-                    req.getParameter("telefono"),
-                    req.getParameter("correo")
-                );
+
+                dao.editar(id, nombre.trim(), nit.trim(), direccion.trim(),
+                           ciudad.trim(), telefono.trim(), correo.trim());
                 res.sendRedirect(ctx + "/emprendimientos?exito=editado");
             }
         } catch (SQLException e) {

@@ -19,6 +19,7 @@ public class HistorialDAO {
         public String     fecha;
         public String     metodoPago;
         public String     realizadaPor;
+        public boolean    realizadaPorSuperAdmin; // true cuando el carrito pertenece al SuperAdmin
         public BigDecimal total;
         public String     nombreEmprendimiento;
     }
@@ -46,12 +47,14 @@ public class HistorialDAO {
             sql = "SELECT v.id, DATE_FORMAT(v.fecha_venta,'%d/%m/%Y %H:%i') AS fecha, " +
                   "mp.nombre AS metodo_pago, " +
                   "COALESCE(pu.nombre_completo, 'Desconocido') AS realizada_por, " +
+                  "r.nombre AS rol_realizador, " +
                   "v.total_venta, e.nombre AS nombre_emprendimiento " +
                   "FROM ventas v " +
                   "JOIN metodo_pago mp   ON mp.id = v.id_metodo_pago " +
                   "JOIN carrito c        ON c.id  = v.id_carrito " +
                   "JOIN usuarios u       ON u.id  = c.id_usuario " +
-                  "JOIN emprendimientos e ON e.id = u.id_emprendimiento " +
+                  "LEFT JOIN emprendimientos e ON e.id = COALESCE(v.id_emprendimiento, u.id_emprendimiento) " +
+                  "JOIN roles r ON r.id = u.id_rol " +
                   "LEFT JOIN perfil_usuario pu ON pu.id_usuario = c.id_usuario " +
                   "ORDER BY v.fecha_venta DESC";
         } else if (esAdminOSuper) {
@@ -59,14 +62,16 @@ public class HistorialDAO {
             sql = "SELECT v.id, DATE_FORMAT(v.fecha_venta,'%d/%m/%Y %H:%i') AS fecha, " +
                   "mp.nombre AS metodo_pago, " +
                   "COALESCE(pu.nombre_completo, 'Desconocido') AS realizada_por, " +
+                  "r.nombre AS rol_realizador, " +
                   "v.total_venta, e.nombre AS nombre_emprendimiento " +
                   "FROM ventas v " +
                   "JOIN metodo_pago mp   ON mp.id = v.id_metodo_pago " +
                   "JOIN carrito c        ON c.id  = v.id_carrito " +
                   "JOIN usuarios u       ON u.id  = c.id_usuario " +
-                  "JOIN emprendimientos e ON e.id = u.id_emprendimiento " +
+                  "LEFT JOIN emprendimientos e ON e.id = COALESCE(v.id_emprendimiento, u.id_emprendimiento) " +
+                  "JOIN roles r ON r.id = u.id_rol " +
                   "LEFT JOIN perfil_usuario pu ON pu.id_usuario = c.id_usuario " +
-                  "WHERE u.id_emprendimiento = ? " +
+                  "WHERE COALESCE(v.id_emprendimiento, u.id_emprendimiento) = ? " +
                   "ORDER BY v.fecha_venta DESC";
             filtrarEmp = true;
         } else {
@@ -98,6 +103,7 @@ public class HistorialDAO {
                     fv.fecha             = rs.getString("fecha");
                     fv.metodoPago        = rs.getString("metodo_pago");
                     fv.realizadaPor      = rs.getString("realizada_por");
+                    try { fv.realizadaPorSuperAdmin = "SuperAdministrador".equals(rs.getString("rol_realizador")); } catch (Exception ignored) {}
                     fv.total             = rs.getBigDecimal("total_venta");
                     fv.nombreEmprendimiento = rs.getString("nombre_emprendimiento");
                     lista.add(fv);

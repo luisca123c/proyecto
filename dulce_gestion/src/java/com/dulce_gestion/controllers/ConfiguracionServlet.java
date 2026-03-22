@@ -136,8 +136,18 @@ public class ConfiguracionServlet extends HttpServlet {
 
     private String requerir(HttpServletRequest req, String campo) {
         String v = req.getParameter(campo);
-        if (v == null || v.isBlank()) throw new IllegalArgumentException("El campo " + campo + " es obligatorio.");
-        return v;
+        if (v == null || v.isBlank())
+            throw new IllegalArgumentException("El campo " + campo + " es obligatorio.");
+        String trimmed = v.trim();
+        if (campo.equals("nombre")) {
+            if (trimmed.matches(".*\\d.*"))
+                throw new IllegalArgumentException("El nombre no puede contener números.");
+            if (trimmed.length() < 2)
+                throw new IllegalArgumentException("El nombre debe tener al menos 2 caracteres.");
+            if (trimmed.length() > 25)
+                throw new IllegalArgumentException("El nombre no puede superar los 25 caracteres.");
+        }
+        return trimmed;
     }
 
     private String ctx(HttpServletRequest req) { return req.getContextPath(); }
