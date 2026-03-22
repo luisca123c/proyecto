@@ -173,15 +173,14 @@ public class GananciasDAO {
         if (esAdminOSuperAdmin) {
             boolean filtrarEmp = idEmprendimiento > 0;
             String sqlGastos =
-                "SELECT g.id, DATE_FORMAT(g.fecha_gasto,'%d/%m/%Y %H:%i') AS fecha, " +
-                "dc.descripcion, mp.nombre AS metodo_pago, g.total_gasto " +
+                "SELECT g.id, DATE_FORMAT(g.fecha,'%d/%m/%Y %H:%i') AS fecha, " +
+                "g.descripcion, mp.nombre AS metodo_pago, g.total " +
                 "FROM gastos g " +
-                "JOIN detalle_compra dc ON dc.id = g.id_detalle_compra " +
                 "JOIN metodo_pago mp ON mp.id = g.id_metodo_pago " +
-                "JOIN usuarios u ON u.id = dc.id_usuario " +
-                "WHERE DATE(g.fecha_gasto) BETWEEN ? AND ? " +
-                (filtrarEmp ? "AND COALESCE(dc.id_emprendimiento, u.id_emprendimiento) = ? " : "") +
-                "ORDER BY g.fecha_gasto DESC";
+                "JOIN usuarios u ON u.id = g.id_usuario " +
+                "WHERE DATE(g.fecha) BETWEEN ? AND ? " +
+                (filtrarEmp ? "AND COALESCE(g.id_emprendimiento, u.id_emprendimiento) = ? " : "") +
+                "ORDER BY g.fecha DESC";
 
             try (Connection con = DB.obtenerConexion();
                  PreparedStatement ps = con.prepareStatement(sqlGastos)) {
@@ -195,7 +194,7 @@ public class GananciasDAO {
                         fg.fecha       = rs.getString("fecha");
                         fg.descripcion = rs.getString("descripcion");
                         fg.metodoPago  = rs.getString("metodo_pago");
-                        fg.total       = rs.getBigDecimal("total_gasto");
+                        fg.total       = rs.getBigDecimal("total");
                         r.gastos.add(fg);
                         r.totalGastos  = r.totalGastos.add(fg.total);
                     }

@@ -105,8 +105,21 @@ public class ComprasServlet extends HttpServlet {
                     if (empR != null && !empR.isBlank()) {
                         try { idEmpresaRegistro = Integer.parseInt(empR); } catch (NumberFormatException ignored) {}
                     }
+                    // SuperAdmin debe seleccionar emprendimiento obligatoriamente
+                    if (idEmpresaRegistro == 0) {
+                        response.sendRedirect(request.getContextPath() + "/compras?error=selecciona_emprendimiento");
+                        return;
+                    }
                 }
-                dao.registrar(usuario.getId(), descripcion.trim(), total,
+                // SuperAdmin: registrar a nombre del admin del emprendimiento seleccionado
+                int idUsuarioRegistra = usuario.getId();
+                if ("SuperAdministrador".equals(usuario.getNombreRol()) && idEmpresaRegistro > 0) {
+                    try {
+                        int adminId = new UsuarioDAO().obtenerAdminDeEmprendimiento(idEmpresaRegistro);
+                        if (adminId > 0) idUsuarioRegistra = adminId;
+                    } catch (Exception ignored) {}
+                }
+                dao.registrar(idUsuarioRegistra, descripcion.trim(), total,
                               idMetodoPago, fechaHora, idEmpresaRegistro);
                 response.sendRedirect(request.getContextPath() + "/compras?exito=creado");
             }

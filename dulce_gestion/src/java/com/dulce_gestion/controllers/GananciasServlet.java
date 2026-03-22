@@ -49,10 +49,13 @@ public class GananciasServlet extends HttpServlet {
             return;
         }
 
-        // ── Paso 2: determinar qué datos puede ver según el rol ──────────
+        // ── Paso 2: verificar rol — solo Admin y SuperAdmin pueden acceder ─
         String rol = usuario.getNombreRol();
-        // true si es Admin o SuperAdmin → ve todas las ventas y todos los gastos
         boolean esAdminOSuper = "SuperAdministrador".equals(rol) || "Administrador".equals(rol);
+        if (!esAdminOSuper) {
+            response.sendRedirect(request.getContextPath() + "/dashboard");
+            return;
+        }
 
         // ── Paso 3: leer el período solicitado ────────────────────────────
         String periodo = request.getParameter("periodo");

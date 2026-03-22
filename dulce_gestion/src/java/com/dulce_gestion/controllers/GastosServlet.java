@@ -90,9 +90,7 @@ public class GastosServlet extends HttpServlet {
             String fechaDatetime = fecha + " " + horaActual;
 
             if ("editar".equals(accion)) {
-                int idGasto         = Integer.parseInt(request.getParameter("idGasto"));
-                int idDetalleCompra = Integer.parseInt(request.getParameter("idDetalleCompra"));
-                int idCompra        = Integer.parseInt(request.getParameter("idCompra"));
+                int idGasto = Integer.parseInt(request.getParameter("idGasto"));
 
                 int idEmprendimientoGasto = 0;
                 if ("SuperAdministrador".equals(usuario.getNombreRol())) {
@@ -101,7 +99,7 @@ public class GastosServlet extends HttpServlet {
                         try { idEmprendimientoGasto = Integer.parseInt(empEditR); } catch (NumberFormatException ignored) {}
                     }
                 }
-                dao.editar(idGasto, idDetalleCompra, idCompra, descripcion.trim(),
+                dao.editar(idGasto, descripcion.trim(),
                            total, idMetodoPago, fechaDatetime, idEmprendimientoGasto);
                 response.sendRedirect(request.getContextPath() + "/gastos?exito=editado");
 
@@ -112,8 +110,21 @@ public class GastosServlet extends HttpServlet {
                     if (empR != null && !empR.isBlank()) {
                         try { idEmpresaRegistro = Integer.parseInt(empR); } catch (NumberFormatException ignored) {}
                     }
+                    // SuperAdmin debe seleccionar emprendimiento obligatoriamente
+                    if (idEmpresaRegistro == 0) {
+                        response.sendRedirect(request.getContextPath() + "/gastos?error=selecciona_emprendimiento");
+                        return;
+                    }
                 }
-                dao.registrar(usuario.getId(), descripcion.trim(), total,
+                // SuperAdmin: registrar a nombre del admin del emprendimiento seleccionado
+                int idUsuarioRegistra = usuario.getId();
+                if ("SuperAdministrador".equals(usuario.getNombreRol()) && idEmpresaRegistro > 0) {
+                    try {
+                        int adminId = new UsuarioDAO().obtenerAdminDeEmprendimiento(idEmpresaRegistro);
+                        if (adminId > 0) idUsuarioRegistra = adminId;
+                    } catch (Exception ignored) {}
+                }
+                dao.registrar(idUsuarioRegistra, descripcion.trim(), total,
                               idMetodoPago, fechaDatetime, idEmpresaRegistro);
                 response.sendRedirect(request.getContextPath() + "/gastos?exito=creado");
             }

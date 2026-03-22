@@ -16,6 +16,9 @@
     String exitoP       = request.getParameter("exito");
     boolean exitoCreado  = "creado".equals(exitoP);
     boolean exitoEditado = "editado".equals(exitoP);
+    String errorParam = request.getParameter("error");
+    if ("selecciona_emprendimiento".equals(errorParam) && error == null)
+        error = "Debes seleccionar un emprendimiento antes de registrar.";
 
     BigDecimal totalGeneral = BigDecimal.ZERO;
     if (compras != null) for (FilaCompra c : compras) totalGeneral = totalGeneral.add(c.total);

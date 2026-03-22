@@ -79,7 +79,12 @@ public class EliminarEmpleadoServlet extends HttpServlet {
                 response.sendRedirect(ctx + "/empleados?error=sinpermiso"); return;
             }
 
-            // ── Paso 5: inactivar mediante el DAO ─────────────────────────
+            // ── Paso 5: proteger contra autoeliminación ──────────────────
+            if (idUsuario == solicitante.getId()) {
+                response.sendRedirect(ctx + "/empleados?error=sinpermiso"); return;
+            }
+
+            // ── Paso 6: inactivar mediante el DAO ─────────────────────────
             new EliminarEmpleadoDAO().inactivar(idUsuario);
 
             response.sendRedirect(ctx + "/empleados?exito=eliminado");

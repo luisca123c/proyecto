@@ -178,66 +178,36 @@ CREATE TABLE ventas (
 
 -- ── GASTOS ────────────────────────────────────────────────────────────────
 
-CREATE TABLE compras (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    fecha_compra DATETIME NOT NULL,
-    total_compra DECIMAL(10,2) NOT NULL
-);
-
-CREATE TABLE detalle_compra (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    id_usuario INT NOT NULL,
-    descripcion VARCHAR(150),
-    id_compra INT NOT NULL,
-    id_emprendimiento INT NULL COMMENT 'Emprendimiento destino del gasto. Solo se popula cuando lo registra el SuperAdministrador.',
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id)
-        ON DELETE RESTRICT ON UPDATE CASCADE,
-    FOREIGN KEY (id_compra) REFERENCES compras(id)
-        ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (id_emprendimiento) REFERENCES emprendimientos(id)
-        ON DELETE SET NULL ON UPDATE CASCADE
-);
-
 CREATE TABLE gastos (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    id_detalle_compra INT NOT NULL,
-    id_metodo_pago INT NOT NULL,
-    fecha_gasto DATETIME NOT NULL,
-    total_gasto DECIMAL(10,2) NOT NULL,
-    FOREIGN KEY (id_detalle_compra) REFERENCES detalle_compra(id)
-        ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (id_metodo_pago) REFERENCES metodo_pago(id)
-        ON DELETE RESTRICT ON UPDATE CASCADE
+    id               INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario       INT           NOT NULL,
+    descripcion      VARCHAR(150)  NOT NULL,
+    total            DECIMAL(10,2) NOT NULL,
+    id_metodo_pago   INT           NOT NULL,
+    fecha            DATETIME      NOT NULL,
+    id_emprendimiento INT          NULL COMMENT 'Emprendimiento explícito cuando lo registra el SuperAdministrador.',
+    FOREIGN KEY (id_usuario)        REFERENCES usuarios(id)        ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (id_metodo_pago)    REFERENCES metodo_pago(id)     ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (id_emprendimiento) REFERENCES emprendimientos(id) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- ── COMPRAS DE INSUMOS ────────────────────────────────────────────────────
 
 CREATE TABLE compras_insumos (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    id_usuario INT NOT NULL,
-    descripcion VARCHAR(150) NOT NULL,
-    total DECIMAL(10,2) NOT NULL,
-    id_metodo_pago INT NOT NULL,
-    fecha_compra DATETIME NOT NULL,
-    id_emprendimiento INT NULL COMMENT 'Emprendimiento destino de la compra. Solo se popula cuando lo registra el SuperAdministrador.',
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id)
-        ON DELETE RESTRICT ON UPDATE CASCADE,
-    FOREIGN KEY (id_metodo_pago) REFERENCES metodo_pago(id)
-        ON DELETE RESTRICT ON UPDATE CASCADE,
-    FOREIGN KEY (id_emprendimiento) REFERENCES emprendimientos(id)
-        ON DELETE SET NULL ON UPDATE CASCADE
+    id               INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario       INT           NOT NULL,
+    descripcion      VARCHAR(150)  NOT NULL,
+    total            DECIMAL(10,2) NOT NULL,
+    id_metodo_pago   INT           NOT NULL,
+    fecha_compra     DATETIME      NOT NULL,
+    id_emprendimiento INT          NULL COMMENT 'Emprendimiento explícito cuando lo registra el SuperAdministrador.',
+    FOREIGN KEY (id_usuario)        REFERENCES usuarios(id)        ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (id_metodo_pago)    REFERENCES metodo_pago(id)     ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (id_emprendimiento) REFERENCES emprendimientos(id) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- ── AUXILIARES ────────────────────────────────────────────────────────────
 
-CREATE TABLE ingresos (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    fecha_ingreso DATETIME NOT NULL,
-    id_venta INT NOT NULL,
-    descripcion VARCHAR(150),
-    FOREIGN KEY (id_venta) REFERENCES ventas(id)
-        ON DELETE CASCADE ON UPDATE CASCADE
-);
 
 CREATE TABLE imagenes_producto (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -248,16 +218,6 @@ CREATE TABLE imagenes_producto (
         ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE TABLE ganancias (
-    id_ingreso INT NOT NULL,
-    id_gasto INT NOT NULL,
-    total_ganancia DECIMAL(10,2),
-    PRIMARY KEY (id_ingreso, id_gasto),
-    FOREIGN KEY (id_ingreso) REFERENCES ingresos(id)
-        ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (id_gasto) REFERENCES gastos(id)
-        ON DELETE CASCADE ON UPDATE CASCADE
-);
 
 -- ════════════════════════════════════════════════════════════════
 -- DATOS INICIALES
@@ -528,37 +488,15 @@ INSERT INTO compras_insumos (id_usuario, descripcion, total, id_metodo_pago, fec
 (6, 'Crema de leche y queso crema',       8000.00, 2, '2026-03-09 10:00:00'),
 (3, 'Azúcar, colorantes y esencias',      7000.00, 1, '2026-03-16 11:00:00');
 
--- ── GASTOS ────────────────────────────────────────────────────
--- Enero gastos: 16,000 | Febrero: 20,000 | Marzo: 45,000
-INSERT INTO compras (fecha_compra, total_compra) VALUES
-('2026-01-07 08:00:00',  5500.00),   -- 1
-('2026-01-14 08:00:00',  4500.00),   -- 2
-('2026-01-21 08:00:00',  6000.00),   -- 3
-('2026-02-04 08:00:00',  7000.00),   -- 4
-('2026-02-11 08:00:00',  6500.00),   -- 5
-('2026-02-18 08:00:00',  6500.00),   -- 6
-('2026-03-03 08:00:00', 15000.00),   -- 7
-('2026-03-10 08:00:00', 15000.00),   -- 8
-('2026-03-17 08:00:00', 15000.00);   -- 9
-
-INSERT INTO detalle_compra (id_usuario, descripcion, id_compra, id_emprendimiento) VALUES
-(2, 'Alquiler local Dulce Gestión enero',       1, NULL),
-(2, 'Servicios públicos enero',                 2, NULL),
-(6, 'Alquiler Postres del Valle enero',         3, NULL),
-(2, 'Alquiler local Dulce Gestión febrero',     4, NULL),
-(2, 'Servicios públicos febrero',               5, NULL),
-(6, 'Alquiler Postres del Valle febrero',       6, NULL),
-(2, 'Alquiler local Dulce Gestión marzo',       7, NULL),
-(2, 'Mantenimiento equipos refrigeración',      8, NULL),
-(6, 'Alquiler Postres del Valle + mora marzo',  9, NULL);
-
-INSERT INTO gastos (id_detalle_compra, id_metodo_pago, fecha_gasto, total_gasto) VALUES
-(1, 1, '2026-01-07 08:30:00',  5500.00),
-(2, 1, '2026-01-14 08:30:00',  4500.00),
-(3, 2, '2026-01-21 08:30:00',  6000.00),
-(4, 1, '2026-02-04 08:30:00',  7000.00),
-(5, 1, '2026-02-11 08:30:00',  6500.00),
-(6, 2, '2026-02-18 08:30:00',  6500.00),
-(7, 1, '2026-03-03 08:30:00', 15000.00),
-(8, 1, '2026-03-10 08:30:00', 15000.00),
-(9, 2, '2026-03-17 08:30:00', 15000.00);
+-- ── GASTOS ────────────────────────────────────────────────────────────────
+-- Enero: 16,000 | Febrero: 20,000 | Marzo: 45,000
+INSERT INTO gastos (id_usuario, descripcion, total, id_metodo_pago, fecha, id_emprendimiento) VALUES
+(2, 'Alquiler local Dulce Gestión enero',       5500.00, 1, '2026-01-07 08:30:00', NULL),
+(2, 'Servicios públicos enero',                 4500.00, 1, '2026-01-14 08:30:00', NULL),
+(6, 'Alquiler Postres del Valle enero',         6000.00, 2, '2026-01-21 08:30:00', NULL),
+(2, 'Alquiler local Dulce Gestión febrero',     7000.00, 1, '2026-02-04 08:30:00', NULL),
+(2, 'Servicios públicos febrero',               6500.00, 1, '2026-02-11 08:30:00', NULL),
+(6, 'Alquiler Postres del Valle febrero',       6500.00, 2, '2026-02-18 08:30:00', NULL),
+(2, 'Alquiler local Dulce Gestión marzo',      15000.00, 1, '2026-03-03 08:30:00', NULL),
+(2, 'Mantenimiento equipos refrigeración',     15000.00, 1, '2026-03-10 08:30:00', NULL),
+(6, 'Alquiler Postres del Valle + mora marzo', 15000.00, 2, '2026-03-17 08:30:00', NULL);

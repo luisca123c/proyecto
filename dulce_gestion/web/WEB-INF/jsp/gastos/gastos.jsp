@@ -14,6 +14,9 @@
     FilaGasto       ge      = (FilaGasto)        request.getAttribute("gastoEditar");
     String error   = (String) request.getAttribute("error");
     String exitoP  = request.getParameter("exito");
+    String errorParam = request.getParameter("error");
+    if ("selecciona_emprendimiento".equals(errorParam) && error == null)
+        error = "Debes seleccionar un emprendimiento antes de registrar.";
     boolean exitoCreado  = "creado".equals(exitoP);
     boolean exitoEditado = "editado".equals(exitoP);
 
@@ -311,9 +314,7 @@
       <div class="modal-titulo"><i class="fi fi-sr-pencil"></i> Editar gasto</div>
       <form method="POST" action="<%= ctx %>/gastos">
         <input type="hidden" name="accion" value="editar">
-        <input type="hidden" name="idGasto"         id="e_idGasto"         value="<%= ge != null ? ge.id : "" %>">
-        <input type="hidden" name="idDetalleCompra" id="e_idDetalleCompra" value="<%= ge != null ? ge.idDetalleCompra : "" %>">
-        <input type="hidden" name="idCompra"        id="e_idCompra"        value="<%= ge != null ? ge.idCompra : "" %>">
+        <input type="hidden" name="idGasto" id="e_idGasto" value="<%= ge != null ? ge.id : "" %>">
         <% if (esSuperAdmin && emprendimientos != null && !emprendimientos.isEmpty()
                && ge != null && ge.registradoPorSuperAdmin) { %>
         <div class="campo">

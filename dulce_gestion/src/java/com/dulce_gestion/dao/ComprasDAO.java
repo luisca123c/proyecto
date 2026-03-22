@@ -11,11 +11,12 @@ import java.util.List;
  * DAO para el módulo de Compras de Insumos.
  *
  * <p>Tabla principal: {@code compras_insumos}. El emprendimiento se resuelve con
- * {@code COALESCE(ci.id_emprendimiento, u.id_emprendimiento)}: si el registro fue
- * creado por el SuperAdministrador con un emprendimiento explícito usa ese campo;
- * si no, cae al emprendimiento del usuario registrador.</p>
+ * {@code COALESCE(e2.nombre, e1.nombre)}: si el SuperAdministrador asignó un
+ * emprendimiento explícito al registrar, ese tiene precedencia; de lo contrario
+ * se usa el del usuario registrador.</p>
  *
- * <p>Tablas leídas: {@code metodo_pago}, {@code usuarios}, {@code perfil_usuario},
+ * <p>Tablas escritas: {@code compras_insumos}.<br>
+ * Tablas leídas: {@code metodo_pago}, {@code usuarios}, {@code perfil_usuario},
  * {@code emprendimientos}, {@code roles}.</p>
  */
 public class ComprasDAO {
@@ -43,16 +44,28 @@ public class ComprasDAO {
         public boolean    registradoPorSuperAdmin;
     }
 
+    private static final String SELECT_BASE =
+        "SELECT ci.id, " +
+        "DATE_FORMAT(ci.fecha_compra,'%d/%m/%Y %H:%i') AS fecha, " +
+        "DATE_FORMAT(ci.fecha_compra,'%Y-%m-%d') AS fecha_raw, " +
+        "ci.descripcion, mp.nombre AS metodo_pago, ci.id_metodo_pago, " +
+        "pu.nombre_completo AS registrado_por, ci.total, " +
+        "COALESCE(e2.nombre, e1.nombre) AS nombre_emprendimiento, " +
+        "r.nombre AS rol_registrador " +
+        "FROM compras_insumos ci " +
+        "JOIN metodo_pago mp    ON mp.id  = ci.id_metodo_pago " +
+        "JOIN usuarios u        ON u.id   = ci.id_usuario " +
+        "JOIN perfil_usuario pu ON pu.id_usuario = u.id " +
+        "JOIN roles r           ON r.id   = u.id_rol " +
+        "LEFT JOIN emprendimientos e1 ON e1.id = u.id_emprendimiento " +
+        "LEFT JOIN emprendimientos e2 ON e2.id = ci.id_emprendimiento ";
+
     // =========================================================
     // LISTAR
     // =========================================================
 
     /**
-     * Retorna el historial de compras de insumos ordenado del más reciente al más antiguo.
-     *
-     * <p>El emprendimiento se resuelve con {@code COALESCE(ci.id_emprendimiento,
-     * u.id_emprendimiento)}: si el SuperAdmin asignó un emprendimiento al registrar
-     * usa ese; si no, cae al emprendimiento del usuario.</p>
+     * Retorna el historial de compras ordenado del más reciente al más antiguo.
      *
      * @param idEmprendimiento filtro de emprendimiento; {@code 0} retorna todos.
      * @return lista de compras según el filtro aplicado.
@@ -60,25 +73,9 @@ public class ComprasDAO {
      */
     public List<FilaCompra> listar(int idEmprendimiento) throws SQLException {
         boolean filtrar = idEmprendimiento > 0;
-        String sql =
-            "SELECT ci.id, DATE_FORMAT(ci.fecha_compra,'%d/%m/%Y %H:%i') AS fecha, " +
-            "DATE_FORMAT(ci.fecha_compra,'%Y-%m-%d') AS fecha_raw, " +
-            "ci.descripcion, mp.nombre AS metodo_pago, ci.id_metodo_pago, " +
-            "p.nombre_completo AS registrado_por, ci.total, " +
-            "COALESCE(e2.nombre, e1.nombre) AS nombre_emprendimiento, " +
-            "r.nombre AS rol_registrador " +
-            "FROM compras_insumos ci " +
-            "JOIN metodo_pago mp ON mp.id = ci.id_metodo_pago " +
-            "JOIN usuarios u ON u.id = ci.id_usuario " +
-            "JOIN perfil_usuario p ON p.id_usuario = ci.id_usuario " +
-            "JOIN roles r ON r.id = u.id_rol " +
-            "LEFT JOIN emprendimientos e1 ON e1.id = u.id_emprendimiento " +
-            "LEFT JOIN emprendimientos e2 ON e2.id = ci.id_emprendimiento " +
-            (filtrar
-                ? "WHERE COALESCE(ci.id_emprendimiento, u.id_emprendimiento) = ? "
-                : "") +
+        String sql = SELECT_BASE +
+            (filtrar ? "WHERE COALESCE(ci.id_emprendimiento, u.id_emprendimiento) = ? " : "") +
             "ORDER BY ci.fecha_compra DESC";
-
         List<FilaCompra> lista = new ArrayList<>();
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -105,22 +102,7 @@ public class ComprasDAO {
      * @throws SQLException si falla la consulta.
      */
     public FilaCompra obtenerPorId(int id) throws SQLException {
-        String sql =
-            "SELECT ci.id, DATE_FORMAT(ci.fecha_compra,'%d/%m/%Y %H:%i') AS fecha, " +
-            "DATE_FORMAT(ci.fecha_compra,'%Y-%m-%d') AS fecha_raw, " +
-            "ci.descripcion, mp.nombre AS metodo_pago, ci.id_metodo_pago, " +
-            "p.nombre_completo AS registrado_por, ci.total, " +
-            "COALESCE(e2.nombre, e1.nombre) AS nombre_emprendimiento, " +
-            "r.nombre AS rol_registrador " +
-            "FROM compras_insumos ci " +
-            "JOIN metodo_pago mp ON mp.id = ci.id_metodo_pago " +
-            "JOIN usuarios u ON u.id = ci.id_usuario " +
-            "JOIN perfil_usuario p ON p.id_usuario = ci.id_usuario " +
-            "JOIN roles r ON r.id = u.id_rol " +
-            "LEFT JOIN emprendimientos e1 ON e1.id = u.id_emprendimiento " +
-            "LEFT JOIN emprendimientos e2 ON e2.id = ci.id_emprendimiento " +
-            "WHERE ci.id = ?";
-
+        String sql = SELECT_BASE + "WHERE ci.id = ?";
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, id);
@@ -157,12 +139,7 @@ public class ComprasDAO {
     // =========================================================
 
     /**
-     * Registra una nueva compra de insumos.
-     *
-     * <p>{@code idEmprendimiento} es necesario cuando {@code idUsuario} pertenece al
-     * SuperAdministrador (cuyo {@code usuarios.id_emprendimiento} es {@code NULL}).
-     * Se persiste en {@code compras_insumos.id_emprendimiento} para que el historial
-     * pueda filtrar y mostrar el emprendimiento correcto.</p>
+     * Registra una nueva compra de insumos en {@code compras_insumos}.
      *
      * @param idUsuario        ID del usuario que registra la compra.
      * @param descripcion      descripción de qué se compró.
@@ -179,7 +156,7 @@ public class ComprasDAO {
              PreparedStatement ps = con.prepareStatement(
                      "INSERT INTO compras_insumos " +
                      "(id_usuario, descripcion, total, id_metodo_pago, fecha_compra, id_emprendimiento) " +
-                     "VALUES (?, ?, ?, ?, ?, ?)")) {
+                     "VALUES (?,?,?,?,?,?)")) {
             ps.setInt(1, idUsuario);
             ps.setString(2, descripcion);
             ps.setBigDecimal(3, total);
@@ -196,18 +173,18 @@ public class ComprasDAO {
     // =========================================================
 
     /**
-     * Actualiza una compra de insumos existente.
+     * Actualiza una compra de insumos existente en {@code compras_insumos}.
      *
-     * <p>Si {@code idNuevoUsuario} es mayor que cero, también reasigna el
-     * {@code id_usuario} (solo permitido cuando la compra fue registrada
+     * <p>Si {@code idEmprendimiento} es mayor que cero, también actualiza el
+     * emprendimiento explícito (solo permitido cuando la compra fue registrada
      * originalmente por el SuperAdministrador).</p>
      *
-     * @param id             ID del registro en {@code compras_insumos}.
-     * @param descripcion    nueva descripción.
-     * @param total          nuevo monto.
-     * @param idMetodoPago   nuevo método de pago.
-     * @param fechaDatetime  nueva fecha en formato {@code yyyy-MM-dd HH:mm:ss}.
-     * @param idNuevoUsuario nuevo {@code id_usuario}; {@code 0} para no cambiar.
+     * @param id               ID del registro en {@code compras_insumos}.
+     * @param descripcion      nueva descripción.
+     * @param total            nuevo monto.
+     * @param idMetodoPago     nuevo método de pago.
+     * @param fechaDatetime    nueva fecha en formato {@code yyyy-MM-dd HH:mm:ss}.
+     * @param idEmprendimiento nuevo emprendimiento explícito; {@code 0} para limpiar.
      * @throws SQLException si falla la actualización.
      */
     public void editar(int id, String descripcion,
@@ -223,26 +200,15 @@ public class ComprasDAO {
             ps.setInt(3, idMetodoPago);
             ps.setString(4, fechaDatetime);
             if (idEmprendimiento > 0) { ps.setInt(5, idEmprendimiento); ps.setInt(6, id); }
-            else                    { ps.setInt(5, id); }
+            else                      { ps.setInt(5, id); }
             ps.executeUpdate();
         }
-    }
-
-    /** Edita una compra sin cambiar el emprendimiento asignado. */
-    public void editar(int id, String descripcion,
-                       BigDecimal total, int idMetodoPago,
-                       String fechaDatetime) throws SQLException {
-        editar(id, descripcion, total, idMetodoPago, fechaDatetime, 0);
     }
 
     // =========================================================
     // HELPER
     // =========================================================
 
-    /**
-     * Convierte una fila del {@link ResultSet} en un objeto {@link FilaCompra}.
-     * Reutilizado por {@link #listar} y {@link #obtenerPorId}.
-     */
     private FilaCompra mapear(ResultSet rs) throws SQLException {
         FilaCompra fc = new FilaCompra();
         fc.id           = rs.getInt("id");
