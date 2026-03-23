@@ -26,11 +26,6 @@ CREATE TABLE categorias (
     activo TINYINT(1) NOT NULL DEFAULT 1
 );
 
-CREATE TABLE estado_carrito (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(50) UNIQUE NOT NULL
-);
-
 CREATE TABLE unidad_medida (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(25) UNIQUE NOT NULL,
@@ -141,11 +136,10 @@ CREATE TABLE carrito (
     id_usuario INT NOT NULL,
     fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     fecha_actualizacion DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    id_estado_carro INT NOT NULL,
+    estado VARCHAR(10) NOT NULL DEFAULT 'Activo',
+    CONSTRAINT chk_estado_carrito CHECK (estado IN ('Activo', 'Inactivo', 'Cancelado')),
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id)
-        ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (id_estado_carro) REFERENCES estado_carrito(id)
-        ON DELETE RESTRICT ON UPDATE CASCADE
+        ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE detalle_carrito (
@@ -240,8 +234,6 @@ INSERT INTO categorias (nombre, descripcion) VALUES
 ('Postres Caseros', 'Tortas, brownies y dulces elaborados en casa'),
 ('Bebidas',         'Jugos, batidos y bebidas frías');
 
-INSERT INTO estado_carrito (nombre) VALUES ('Activo'), ('Inactivo'), ('Cancelado');
-
 INSERT INTO unidad_medida (nombre) VALUES ('Unidad'), ('Gramos'), ('Litros');
 
 INSERT INTO metodo_pago (nombre) VALUES ('Efectivo'), ('Nequi');
@@ -330,36 +322,36 @@ INSERT INTO productos (nombre, descripcion, stock_actual, id_unidad, precio_unit
 -- ════════════════════════════════════════════════════════════════
 
 -- ── CARRITOS HISTÓRICOS (Inactivo) ────────────────────────────
-INSERT INTO carrito (id_usuario, fecha_creacion, fecha_actualizacion, id_estado_carro) VALUES
+INSERT INTO carrito (id_usuario, fecha_creacion, fecha_actualizacion, estado) VALUES
 -- Enero emp1 (users: 2=carlos, 3=ana, 4=pedro, 5=lucia)
-(2, '2026-01-05 10:00:00', '2026-01-05 10:45:00', 2),  -- 1
-(3, '2026-01-09 11:00:00', '2026-01-09 11:30:00', 2),  -- 2
-(4, '2026-01-15 14:00:00', '2026-01-15 14:50:00', 2),  -- 3
-(5, '2026-01-20 16:00:00', '2026-01-20 16:20:00', 2),  -- 4
-(2, '2026-01-26 09:30:00', '2026-01-26 10:00:00', 2),  -- 5
+(2, '2026-01-05 10:00:00', '2026-01-05 10:45:00', 'Inactivo'),  -- 1
+(3, '2026-01-09 11:00:00', '2026-01-09 11:30:00', 'Inactivo'),  -- 2
+(4, '2026-01-15 14:00:00', '2026-01-15 14:50:00', 'Inactivo'),  -- 3
+(5, '2026-01-20 16:00:00', '2026-01-20 16:20:00', 'Inactivo'),  -- 4
+(2, '2026-01-26 09:30:00', '2026-01-26 10:00:00', 'Inactivo'),  -- 5
 -- Enero emp2 (users: 6=sofia, 7=miguel, 8=valentina, 9=juan)
-(6, '2026-01-06 10:00:00', '2026-01-06 10:40:00', 2),  -- 6
-(7, '2026-01-12 12:00:00', '2026-01-12 12:35:00', 2),  -- 7
-(8, '2026-01-18 15:00:00', '2026-01-18 15:25:00', 2),  -- 8
-(9, '2026-01-24 17:00:00', '2026-01-24 17:15:00', 2),  -- 9
+(6, '2026-01-06 10:00:00', '2026-01-06 10:40:00', 'Inactivo'),  -- 6
+(7, '2026-01-12 12:00:00', '2026-01-12 12:35:00', 'Inactivo'),  -- 7
+(8, '2026-01-18 15:00:00', '2026-01-18 15:25:00', 'Inactivo'),  -- 8
+(9, '2026-01-24 17:00:00', '2026-01-24 17:15:00', 'Inactivo'),  -- 9
 -- Febrero emp1
-(3, '2026-02-03 10:00:00', '2026-02-03 10:55:00', 2),  -- 10
-(4, '2026-02-08 13:00:00', '2026-02-08 13:30:00', 2),  -- 11
-(5, '2026-02-13 15:00:00', '2026-02-13 15:40:00', 2),  -- 12
-(2, '2026-02-19 09:00:00', '2026-02-19 09:25:00', 2),  -- 13
-(3, '2026-02-25 11:00:00', '2026-02-25 11:20:00', 2),  -- 14
+(3, '2026-02-03 10:00:00', '2026-02-03 10:55:00', 'Inactivo'),  -- 10
+(4, '2026-02-08 13:00:00', '2026-02-08 13:30:00', 'Inactivo'),  -- 11
+(5, '2026-02-13 15:00:00', '2026-02-13 15:40:00', 'Inactivo'),  -- 12
+(2, '2026-02-19 09:00:00', '2026-02-19 09:25:00', 'Inactivo'),  -- 13
+(3, '2026-02-25 11:00:00', '2026-02-25 11:20:00', 'Inactivo'),  -- 14
 -- Febrero emp2
-(7, '2026-02-04 10:00:00', '2026-02-04 10:50:00', 2),  -- 15
-(8, '2026-02-10 14:00:00', '2026-02-10 14:30:00', 2),  -- 16
-(9, '2026-02-16 16:00:00', '2026-02-16 16:25:00', 2),  -- 17
-(6, '2026-02-22 09:00:00', '2026-02-22 09:35:00', 2),  -- 18
-(7, '2026-02-27 11:00:00', '2026-02-27 11:40:00', 2),  -- 19
+(7, '2026-02-04 10:00:00', '2026-02-04 10:50:00', 'Inactivo'),  -- 15
+(8, '2026-02-10 14:00:00', '2026-02-10 14:30:00', 'Inactivo'),  -- 16
+(9, '2026-02-16 16:00:00', '2026-02-16 16:25:00', 'Inactivo'),  -- 17
+(6, '2026-02-22 09:00:00', '2026-02-22 09:35:00', 'Inactivo'),  -- 18
+(7, '2026-02-27 11:00:00', '2026-02-27 11:40:00', 'Inactivo'),  -- 19
 -- Marzo emp1 (pocas ventas → pérdida)
-(4, '2026-03-04 10:00:00', '2026-03-04 10:20:00', 2),  -- 20
-(5, '2026-03-11 14:00:00', '2026-03-11 14:15:00', 2),  -- 21
+(4, '2026-03-04 10:00:00', '2026-03-04 10:20:00', 'Inactivo'),  -- 20
+(5, '2026-03-11 14:00:00', '2026-03-11 14:15:00', 'Inactivo'),  -- 21
 -- Marzo emp2 (pocas ventas → pérdida)
-(8, '2026-03-05 11:00:00', '2026-03-05 11:10:00', 2),  -- 22
-(9, '2026-03-12 15:00:00', '2026-03-12 15:20:00', 2);  -- 23
+(8, '2026-03-05 11:00:00', '2026-03-05 11:10:00', 'Inactivo'),  -- 22
+(9, '2026-03-12 15:00:00', '2026-03-12 15:20:00', 'Inactivo');  -- 23
 
 -- ── DETALLE DE CADA CARRITO ────────────────────────────────────
 INSERT INTO detalle_carrito (id_carrito, id_producto, cantidad) VALUES
@@ -449,15 +441,15 @@ INSERT INTO ventas (fecha_venta, id_carrito, id_metodo_pago, total_venta, id_emp
 ('2026-03-12 15:20:00', 23, 2,   6000.00, 2);
 
 -- ── CARRITOS ACTIVOS (uno por usuario para operar normalmente) ─
-INSERT INTO carrito (id_usuario, fecha_creacion, id_estado_carro) VALUES
-(2, '2026-03-16 08:00:00', 1),  -- 24  carlos
-(3, '2026-03-16 08:01:00', 1),  -- 25  ana
-(4, '2026-03-16 08:02:00', 1),  -- 26  pedro
-(5, '2026-03-16 08:03:00', 1),  -- 27  lucia
-(6, '2026-03-16 08:04:00', 1),  -- 28  sofia
-(7, '2026-03-16 08:05:00', 1),  -- 29  miguel
-(8, '2026-03-16 08:06:00', 1),  -- 30  valentina
-(9, '2026-03-16 08:07:00', 1);  -- 31  juan
+INSERT INTO carrito (id_usuario, fecha_creacion, estado) VALUES
+(2, '2026-03-16 08:00:00', 'Activo'),  -- 24  carlos
+(3, '2026-03-16 08:01:00', 'Activo'),  -- 25  ana
+(4, '2026-03-16 08:02:00', 'Activo'),  -- 26  pedro
+(5, '2026-03-16 08:03:00', 'Activo'),  -- 27  lucia
+(6, '2026-03-16 08:04:00', 'Activo'),  -- 28  sofia
+(7, '2026-03-16 08:05:00', 'Activo'),  -- 29  miguel
+(8, '2026-03-16 08:06:00', 'Activo'),  -- 30  valentina
+(9, '2026-03-16 08:07:00', 'Activo');  -- 31  juan
 
 -- ── STOCK ACTUALIZADO TRAS VENTAS HISTÓRICAS ──────────────────
 -- prod1: vendidas 11 unid  | prod2: 9  | prod3: 7  | prod4: 6  | prod5: 5

@@ -13,7 +13,7 @@ import java.util.List;
  * ============================================================
  * DAO: CarritoDAO
  * Tablas escritas:    carrito, detalle_carrito, productos, ventas
- * Tablas leídas:      estado_carrito, metodo_pago, imagenes_producto
+ * Tablas leídas:      metodo_pago, imagenes_producto
  * Usado por:          VentasServlet
  * ============================================================
  *
@@ -34,7 +34,7 @@ public class CarritoDAO {
         String sqlBuscar = """
                 SELECT id FROM carrito
                 WHERE id_usuario = ?
-                  AND id_estado_carro = (SELECT id FROM estado_carrito WHERE nombre = 'Activo')
+                  AND estado = 'Activo'
                 LIMIT 1
                 """;
         try (Connection con = DB.obtenerConexion();
@@ -47,8 +47,8 @@ public class CarritoDAO {
 
         // No existe carrito activo → crear uno nuevo
         String sqlCrear = """
-                INSERT INTO carrito (id_usuario, id_estado_carro)
-                VALUES (?, (SELECT id FROM estado_carrito WHERE nombre = 'Activo'))
+                INSERT INTO carrito (id_usuario, estado)
+                VALUES (?, 'Activo')
                 """;
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(sqlCrear, Statement.RETURN_GENERATED_KEYS)) {
@@ -354,17 +354,14 @@ public class CarritoDAO {
 
                 // ── Paso 4: marcar el carrito como Inactivo (preserva los ítems para historial) ──
                 try (PreparedStatement ps = con.prepareStatement(
-                        "UPDATE carrito SET id_estado_carro = " +
-                        "(SELECT id FROM estado_carrito WHERE nombre = 'Inactivo') " +
-                        "WHERE id = ?")) {
+                        "UPDATE carrito SET estado = 'Inactivo' WHERE id = ?")) {
                     ps.setInt(1, idCarrito);
                     ps.executeUpdate();
                 }
 
                 // ── Paso 5: crear un carrito Activo nuevo para la próxima venta ──
                 try (PreparedStatement ps = con.prepareStatement(
-                        "INSERT INTO carrito (id_usuario, id_estado_carro) " +
-                        "VALUES (?, (SELECT id FROM estado_carrito WHERE nombre = 'Activo'))")) {
+                        "INSERT INTO carrito (id_usuario, estado) VALUES (?, 'Activo')")) {
                     ps.setInt(1, idUsuario);
                     ps.executeUpdate();
                 }
