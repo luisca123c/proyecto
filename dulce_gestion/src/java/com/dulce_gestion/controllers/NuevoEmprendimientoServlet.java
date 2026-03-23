@@ -114,8 +114,24 @@ public class NuevoEmprendimientoServlet extends HttpServlet {
         }
 
         try {
-            new EmprendimientoDAO().crear(nombre.trim(), nit.trim(), direccion.trim(),
-                                          ciudad.trim(), telefono.trim(), correo.trim());
+            EmprendimientoDAO dao = new EmprendimientoDAO();
+            if (dao.nitExisteEnOtro(nit.trim(), 0)) {
+                req.setAttribute("error", "Ya existe un emprendimiento con ese NIT.");
+                req.getRequestDispatcher("/WEB-INF/jsp/emprendimientos/nuevo.jsp").forward(req, res);
+                return;
+            }
+            if (dao.telefonoExisteEnOtro(telefono.trim(), 0)) {
+                req.setAttribute("error", "Ya existe un emprendimiento con ese teléfono.");
+                req.getRequestDispatcher("/WEB-INF/jsp/emprendimientos/nuevo.jsp").forward(req, res);
+                return;
+            }
+            if (dao.correoExisteEnOtro(correo.trim(), 0)) {
+                req.setAttribute("error", "Ya existe un emprendimiento con ese correo.");
+                req.getRequestDispatcher("/WEB-INF/jsp/emprendimientos/nuevo.jsp").forward(req, res);
+                return;
+            }
+            dao.crear(nombre.trim(), nit.trim(), direccion.trim(),
+                      ciudad.trim(), telefono.trim(), correo.trim());
             res.sendRedirect(req.getContextPath() + "/emprendimientos?exito=creado");
         } catch (SQLException e) {
             e.printStackTrace();

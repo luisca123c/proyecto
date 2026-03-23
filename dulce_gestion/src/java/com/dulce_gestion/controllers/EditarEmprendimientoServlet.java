@@ -108,6 +108,19 @@ public class EditarEmprendimientoServlet extends HttpServlet {
                     return;
                 }
 
+                if (dao.nitExisteEnOtro(nit.trim(), id)) {
+                    campoError = "Ya existe un emprendimiento con ese NIT.";
+                } else if (dao.telefonoExisteEnOtro(telefono.trim(), id)) {
+                    campoError = "Ya existe un emprendimiento con ese teléfono.";
+                } else if (dao.correoExisteEnOtro(correo.trim(), id)) {
+                    campoError = "Ya existe un emprendimiento con ese correo.";
+                }
+                if (campoError != null) {
+                    req.setAttribute("error", campoError);
+                    req.setAttribute("emp", dao.buscarPorId(id));
+                    req.getRequestDispatcher("/WEB-INF/jsp/emprendimientos/editar.jsp").forward(req, res);
+                    return;
+                }
                 dao.editar(id, nombre.trim(), nit.trim(), direccion.trim(),
                            ciudad.trim(), telefono.trim(), correo.trim());
                 res.sendRedirect(ctx + "/emprendimientos?exito=editado");

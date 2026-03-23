@@ -53,8 +53,8 @@ CREATE TABLE emprendimientos (
     nit VARCHAR(30) UNIQUE,
     direccion VARCHAR(150),
     ciudad VARCHAR(100),
-    telefono VARCHAR(20),
-    correo VARCHAR(100),
+    telefono VARCHAR(20) UNIQUE,
+    correo VARCHAR(100) UNIQUE,
     estado VARCHAR(20) NOT NULL DEFAULT 'Activo',
     fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

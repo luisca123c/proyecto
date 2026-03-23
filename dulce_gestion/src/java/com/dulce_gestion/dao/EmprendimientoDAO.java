@@ -43,6 +43,67 @@ public class EmprendimientoDAO {
 
     // ── Crear ──────────────────────────────────────────────────────────
 
+
+    /**
+     * Verifica si un NIT ya existe en otro emprendimiento.
+     *
+     * @param nit  NIT a verificar.
+     * @param excludeId  ID a excluir (para edición); 0 en creación.
+     * @return true si el NIT ya lo usa otro emprendimiento.
+     * @throws SQLException si falla la consulta.
+     */
+    public boolean nitExisteEnOtro(String nit, int excludeId) throws SQLException {
+        String sql = excludeId > 0
+            ? "SELECT id FROM emprendimientos WHERE nit = ? AND id != ?"
+            : "SELECT id FROM emprendimientos WHERE nit = ?";
+        try (Connection con = DB.obtenerConexion();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, nit.trim());
+            if (excludeId > 0) ps.setInt(2, excludeId);
+            try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
+        }
+    }
+
+    /**
+     * Verifica si un teléfono ya existe en otro emprendimiento.
+     *
+     * @param telefono  teléfono a verificar.
+     * @param excludeId  ID a excluir (para edición); 0 en creación.
+     * @return true si el teléfono ya lo usa otro emprendimiento.
+     * @throws SQLException si falla la consulta.
+     */
+    public boolean telefonoExisteEnOtro(String telefono, int excludeId) throws SQLException {
+        String sql = excludeId > 0
+            ? "SELECT id FROM emprendimientos WHERE telefono = ? AND id != ?"
+            : "SELECT id FROM emprendimientos WHERE telefono = ?";
+        try (Connection con = DB.obtenerConexion();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, telefono.trim());
+            if (excludeId > 0) ps.setInt(2, excludeId);
+            try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
+        }
+    }
+
+    /**
+     * Verifica si un correo ya existe en otro emprendimiento.
+     *
+     * @param correo  correo a verificar.
+     * @param excludeId  ID a excluir (para edición); 0 en creación.
+     * @return true si el correo ya lo usa otro emprendimiento.
+     * @throws SQLException si falla la consulta.
+     */
+    public boolean correoExisteEnOtro(String correo, int excludeId) throws SQLException {
+        String sql = excludeId > 0
+            ? "SELECT id FROM emprendimientos WHERE correo = ? AND id != ?"
+            : "SELECT id FROM emprendimientos WHERE correo = ?";
+        try (Connection con = DB.obtenerConexion();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, correo.trim().toLowerCase());
+            if (excludeId > 0) ps.setInt(2, excludeId);
+            try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
+        }
+    }
+
     public void crear(String nombre, String nit, String direccion,
                       String ciudad, String telefono, String correo) throws SQLException {
         String sql = "INSERT INTO emprendimientos (nombre, nit, direccion, ciudad, telefono, correo) " +
