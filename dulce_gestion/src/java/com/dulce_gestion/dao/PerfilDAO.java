@@ -11,25 +11,42 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * ============================================================
- * DAO: PerfilDAO
- * Tablas leídas:      usuarios, correos, roles, perfil_usuario,
- *                     telefonos, generos
- * Tablas escritas:    correos, telefonos, perfil_usuario, usuarios
- * Usado por:          PerfilServlet, EditarPerfilServlet, VerPerfilServlet
- * ============================================================
+ * DAO especializado en la gestión de perfiles de usuarios.
  *
+ * Esta clase maneja las operaciones CRUD para perfiles de usuarios,
+ * incluyendo datos personales, contacto y gestión de contraseñas.
+ *
+ * Tablas leídas: usuarios, correos, roles, perfil_usuario, telefonos, generos, emprendimientos
+ * Tablas escritas: correos, telefonos, perfil_usuario, usuarios
+ *
+ * Características importantes:
+ * - Consultas complejas con múltiples JOINs para obtener datos completos
+ * - Actualizaciones coordinadas entre múltiples tablas
+ * - Validación de existencia de usuarios antes de operaciones
+ * - Manejo seguro de contraseñas con hashing SHA-256
+ * - Normalización de datos (trim, lowercase)
+ * - Control de acceso según rol de usuario
+ *
+ * Usado por: PerfilServlet, EditarPerfilServlet, VerPerfilServlet
  */
 public class PerfilDAO {
 
+    // =========================================================
+    // CONSULTA - Obtener perfil completo de usuario
+    // =========================================================
     /**
      * Carga el perfil completo de un usuario por su ID.
      *
      * Trae todos los campos necesarios para la pantalla de perfil:
-     * datos básicos, teléfono, género, fechas de alta y actualización.
+     * datos básicos, teléfono, género, fechas de alta y actualización,
+     * e información del emprendimiento asociado.
      *
+     * @param idUsuario ID del usuario a consultar
+     * @return objeto Usuario con todos los datos del perfil, o null si no existe
+     * @throws SQLException si hay error en la consulta
      */
     public Usuario obtenerPerfil(int idUsuario) throws SQLException {
+        // SQL con múltiples JOINs para obtener todos los datos del perfil en una sola consulta
         String sql = """
                 SELECT
                     u.id,
@@ -68,14 +85,20 @@ public class PerfilDAO {
         return null;
     }
 
+    // =========================================================
+    // LISTADO - Obtener todos los usuarios (SuperAdmin)
+    // =========================================================
     /**
      * Lista todos los usuarios del sistema.
-     * Se usaría para una pantalla de administración general (SuperAdmin).
      *
-     * @return  lista completa de usuarios ordenada por nombre
+     * Se usaría para una pantalla de administración general (SuperAdmin)
+     * para tener una vista completa de todos los usuarios registrados.
+     *
+     * @return lista completa de usuarios ordenada por nombre completo
      * @throws SQLException si hay error al consultar la BD
      */
     public List<Usuario> listarTodosUsuarios() throws SQLException {
+        // SQL para obtener datos básicos de todos los usuarios sin emprendimiento
         String sql = """
                 SELECT
                     u.id,
@@ -108,14 +131,16 @@ public class PerfilDAO {
         return usuarios;
     }
 
+    // =========================================================
+    // LISTA DE GÉNEROS - Para selector del formulario
+    // =========================================================
     /**
-     * Retorna la lista de géneros disponibles para el <select> del formulario.
+     * Retorna la lista de géneros disponibles para el selector del formulario.
      *
-     * Devuelve un array de String[] con [id, nombre] por cada género
-     * para que el JSP pueda generar las opciones del select:
-     *   <option value="1">Masculino</option>
+     * Devuelve una lista de pares [id, nombre] por cada género para que
+     * el JSP pueda generar las opciones del select de forma dinámica.
      *
-     * @return  lista de [id, nombre] por cada género
+     * @return lista de [id, nombre] por cada género ordenada por nombre
      * @throws SQLException si hay error al consultar la BD
      */
     public List<String[]> listarGeneros() throws SQLException {
@@ -125,6 +150,7 @@ public class PerfilDAO {
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
+                // Crear par [id, nombre] para cada género
                 lista.add(new String[]{rs.getString("id"), rs.getString("nombre")});
             }
         }
@@ -209,13 +235,26 @@ public class PerfilDAO {
         return true;
     }
 
+    // =========================================================
+    // ACTUALIZACIÓN PARCIAL - Solo teléfono y correo (Empleados)
+    // =========================================================
     /**
      * Actualiza solo el teléfono y el correo de un usuario.
+     *
      * Usado por Empleados, que no pueden cambiar nombre ni género.
+     * Realiza las mismas validaciones que el método completo pero
+     * solo actualiza los campos permitidos para este rol.
+     *
+     * @param idUsuario ID del usuario a actualizar
+     * @param telefono  nuevo número de teléfono
+     * @param correo    nuevo correo electrónico
+     * @return true si la actualización fue exitosa, false si el usuario no existe
+     * @throws SQLException si hay error en las consultas
      */
     public boolean actualizarTelefonoYCorreo(int idUsuario, String telefono, String correo)
             throws SQLException {
 
+        // Paso 1: Obtener los IDs de las tablas relacionadas para el usuario
         String sqlObtener = """
                 SELECT u.id_correo, p.id_telefono
                 FROM usuarios u
@@ -236,8 +275,10 @@ public class PerfilDAO {
             }
         }
 
+        // Paso 2: Validar que se encontraron los IDs (usuario existe)
         if (idCorreo == -1 || idTelefono == -1) return false;
 
+        // Paso 3: Actualizar correo (normalizado a minúsculas sin espacios)
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(
                      "UPDATE correos SET correo = ? WHERE id = ?")) {
@@ -246,6 +287,7 @@ public class PerfilDAO {
             ps.executeUpdate();
         }
 
+        // Paso 4: Actualizar teléfono (normalizado sin espacios)
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(
                      "UPDATE telefonos SET telefono = ? WHERE id = ?")) {
@@ -254,17 +296,30 @@ public class PerfilDAO {
             ps.executeUpdate();
         }
 
-        return true;
+        return true; // Actualización exitosa
     }
 
+    // =========================================================
+    // SEGURIDAD - Cambio de contraseña
+    // =========================================================
     /**
-     * Cambia la contraseña del usuario, verificando primero que la contraseña
-     * actual sea correcta.
+     * Cambia la contraseña del usuario, verificando primero que la contraseña actual sea correcta.
      *
+     * Proceso de cambio seguro:
+     * 1. Hashear ambas contraseñas (actual y nueva) con SHA-256
+     * 2. Verificar que la contraseña actual coincida con la almacenada
+     * 3. Si la verificación pasa, actualizar con la nueva contraseña hasheada
+     *
+     * @param idUsuario         ID del usuario que cambia la contraseña
+     * @param contrasennaActual contraseña actual en texto plano
+     * @param contrasenaNueva   nueva contraseña en texto plano
+     * @return true si el cambio fue exitoso, false si la contraseña actual es incorrecta
+     * @throws SQLException si hay error en las consultas
      */
     public boolean cambiarContrasena(int idUsuario, String contrasennaActual,
                                       String contrasenaNueva) throws SQLException {
 
+        // Paso 1: Hashear ambas contraseñas para comparación segura
         String hashActual = UsuarioDAO.hashSHA256(contrasennaActual);
         String hashNueva  = UsuarioDAO.hashSHA256(contrasenaNueva);
 
@@ -272,7 +327,7 @@ public class PerfilDAO {
             return false; // No se pudo hashear (SHA-256 no disponible)
         }
 
-        // Verificar que la contraseña actual sea correcta en la BD
+        // Paso 2: Verificar que la contraseña actual sea correcta en la BD
         // Si no coincide, no se continúa con el cambio
         String sqlVerificar = "SELECT id FROM usuarios WHERE id = ? AND contrasena = ?";
         try (Connection con = DB.obtenerConexion();
@@ -287,7 +342,7 @@ public class PerfilDAO {
             }
         }
 
-        // La verificación pasó → actualizar con la nueva contraseña
+        // Paso 3: La verificación pasó → actualizar con la nueva contraseña
         String sqlActualizar = "UPDATE usuarios SET contrasena = ? WHERE id = ?";
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(sqlActualizar)) {
@@ -299,9 +354,19 @@ public class PerfilDAO {
         return true; // Contraseña cambiada exitosamente
     }
 
+    // =========================================================
+    // HELPER - Mapeo de ResultSet a objeto Usuario
+    // =========================================================
+    
     /**
      * Convierte una fila del ResultSet en un objeto Usuario.
      *
+     * Mapea todos los campos del perfil incluyendo datos opcionales
+     * de emprendimiento que pueden no estar presentes según la query.
+     *
+     * @param rs ResultSet posicionado en la fila a mapear
+     * @return objeto Usuario con todos los datos del perfil
+     * @throws SQLException si hay error al acceder a los campos
      */
     private Usuario mapearUsuario(ResultSet rs) throws SQLException {
         Usuario u = new Usuario();
@@ -313,10 +378,11 @@ public class PerfilDAO {
         u.setNombreCompleto(rs.getString("nombre_completo"));
         u.setTelefono(rs.getString("telefono"));
         u.setGenero(rs.getString("nombre_genero"));
+        // Manejo seguro de campos opcionales según la query utilizada
         try {
             u.setIdEmprendimiento(rs.getInt("id_emprendimiento"));
             u.setNombreEmprendimiento(rs.getString("nombre_emprendimiento"));
-        } catch (Exception ignored) {} // columnas opcionales según la query
+        } catch (Exception ignored) {} // Columnas opcionales según la query
         return u;
     }
 }

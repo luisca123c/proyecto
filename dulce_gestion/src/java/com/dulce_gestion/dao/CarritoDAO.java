@@ -10,27 +10,41 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * ============================================================
- * DAO: CarritoDAO
- * Tablas escritas:    carrito, detalle_carrito, productos, ventas
- * Tablas leídas:      metodo_pago, imagenes_producto
- * Usado por:          VentasServlet
- * ============================================================
+ * DAO para el módulo de Carrito de Compras.
+ *
+ * Esta clase maneja todas las operaciones relacionadas con el carrito de compras
+ * del sistema. Funciona como una capa de abstracción entre la lógica de negocio
+ * y la base de datos para el proceso completo de compras: desde agregar productos
+ * hasta confirmar la venta.
+ *
+ * Tabla principal: {@code carrito} con sus detalles en {@code detalle_carrito}.
+ * Implementa validaciones importantes como stock disponible y consistencia
+ * de emprendimientos en el mismo carrito.
+ *
+ * Tablas escritas: {@code carrito}, {@code detalle_carrito}, {@code productos}, {@code ventas}.<br>
+ * Tablas leídas: {@code metodo_pago}, {@code imagenes_producto}, {@code emprendimientos}.
  *
  */
 public class CarritoDAO {
 
     // =========================================================
-    // OBTENER O CREAR CARRITO ACTIVO
+    // GESTIÓN DE CARRITO - Obtener y crear carritos activos
     // =========================================================
 
     /**
      * Retorna el ID del carrito Activo del usuario, o crea uno nuevo si no existe.
      *
+     * Este método implementa el patrón "get-or-create": primero busca un carrito
+     * en estado 'Activo' para el usuario, y si no lo encuentra, crea uno nuevo.
+     * Esto garantiza que cada usuario siempre tenga exactamente un carrito activo.
+     *
+     * @param idUsuario ID del usuario en sesión
+     * @return ID del carrito activo (existente o recién creado)
+     * @throws SQLException si hay error en la consulta o inserción
      */
     public int obtenerOCrearCarrito(int idUsuario) throws SQLException {
 
-        // Buscar carrito activo existente para este usuario
+        // Paso 1: Buscar carrito activo existente para este usuario
         String sqlBuscar = """
                 SELECT id FROM carrito
                 WHERE id_usuario = ?
@@ -39,21 +53,23 @@ public class CarritoDAO {
                 """;
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(sqlBuscar)) {
-            ps.setInt(1, idUsuario);
+            ps.setInt(1, idUsuario); // Parámetro para filtrar por usuario
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return rs.getInt("id"); // Ya existe → retornar el ID
             }
         }
 
-        // No existe carrito activo → crear uno nuevo
+        // Paso 2: No existe carrito activo → crear uno nuevo
         String sqlCrear = """
                 INSERT INTO carrito (id_usuario, estado)
                 VALUES (?, 'Activo')
                 """;
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(sqlCrear, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setInt(1, idUsuario);
+            ps.setInt(1, idUsuario); // Asociar carrito al usuario
             ps.executeUpdate();
+            
+            // Obtener el ID generado automáticamente por la BD
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 rs.next();
                 return rs.getInt(1); // ID del carrito recién creado
@@ -62,7 +78,7 @@ public class CarritoDAO {
     }
 
     // =========================================================
-    // LISTAR ÍTEMS Y CALCULAR TOTAL
+    // CONSULTA DE ÍTEMS - Listar productos y calcular totales
     // =========================================================
 
     /**
@@ -78,6 +94,9 @@ public class CarritoDAO {
      * @throws SQLException si hay error al consultar la BD
      */
     public List<CarritoItem> listarItems(int idCarrito) throws SQLException {
+        // Consulta con JOINs para obtener todos los datos necesarios en una sola llamada
+        /** LEFT JOIN con imágenes: el producto puede no tener imagen */
+
         String sql = """
                 SELECT dc.id            AS id_detalle,
                        dc.id_producto,
@@ -95,10 +114,11 @@ public class CarritoDAO {
         List<CarritoItem> lista = new ArrayList<>();
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, idCarrito);
+            ps.setInt(1, idCarrito); // Filtrar por carrito específico
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     CarritoItem item = new CarritoItem();
+                    // Mapear campos del ResultSet al objeto CarritoItem
                     item.setIdDetalle(rs.getInt("id_detalle"));
                     item.setIdProducto(rs.getInt("id_producto"));
                     item.setCantidad(rs.getInt("cantidad"));
@@ -124,10 +144,13 @@ public class CarritoDAO {
      * @return       suma de todos los subtotales (BigDecimal.ZERO si la lista está vacía)
      */
     public BigDecimal calcularTotal(List<CarritoItem> items) {
-        // Stream reduce: empieza con ZERO y acumula sumando cada subtotal
+        // Stream API con reduce: empieza con ZERO y acumula sumando cada subtotal
+        // BigDecimal.ZERO es el valor neutro para sumas (equivalente a 0)
+        // CarritoItem::getSubtotal es referencia de método (más legible que lambda)
+        // stream: recorre la lista de ítems y aplica getSubtotal a cada uno
         return items.stream()
-                    .map(CarritoItem::getSubtotal)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    .map(CarritoItem::getSubtotal) // Extraer subtotal de cada ítem
+                    .reduce(BigDecimal.ZERO, BigDecimal::add); // Sumar todos los subtotales
     }
 
     // =========================================================
@@ -137,10 +160,19 @@ public class CarritoDAO {
     /**
      * Agrega un producto al carrito o incrementa su cantidad si ya está.
      *
+     * Este método implementa múltiples validaciones críticas:
+     * 1. No mezclar productos de diferentes emprendimientos en el mismo carrito
+     * 2. Verificar stock disponible antes de agregar
+     * 3. Actualizar cantidad si el producto ya existe, o insertar nuevo
+     *
+     * @param idCarrito   ID del carrito activo del usuario
+     * @param idProducto  ID del producto a agregar
+     * @param cantidad    Cantidad a agregar (se suma si ya existe)
+     * @throws SQLException si hay violación de reglas de negocio
      */
     public void agregarProducto(int idCarrito, int idProducto, int cantidad) throws SQLException {
 
-        // Verificar que no se mezclen emprendimientos en el carrito
+        // Validación 1: Verificar que no se mezclen emprendimientos en el carrito
         String sqlEmpProducto = "SELECT id_emprendimiento FROM productos WHERE id = ?";
         int empProductoNuevo;
         try (Connection con = DB.obtenerConexion();
@@ -148,15 +180,17 @@ public class CarritoDAO {
             ps.setInt(1, idProducto);
             try (ResultSet rs = ps.executeQuery()) {
                 if (!rs.next()) throw new SQLException("Producto no encontrado.");
-                empProductoNuevo = rs.getInt("id_emprendimiento");
+                empProductoNuevo = rs.getInt("id_emprendimiento"); // Emprendimiento del nuevo producto
             }
         }
+        
+        // Obtener emprendimiento actual del carrito (0 si está vacío)
         int empCarrito = obtenerEmprendimientoDelCarrito(idCarrito);
         if (empCarrito > 0 && empCarrito != empProductoNuevo) {
             throw new SQLException("No puedes mezclar productos de diferentes emprendimientos en el mismo carrito. Vacía el carrito primero.");
         }
 
-        // Verificar stock disponible del producto
+        // Validación 2: Verificar stock disponible del producto
         String sqlStock = "SELECT stock_actual FROM productos WHERE id = ?";
         int stock;
         try (Connection con = DB.obtenerConexion();
@@ -168,7 +202,7 @@ public class CarritoDAO {
             }
         }
 
-        // Ver si el producto ya está en el carrito para incrementar la cantidad
+        // Validación 3: Ver si el producto ya está en el carrito para incrementar la cantidad
         String sqlExiste = "SELECT id, cantidad FROM detalle_carrito WHERE id_carrito = ? AND id_producto = ?";
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(sqlExiste)) {
@@ -180,8 +214,12 @@ public class CarritoDAO {
                     int idDetalle      = rs.getInt("id");
                     int cantidadActual = rs.getInt("cantidad");
                     int nuevaCantidad  = cantidadActual + cantidad;
+                    
+                    // Validar que la nueva cantidad no supere el stock
                     if (nuevaCantidad > stock)
                         throw new SQLException("Stock insuficiente. Disponible: " + stock);
+                        
+                    // Actualizar cantidad existente
                     try (Connection con2 = DB.obtenerConexion();
                          PreparedStatement ps2 = con2.prepareStatement(
                              "UPDATE detalle_carrito SET cantidad = ? WHERE id = ?")) {
@@ -195,19 +233,21 @@ public class CarritoDAO {
         }
 
         // El producto no estaba en el carrito → insertar nuevo ítem
+        // INSERT INTO detalle_carrito: tabla intermedia entre carrito y productos
+        // Cada registro representa un producto específico en el carrito de un usuario
         if (cantidad > stock) throw new SQLException("Stock insuficiente. Disponible: " + stock);
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(
                  "INSERT INTO detalle_carrito (id_carrito, id_producto, cantidad) VALUES (?, ?, ?)")) {
-            ps.setInt(1, idCarrito);
-            ps.setInt(2, idProducto);
-            ps.setInt(3, cantidad);
+            ps.setInt(1, idCarrito);   // FK: carrito al que pertenece este ítem
+            ps.setInt(2, idProducto);  // FK: producto que se está agregando
+            ps.setInt(3, cantidad);    // Cantidad inicial del producto
             ps.executeUpdate();
         }
     }
 
     // =========================================================
-    // ACTUALIZAR CANTIDAD, ELIMINAR ÍTEM, VACIAR
+    // MODIFICACIÓN DE ÍTEMS - Actualizar cantidades y eliminar
     // =========================================================
 
     /**
@@ -220,7 +260,7 @@ public class CarritoDAO {
      */
     public void actualizarCantidad(int idDetalle, int nuevaCantidad) throws SQLException {
         if (nuevaCantidad <= 0) {
-            // Si la cantidad llega a 0, quitar el ítem del carrito directamente
+            // Si la cantidad llega a 0 o menos, eliminar el ítem directamente
             eliminarItem(idDetalle);
             return;
         }
@@ -242,7 +282,7 @@ public class CarritoDAO {
         }
         if (nuevaCantidad > stock) throw new SQLException("Stock insuficiente. Disponible: " + stock);
 
-        // Actualizar la cantidad del ítem
+        // Actualizar la cantidad del ítem en la base de datos
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(
                  "UPDATE detalle_carrito SET cantidad = ? WHERE id = ?")) {
@@ -259,6 +299,7 @@ public class CarritoDAO {
      * @throws SQLException si hay error al eliminar
      */
     public void eliminarItem(int idDetalle) throws SQLException {
+        // Eliminar el ítem específico del carrito
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(
                  "DELETE FROM detalle_carrito WHERE id = ?")) {
@@ -275,6 +316,8 @@ public class CarritoDAO {
      * @throws SQLException si hay error al eliminar
      */
     public void vaciarCarrito(int idCarrito) throws SQLException {
+        // Eliminar todos los ítems del carrito pero mantener la fila del carrito
+        // Esto preserva el historial y permite reutilizar el mismo carrito
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(
                  "DELETE FROM detalle_carrito WHERE id_carrito = ?")) {
@@ -284,31 +327,43 @@ public class CarritoDAO {
     }
 
     // =========================================================
-    // CONFIRMAR VENTA (TRANSACCIÓN PRINCIPAL)
+    // PROCESO DE VENTA - Transacción completa y confirmación
     // =========================================================
 
     /**
      * Confirma la venta: registra en ventas, descuenta stock y vacía el carrito.
-     * Todo dentro de una transacción para garantizar consistencia.
+     * Todo dentro de una transacción para garantizar consistencia total.
      *
-     * @param idEmprendimiento  ID del emprendimiento al que pertenece la venta.
-     *                          Se usa para que las ventas del SuperAdmin queden
-     *                          correctamente asociadas en el historial.
-     *                          0 o negativo → se guarda NULL en la BD.
+     * <strong>Transacción ACID:</strong>
+     * - Atomicity: Todo o nada se ejecuta
+     * - Consistency: La BD siempre queda en estado válido
+     * - Isolation: Otros usuarios no ven cambios parciales
+     * - Durability: Los cambios persisten aunque haya fallos
+     *
+     * @param idCarrito         ID del carrito a procesar
+     * @param idUsuario         ID del usuario que realiza la compra
+     * @param idMetodoPago      ID del método de pago seleccionado
+     * @param idEmprendimiento  ID del emprendimiento (0 o negativo = NULL)
+     * @return                  ID de la venta registrada
+     * @throws SQLException     Si hay error en cualquier paso de la transacción
      */
     public int confirmarVenta(int idCarrito, int idUsuario, int idMetodoPago,
                               int idEmprendimiento) throws SQLException {
 
+        // Obtener ítems del carrito y validar que no esté vacío
         List<CarritoItem> items = listarItems(idCarrito);
         if (items.isEmpty()) throw new SQLException("El carrito está vacío.");
 
-        BigDecimal total = calcularTotal(items); // Total exacto con BigDecimal
+        // Calcular total exacto usando BigDecimal (evita errores de punto flotante)
+        BigDecimal total = calcularTotal(items);
 
         try (Connection con = DB.obtenerConexion()) {
-            con.setAutoCommit(false); // Iniciar transacción
+            // auto-commit realiza commit automático tras cada sentencia
+            con.setAutoCommit(false); // desactivar auto-commit para transacción manual
 
             try {
-                // ── Paso 1: verificar stock de TODOS los ítems antes de modificar ──
+                // ── Paso 1: Verificar stock de TODOS los ítems antes de modificar ──
+                // Esta verificación previa evita descontar stock parcialmente si hay error
                 for (CarritoItem item : items) {
                     try (PreparedStatement ps = con.prepareStatement(
                             "SELECT stock_actual FROM productos WHERE id = ?")) {
@@ -324,7 +379,8 @@ public class CarritoDAO {
                     }
                 }
 
-                // ── Paso 2: descontar stock de cada producto ──────────────
+                // ── Paso 2: Descontar stock de cada producto (actualización atómica) ──
+                // Se usa stock_actual = stock_actual - ? para evitar condiciones de carrera
                 for (CarritoItem item : items) {
                     try (PreparedStatement ps = con.prepareStatement(
                             "UPDATE productos SET stock_actual = stock_actual - ? WHERE id = ?")) {
@@ -334,7 +390,7 @@ public class CarritoDAO {
                     }
                 }
 
-                // ── Paso 3: registrar la venta ────────────────────────────
+                // ── Paso 3: Registrar la venta en la tabla ventas ──
                 int idVenta;
                 try (PreparedStatement ps = con.prepareStatement(
                         "INSERT INTO ventas (fecha_venta, id_carrito, id_metodo_pago, total_venta, id_emprendimiento) " +
@@ -343,23 +399,28 @@ public class CarritoDAO {
                     ps.setInt(1, idCarrito);
                     ps.setInt(2, idMetodoPago);
                     ps.setBigDecimal(3, total);
+                    // Manejar emprendimiento opcional (puede ser NULL)
                     if (idEmprendimiento > 0) ps.setInt(4, idEmprendimiento);
                     else                      ps.setNull(4, java.sql.Types.INTEGER);
                     ps.executeUpdate();
+                    
+                    // Obtener el ID generado automáticamente para la venta
                     try (ResultSet rs = ps.getGeneratedKeys()) {
                         rs.next();
                         idVenta = rs.getInt(1); // ID de la nueva venta
                     }
                 }
 
-                // ── Paso 4: marcar el carrito como Inactivo (preserva los ítems para historial) ──
+                // ── Paso 4: Marcar el carrito como Inactivo (preserva historial) ──
+                // No se elimina el carrito, solo se cambia estado para mantener historial
                 try (PreparedStatement ps = con.prepareStatement(
                         "UPDATE carrito SET estado = 'Inactivo' WHERE id = ?")) {
                     ps.setInt(1, idCarrito);
                     ps.executeUpdate();
                 }
 
-                // ── Paso 5: crear un carrito Activo nuevo para la próxima venta ──
+                // ── Paso 5: Crear un carrito Activo nuevo para la próxima compra ──
+                // Esto asegura que el usuario siempre tenga un carrito disponible
                 try (PreparedStatement ps = con.prepareStatement(
                         "INSERT INTO carrito (id_usuario, estado) VALUES (?, 'Activo')")) {
                     ps.setInt(1, idUsuario);
@@ -377,7 +438,7 @@ public class CarritoDAO {
     }
 
     // =========================================================
-    // CATÁLOGO Y MÉTODOS DE PAGO
+    // DATOS DE REFERENCIA - Catálogos y métodos de pago
     // =========================================================
 
     /**
@@ -393,15 +454,26 @@ public class CarritoDAO {
      */
     /**
      * Lista productos activos con stock disponible para el carrito.
-     * Si idEmprendimiento=0 (SuperAdmin sin filtro) → todos los emprendimientos.
-     * Si idEmprendimiento>0 → solo ese emprendimiento.
-     * Incluye id_emprendimiento para validar mezcla de emprendimientos en el carrito.
+     * 
+     * Este método filtra productos según el emprendimiento del usuario:
+     * - Si idEmprendimiento=0 (SuperAdmin sin filtro) → todos los emprendimientos
+     * - Si idEmprendimiento>0 → solo ese emprendimiento específico
+     * 
+     * Incluye LEFT JOIN con imágenes para mostrar thumbnails en el carrito.
+     * Solo muestra productos con stock > 0 y estado != 'Inactivo'.
+     *
+     * @param idEmprendimiento ID del emprendimiento para filtrar (0 = sin filtro)
+     * @return lista de productos disponibles para agregar al carrito
+     * @throws SQLException si hay error en la consulta
      */
     public List<com.dulce_gestion.models.Producto> listarProductosActivos(int idEmprendimiento)
             throws SQLException {
+        // Construir SQL dinámico según el filtro de emprendimiento
         String sql;
         boolean filtrar = idEmprendimiento > 0;
         if (filtrar) {
+            // SQL con filtro específico de emprendimiento
+            /** LEFT JOIN: el producto puede no tener imagen */
             sql = """
                     SELECT p.id, p.nombre, p.precio_unitario, p.stock_actual,
                            p.id_emprendimiento, e.nombre AS nombre_emprendimiento,
@@ -415,6 +487,7 @@ public class CarritoDAO {
                     ORDER BY p.nombre
                     """;
         } else {
+            // SQL sin filtro (todos los emprendimientos)
             sql = """
                     SELECT p.id, p.nombre, p.precio_unitario, p.stock_actual,
                            p.id_emprendimiento, e.nombre AS nombre_emprendimiento,
@@ -427,18 +500,20 @@ public class CarritoDAO {
                     ORDER BY e.nombre, p.nombre
                     """;
         }
+        // Ejecutar consulta y mapear resultados
         List<com.dulce_gestion.models.Producto> lista = new ArrayList<>();
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
-            if (filtrar) ps.setInt(1, idEmprendimiento);
+            if (filtrar) ps.setInt(1, idEmprendimiento); // Asignar parámetro solo si hay filtro
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
+                    // Mapear ResultSet a objeto Producto
                     com.dulce_gestion.models.Producto p = new com.dulce_gestion.models.Producto();
                     p.setId(rs.getInt("id"));
                     p.setNombre(rs.getString("nombre"));
                     p.setPrecioUnitario(rs.getBigDecimal("precio_unitario"));
                     p.setStockActual(rs.getInt("stock_actual"));
-                    p.setPathImagen(rs.getString("path_imagen"));
+                    p.setPathImagen(rs.getString("path_imagen")); // Puede ser null
                     p.setIdEmprendimiento(rs.getInt("id_emprendimiento"));
                     p.setNombreEmprendimiento(rs.getString("nombre_emprendimiento"));
                     lista.add(p);
@@ -449,10 +524,18 @@ public class CarritoDAO {
     }
 
     /**
-     * Obtiene el id_emprendimiento de los productos ya en el carrito.
-     * Retorna 0 si el carrito está vacío.
+     * Obtiene el emprendimiento de los productos ya en el carrito.
+     * 
+     * Este método es crucial para la validación que impide mezclar productos
+     * de diferentes emprendimientos en el mismo carrito. Retorna 0 si el carrito está vacío.
+     *
+     * @param idCarrito ID del carrito a consultar
+     * @return ID del emprendimiento (0 si el carrito está vacío)
+     * @throws SQLException si hay error en la consulta
      */
     public int obtenerEmprendimientoDelCarrito(int idCarrito) throws SQLException {
+        // Consulta para obtener el emprendimiento del primer producto en el carrito
+        // LIMIT 1 porque todos los productos deben ser del mismo emprendimiento
         String sql = "SELECT p.id_emprendimiento FROM detalle_carrito dc " +
                       "JOIN productos p ON p.id = dc.id_producto " +
                       "WHERE dc.id_carrito = ? LIMIT 1";
@@ -460,6 +543,7 @@ public class CarritoDAO {
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, idCarrito);
             try (ResultSet rs = ps.executeQuery()) {
+                // Retornar el emprendimiento si hay productos, sino 0 (carrito vacío)
                 return rs.next() ? rs.getInt("id_emprendimiento") : 0;
             }
         }
@@ -468,15 +552,21 @@ public class CarritoDAO {
     /**
      * Retorna los métodos de pago disponibles para el modal de confirmación.
      *
-     * @return  lista de [id, nombre] por cada método de pago (ej: ["1", "Efectivo"])
+     * Este método carga el catálogo de métodos de pago del sistema.
+     * El resultado se usa para poblar el campo desplegable en el formulario
+     * de confirmación de compra.
+     *
+     * @return lista de pares [id, nombre] para el select HTML
      * @throws SQLException si hay error al consultar la BD
      */
     public List<String[]> listarMetodosPago() throws SQLException {
+        // Consulta simple para obtener todos los métodos de pago ordenados por nombre
         String sql = "SELECT id, nombre FROM metodo_pago ORDER BY nombre";
         List<String[]> lista = new ArrayList<>();
         try (Connection con = DB.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
+            // Convertir cada fila a un arreglo [id, nombre] para el select HTML
             while (rs.next())
                 lista.add(new String[]{rs.getString("id"), rs.getString("nombre")});
         }
