@@ -1,3 +1,49 @@
+<%--
+============================================================
+JSP: lista.jsp (Productos)
+RUTA: /WEB-INF/jsp/productos/lista.jsp
+PROPOSITO: Listado y gestión de productos con filtros
+ACCESO: Requiere autenticación (Admin, SuperAdmin, Empleado)
+============================================================
+
+Este JSP implementa la interfaz de gestión de productos del sistema
+con las siguientes características:
+
+CARACTERÍSTICAS PRINCIPALES:
+- Listado de productos con filtros por emprendimiento
+- Acciones de CRUD según rol del usuario
+- Diseño responsive con tarjetas de productos
+- Sistema de filtros para SuperAdmin (todos los emprendimientos)
+- Manejo de mensajes de éxito y error
+- Acciones directas desde la lista (editar, eliminar)
+
+PERMISOS POR ROL:
+- SuperAdministrador: ve todos los productos, puede filtrar por emprendimiento
+- Administrador: ve solo productos de su emprendimiento, puede editar/eliminar
+- Empleado: ve solo productos de su emprendimiento, solo lectura
+
+ATRIBUTOS DEL REQUEST:
+- productos: List<Producto> con los productos a mostrar
+- rolSolicitante: String con el rol del usuario actual
+- emprendimientos: List<Emprendimiento> para filtros (solo SuperAdmin)
+- empFiltro: Integer con el ID del emprendimiento seleccionado
+- errorProductos: String con mensaje de error de carga
+
+PARÁMETROS URL:
+- ?exito=creado/editado/eliminado: mensajes de éxito
+- ?error=tipo_error: mensajes de error específicos
+
+COMPONENTES CLAVE:
+- .filtros-productos: sección de filtros (solo SuperAdmin)
+- .productos-grid: rejilla de tarjetas de productos
+- .producto-card: tarjeta individual de producto
+- .acciones-rapidas: botones de acción por producto
+
+ESTILOS Y RECURSOS:
+- styles.css: estilos principales del sistema
+- mensajes.css: estilos para notificaciones
+- uicons-solid-rounded: iconos de Flaticon
+--%>
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="com.dulce_gestion.models.Producto, com.dulce_gestion.models.Emprendimiento, com.dulce_gestion.models.Usuario, java.util.List" %>
 <%

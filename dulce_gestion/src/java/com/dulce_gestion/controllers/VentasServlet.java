@@ -23,20 +23,19 @@ import java.util.List;
 /**
  * Servlet del carrito de ventas.
  *
- * <ul>
- *   <li>{@code GET  /ventas} — muestra el carrito activo del usuario junto con
- *       el catálogo de productos disponibles.</li>
- *   <li>{@code POST /ventas?accion=agregar}    — agrega un producto al carrito.</li>
- *   <li>{@code POST /ventas?accion=actualizar} — modifica la cantidad de un ítem.</li>
- *   <li>{@code POST /ventas?accion=eliminar}   — quita un ítem del carrito.</li>
- *   <li>{@code POST /ventas?accion=vaciar}     — vacía todos los ítems del carrito.</li>
- *   <li>{@code POST /ventas?accion=confirmar}  — confirma la venta: descuenta stock,
- *       registra la venta y abre un carrito nuevo.</li>
- * </ul>
+ * Métodos soportados:
+ * - GET  /ventas - muestra el carrito activo del usuario junto con
+ *     el catálogo de productos disponibles.
+ * - POST /ventas?accion=agregar    - agrega un producto al carrito.
+ * - POST /ventas?accion=actualizar - modifica la cantidad de un ítem.
+ * - POST /ventas?accion=eliminar   - quita un ítem del carrito.
+ * - POST /ventas?accion=vaciar     - vacía todos los ítems del carrito.
+ * - POST /ventas?accion=confirmar  - confirma la venta: descuenta stock,
+ *     registra la venta y abre un carrito nuevo.
  *
- * <p>El emprendimiento de la venta se toma directamente de los productos presentes
+ * El emprendimiento de la venta se toma directamente de los productos presentes
  * en el carrito (todos pertenecen al mismo emprendimiento via
- * {@code productos.id_emprendimiento}), sin depender del emprendimiento del usuario.</p>
+ * productos.id_emprendimiento), sin depender del emprendimiento del usuario.
  */
 @WebServlet("/ventas")
 public class VentasServlet extends HttpServlet {
@@ -138,13 +137,13 @@ public class VentasServlet extends HttpServlet {
     /**
      * Carga todos los datos del carrito como atributos del request para el JSP.
      *
-     * <p>Para el SuperAdmin, si el carrito ya tiene ítems el catálogo se filtra
+     * Para el SuperAdmin, si el carrito ya tiene ítems el catálogo se filtra
      * automáticamente al emprendimiento de esos ítems. Si está vacío, se respeta
-     * el parámetro {@code ?emp=} de la URL.</p>
+     * el parámetro ?emp= de la URL.
      *
-     * <p>Atributos depositados: {@code idCarrito}, {@code items}, {@code productos},
-     * {@code metodos}, {@code total}, {@code empCarrito}, {@code esSuperAdmin},
-     * y para SuperAdmin también {@code emprendimientos} y {@code empFiltro}.</p>
+     * Atributos depositados: idCarrito, items, productos,
+     * metodos, total, empCarrito, esSuperAdmin,
+     * y para SuperAdmin también emprendimientos y empFiltro.
      *
      * @param request   request donde se depositan los atributos.
      * @param usuario   usuario propietario del carrito.

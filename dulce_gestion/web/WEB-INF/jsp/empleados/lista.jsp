@@ -1,3 +1,63 @@
+<%--
+============================================================
+JSP: lista.jsp (Empleados)
+RUTA: /WEB-INF/jsp/empleados/lista.jsp
+PROPOSITO: Listado y gestión de empleados con filtros
+ACCESO: Requiere autenticación (Admin, SuperAdmin) - Empleado no tiene acceso
+============================================================
+
+Este JSP implementa la interfaz de gestión de empleados del sistema
+con las siguientes características:
+
+CARACTERÍSTICAS PRINCIPALES:
+- Listado de empleados con filtros por emprendimiento
+- Acciones de CRUD según rol del usuario
+- Sistema de filtros para SuperAdmin (todos los emprendimientos)
+- Manejo de mensajes de éxito y error
+- Acciones directas desde la lista (editar, eliminar)
+- Información detallada de cada empleado
+
+PERMISOS POR ROL:
+- SuperAdministrador: ve todos los empleados, puede filtrar por emprendimiento, puede crear/editar/eliminar Admin y Empleado
+- Administrador: ve solo empleados de su emprendimiento, puede crear/editar/eliminar solo Empleados
+- Empleado: no tiene acceso (redirigido al dashboard)
+
+ATRIBUTOS DEL REQUEST:
+- empleados: List<Usuario> con los empleados a mostrar
+- rolSolicitante: String con el rol del usuario actual
+- emprendimientos: List<Emprendimiento> para filtros (solo SuperAdmin)
+- empFiltro: Integer con el ID del emprendimiento seleccionado
+- errorEmpleados: String con mensaje de error de carga
+
+PARÁMETROS URL:
+- ?exito=creado/editado/eliminado: mensajes de éxito
+- ?error=noexiste/sinpermiso/eliminacion: mensajes de error específicos
+- ?emp=<id>: filtro por emprendimiento (solo SuperAdmin)
+
+INFORMACIÓN MOSTRADA POR EMPLEADO:
+- Foto de perfil (o placeholder)
+- Nombre completo
+- Correo electrónico
+- Rol (Administrador/Empleado)
+- Estado (Activo/Inactivo)
+- Emprendimiento asignado
+- Acciones (Editar/Eliminar según permisos)
+
+COMPONENTES CLAVE:
+- .filtros-empleados: sección de filtros (solo SuperAdmin)
+- .empleados-grid: rejilla de tarjetas de empleados
+- .empleado-card: tarjeta individual de empleado
+- .acciones-rapidas: botones de acción por empleado
+
+SEGURIDAD:
+- Acceso controlado por EmpleadosServlet según rol
+- Botones de acción deshabilitados según permisos
+- Validación de autoeliminación bloqueada
+
+ESTILOS Y RECURSOS:
+- styles.css: estilos principales del sistema
+- uicons-solid-rounded: iconos de Flaticon
+--%>
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="com.dulce_gestion.models.Usuario, com.dulce_gestion.models.Emprendimiento, java.util.List" %>
 <%

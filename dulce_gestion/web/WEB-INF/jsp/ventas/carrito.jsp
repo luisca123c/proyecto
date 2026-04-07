@@ -1,3 +1,69 @@
+<%--
+============================================================
+JSP: carrito.jsp (Ventas)
+RUTA: /WEB-INF/jsp/ventas/carrito.jsp
+PROPOSITO: Carrito de compras activo y catálogo de productos
+ACCESO: Requiere autenticación (todos los roles)
+============================================================
+
+Este JSP implementa el sistema de carrito de ventas del sistema
+con las siguientes características:
+
+CARACTERÍSTICAS PRINCIPALES:
+- Carrito de compras activo con gestión de ítems
+- Catálogo de productos filtrados por emprendimiento
+- Sistema de confirmación de ventas con método de pago
+- Actualización dinámica de cantidades y totales
+- Filtros por emprendimiento (solo SuperAdmin)
+- Diseño responsive con dos paneles principales
+
+FLUJO DE FUNCIONAMIENTO:
+1. El usuario agrega productos al carrito desde el catálogo
+2. Puede ajustar cantidades o eliminar ítems del carrito
+3. El total se calcula automáticamente
+4. Al confirmar, se descuenta stock y se registra la venta
+5. Se abre un nuevo carrito vacío para la siguiente venta
+
+PERMISOS POR ROL:
+- SuperAdministrador: puede vender productos de cualquier emprendimiento
+- Administrador: puede vender productos de su emprendimiento
+- Empleado: puede vender productos de su emprendimiento
+
+ATRIBUTOS DEL REQUEST:
+- items: List<CarritoItem> con productos en el carrito
+- productos: List<Producto> con catálogo disponible
+- metodos: List<String[]> con métodos de pago [id, nombre]
+- total: BigDecimal con el total calculado
+- emprendimientos: List<Emprendimiento> para filtros (solo SuperAdmin)
+- empFiltro: Integer con emprendimiento seleccionado
+- empCarrito: Integer con emprendimiento del carrito actual
+
+ACCIONES DISPONIBLES:
+- Agregar producto al carrito
+- Actualizar cantidad de un ítem
+- Eliminar ítem del carrito
+- Vaciar carrito completo
+- Confirmar venta (descuenta stock)
+
+PARÁMETROS URL:
+- ?exito=venta&id=<id>: mensaje de éxito con ID de venta
+- ?emp=<id>: filtro de emprendimiento (solo SuperAdmin)
+
+COMPONENTES CLAVE:
+- .carrito-seccion: panel del carrito activo
+- .catalogo-seccion: panel de productos disponibles
+- .carrito-item: ítem individual del carrito
+- .producto-card: tarjeta de producto del catálogo
+
+VALIDACIONES:
+- Stock disponible al agregar productos
+- Cantidades mínimas (1)
+- Método de pago requerido al confirmar
+
+ESTILOS Y RECURSOS:
+- styles.css: estilos principales del sistema
+- uicons-solid-rounded: iconos de Flaticon
+--%>
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="com.dulce_gestion.models.Usuario, com.dulce_gestion.models.CarritoItem, com.dulce_gestion.models.Emprendimiento, com.dulce_gestion.models.Producto, java.util.List, java.math.BigDecimal" %>
 <%

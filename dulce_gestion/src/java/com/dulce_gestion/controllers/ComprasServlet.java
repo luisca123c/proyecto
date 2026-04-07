@@ -22,14 +22,13 @@ import java.util.List;
 /**
  * Servlet para el módulo de Compras de Insumos.
  *
- * <ul>
- *   <li>{@code GET  /compras}              — lista el historial de compras. Si viene
- *       {@code ?editar=ID} precarga la compra en el modal de edición.</li>
- *   <li>{@code POST /compras?accion=crear}  — registra una nueva compra.</li>
- *   <li>{@code POST /compras?accion=editar} — actualiza una compra existente.</li>
- * </ul>
+ * Métodos soportados:
+ * - GET  /compras              - lista el historial de compras. Si viene
+ *     ?editar=ID precarga la compra en el modal de edición.
+ * - POST /compras?accion=crear  - registra una nueva compra.
+ * - POST /compras?accion=editar - actualiza una compra existente.
  *
- * <p>Solo accesible para roles {@code Administrador} y {@code SuperAdministrador}.</p>
+ * Solo accesible para roles Administrador y SuperAdministrador.
  */
 @WebServlet("/compras")
 public class ComprasServlet extends HttpServlet {

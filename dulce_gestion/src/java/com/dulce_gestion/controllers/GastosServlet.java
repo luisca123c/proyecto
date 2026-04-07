@@ -25,14 +25,13 @@ import java.util.Date;
 /**
  * Servlet para el módulo de gastos.
  *
- * <ul>
- *   <li>{@code GET  /gastos}         — lista el historial de gastos. Si viene
- *       {@code ?editar=ID} precarga el gasto en el modal de edición.</li>
- *   <li>{@code POST /gastos?accion=crear}  — registra un nuevo gasto.</li>
- *   <li>{@code POST /gastos?accion=editar} — actualiza un gasto existente.</li>
- * </ul>
+ * Métodos soportados:
+ * - GET  /gastos         - lista el historial de gastos. Si viene
+ *     ?editar=ID precarga el gasto en el modal de edición.
+ * - POST /gastos?accion=crear  - registra un nuevo gasto.
+ * - POST /gastos?accion=editar - actualiza un gasto existente.
  *
- * <p>Solo accesible para roles {@code Administrador} y {@code SuperAdministrador}.</p>
+ * Solo accesible para roles Administrador y SuperAdministrador.
  */
 @WebServlet("/gastos")
 public class GastosServlet extends HttpServlet {

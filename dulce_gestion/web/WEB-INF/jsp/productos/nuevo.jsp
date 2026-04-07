@@ -1,3 +1,56 @@
+<%--
+============================================================
+JSP: nuevo.jsp (Productos)
+RUTA: /WEB-INF/jsp/productos/nuevo.jsp
+PROPOSITO: Formulario para crear nuevos productos
+ACCESO: Requiere autenticación y rol Admin/SuperAdmin
+============================================================
+
+Este JSP implementa el formulario de creación de productos del sistema
+con las siguientes características:
+
+CARACTERÍSTICAS PRINCIPALES:
+- Formulario completo con todos los campos del producto
+- Selectores dinámicos para categorías y unidades de medida
+- Upload de imágenes con vista previa
+- Validación del lado del cliente y servidor
+- Persistencia de datos en caso de error
+- Selector de emprendimiento (solo SuperAdmin)
+
+CAMPOS DEL FORMULARIO:
+- nombre: nombre del producto (requerido)
+- descripcion: descripción detallada (opcional)
+- stock: cantidad inicial (requerido, numérico, no negativo)
+- precio: precio unitario (requerido, decimal, no negativo)
+- estado: estado inicial (Disponible/Agotado/Inactivo)
+- fechaVencimiento: fecha de vencimiento (requerido)
+- idCategoria: categoría del producto (select dinámico)
+- idUnidad: unidad de medida (select dinámico)
+- idEmprendimiento: emprendimiento asignado (solo SuperAdmin)
+- imagen: archivo de imagen del producto (opcional)
+
+PERMISOS POR ROL:
+- SuperAdministrador: puede asignar a cualquier emprendimiento
+- Administrador: solo puede crear para su emprendimiento
+- Empleado: no tiene acceso (redirigido)
+
+ATRIBUTOS DEL REQUEST:
+- categorias: List<String[]> con [id, nombre] para select
+- unidades: List<String[]> con [id, nombre] para select
+- emprendimientos: List<Emprendimiento> para filtros (solo SuperAdmin)
+- error: String con mensaje de error de validación
+
+VALIDACIONES IMPLEMENTADAS:
+- Campos requeridos no vacíos
+- Formatos numéricos válidos
+- Valores no negativos
+- Fecha de vencimiento futura
+- Tamaño máximo de imagen (5MB)
+
+ESTILOS Y RECURSOS:
+- styles.css: estilos principales del sistema
+- uicons-solid-rounded: iconos de Flaticon
+--%>
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="com.dulce_gestion.models.Usuario, com.dulce_gestion.models.Emprendimiento, java.util.List" %>
 <%

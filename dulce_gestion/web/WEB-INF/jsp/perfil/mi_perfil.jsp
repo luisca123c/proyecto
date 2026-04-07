@@ -1,3 +1,65 @@
+<%--
+============================================================
+JSP: mi_perfil.jsp (Perfil)
+RUTA: /WEB-INF/jsp/perfil/mi_perfil.jsp
+PROPOSITO: Visualización y edición del perfil personal del usuario
+ACCESO: Requiere autenticación (todos los roles)
+============================================================
+
+Este JSP implementa la interfaz de gestión del perfil personal del usuario
+con las siguientes características:
+
+CARACTERÍSTICAS PRINCIPALES:
+- Visualización completa de datos del perfil personal
+- Formularios embebidos para edición de datos y contraseña
+- Diseño responsive con secciones organizadas
+- Manejo de mensajes de éxito y error
+- Validación de datos del lado del cliente y servidor
+- Selectores dinámicos para género y otros campos
+
+SECCIONES DEL PERFIL:
+1. Información básica: nombre, correo, teléfono, dirección
+2. Información de empleo: rol, emprendimiento, estado
+3. Formulario de edición de datos personales
+4. Formulario de cambio de contraseña
+5. Opciones de configuración según rol
+
+CAMPOS EDITABLES:
+- Datos personales: nombre completo, teléfono, dirección, género
+- Contraseña: actual y nueva confirmación
+- Foto de perfil (según implementación)
+
+ATRIBUTOS DEL REQUEST:
+- perfil: Usuario con todos los datos del perfil
+- generos: List<String[]> con [id, nombre] para selector
+- error: String con mensaje de error de validación
+
+PARÁMETROS URL:
+- ?exito=datos: mensaje de éxito al actualizar datos
+- ?exito=contrasena: mensaje de éxito al cambiar contraseña
+- ?error=tipo_error: mensajes de error específicos
+
+PERMISOS POR ROL:
+- Todos los roles pueden ver y editar su perfil
+- Algunos campos pueden ser de solo lectura según rol
+- Empleados tienen opciones limitadas
+
+VALIDACIONES IMPLEMENTADAS:
+- Campos requeridos no vacíos
+- Formatos de datos válidos (email, teléfono)
+- Longitudes máximas de campos
+- Contraseña actual requerida para cambio
+- Confirmación de nueva contraseña
+
+SEGURIDAD:
+- Solo el usuario puede editar su propio perfil
+- Contraseña actual requerida para cambios
+- Validación del lado del servidor obligatoria
+
+ESTILOS Y RECURSOS:
+- styles.css: estilos principales del sistema
+- uicons-solid-rounded: iconos de Flaticon
+--%>
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="com.dulce_gestion.models.Usuario, java.util.List" %>
 <%
